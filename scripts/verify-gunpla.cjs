@@ -2,7 +2,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict');
 const {chromium,webkit,devices}=require('playwright');
 const auth=require('./browser-auth.cjs');
 const base=process.env.PREVIEW_URL||'https://117.72.11.77',out='artifacts/acceptance',local=new URL(base).hostname==='127.0.0.1';
-const report={status:'fail',scope:local?'local server with actual partial official dataset':'deployed private HTTPS',checks:[],errors:[],profiles:[]};
+const report={status:'fail',scope:local?'local server with actual partial official dataset':'deployed private HTTPS',checks:[],errors:[],profiles:[],rateLimited:[]};
 const check=(name,value)=>{assert.ok(value,name);report.checks.push(name);console.log('PASS '+name);};
 const ready=p=>p.waitForFunction(()=>window.GunplaPage?.state.ready&&!GunplaPage.state.loading&&GunplaPage.state.items.length>0);
 const settled=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
@@ -14,6 +14,7 @@ const shape=v=>JSON.stringify({query:v.query,ids:v.ids});
   const browser=await profile.engine.launch(profile.engine===chromium?{headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{headless:true});
   try{
    const c=await browser.newContext({...profile.options,...auth.contextOptions()}),p=await c.newPage();p.setDefaultTimeout(45000);p.on('pageerror',e=>report.errors.push(e.message));const pass=(name,value)=>check(profile.name+' '+name,value);
+   p.on('response',r=>{if(r.status()===429&&new URL(r.url()).origin===base)report.rateLimited.push(new URL(r.url()).pathname);});
    if(!local&&profile.name==='desktop'){
     const anonymous=await browser.newContext();
     const document=await anonymous.request.get(base+'/preview/gunpla.html',{maxRedirects:0});
@@ -71,5 +72,5 @@ const shape=v=>JSON.stringify({query:v.query,ids:v.ids});
    report.profiles.push({name:profile.name,status:'pass'});await c.close();
   }finally{await browser.close();}
  }
- check('no JavaScript errors',report.errors.length===0);report.status='pass';console.log(JSON.stringify({status:report.status,checks:report.checks.length,profiles:report.profiles}));
+ check('normal catalog browsing is not rate limited',report.rateLimited.length===0);check('no JavaScript errors',report.errors.length===0);report.status='pass';console.log(JSON.stringify({status:report.status,checks:report.checks.length,profiles:report.profiles}));
 })().catch(error=>{report.errors.push(String(error.message).split('\n')[0]);console.error(String(error.message).split('\n')[0]);process.exitCode=1;}).finally(()=>fs.writeFileSync(out+'/gunpla-'+(local?'local':'public')+'.json',JSON.stringify(report,null,2)));

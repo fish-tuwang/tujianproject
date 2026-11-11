@@ -43,3 +43,5 @@ python3 /opt/dual-catalog/app/scripts/deploy_release.py --image dual-catalog:0.7
 日志时间使用带时区的ISO格式；查询 `--since` 未写时区时按北京时间解释。访问IP取自nginx实际连接地址，客户端伪造转发头不会替换它；IP代表网络出口，不能直接等同于个人。访问日志不保存查询参数、Cookie或Authorization；部署日志只记变更配置键，不记凭证内容。
 
 独立 `dual-catalog-logrotate.timer` 每小时检查：访问/采集各20MiB阈值、14份历史，部署5MiB阈值、30份历史，按日或大小轮转并压缩。大流量时保留时间可能短于14/30天。Python自动重开文件，nginx收到reopen；轮转配置 `/opt/dual-catalog/logrotate.conf`，状态文件独立，不改系统其它日志规则。查看 `systemctl status dual-catalog-logrotate.timer`。日志属于本项目私有卷，文件权限为访问/采集0640、发布0600。
+
+公网防爬已加入request_limit、connection_limit和known_crawler字段：REJECTED表示代理限流或并发拒绝，known_crawler=1表示命中已知爬虫标识；结合client_ip、path及403/429状态查询。该日志继续轮转，不记录认证Cookie和口令。

@@ -78,3 +78,17 @@ python3 /opt/dual-catalog/app/scripts/deploy_release.py --image dual-catalog:0.1
 发布只等待最多180秒的首屏封面、规格图标与样例图库预热；完整封面/图库由已有cache-warmer在后台继续。磁盘缓存30天、Redis热点24小时，不清空旧图片。通过systemctl list-timers dual-catalog-gunpla-sync.timer及docker logs --tail 2 dual-catalog-cache-warmer-1核对真实进度。公网入口/preview/gunpla.html沿用私有登录与可信HTTPS；微信正式发布仍待AppID和域名。
 
 0.11.2采集频率：多美卡以2026-01-01 03:00为固定相位每48小时执行，跨月及重启均不重置间隔，2026-11-11部署时核对下次为2026-11-13 03:00（北京时间）。高达改为每周日03:30，当次核对下次为2026-11-15 03:30；systemd timer通过install_timer写入并重启生效，未来重装不会恢复为每日。宝可梦自动任务停用；当前无待执行/运行任务及待重试项。手动管理命令、历史资料与图片缓存预热保留。服务器独立执行，不依赖用户电脑或Codex后台在线。
+
+
+公网防爬只修改本项目Nginx入口，不修改应用镜像、采集频率或图片缓存。以每个真实连接IP计算：普通图鉴API 8次/秒、突发24；图片30次/秒、突发240；登录6次/分钟、突发5；总入口60次/秒、突发400；同时处理最多40个请求。超限返回429并保留上游原有Retry-After，代理产生的429给出10秒重试提示。健康检查、robots和HTTP ACME校验不占上述入口额度；内部采集与cache-warmer直连8092，不经过公网限流。
+
+已知搜索/批量爬虫标识返回403，robots.txt声明全站Disallow，响应增加X-Robots-Tag。标识拦截不能识别所有伪装客户端，实际数据继续依赖现有登录鉴权；不采用国家/地区封锁或固定IP白名单，保留手机及公司网络访问。拦截和限流行为进入原访问日志，新增request_limit、connection_limit、known_crawler字段，不记录Cookie或密码。
+
+防爬配置先通过同版本真实Nginx的隔离端口测试（哑上游，不向正式接口发送压力请求），再备份并保持文件inode热加载；语法、健康、鉴权或爬虫检查失败会恢复原配置，仅操作dual-catalog-preview-proxy。
+
+```sh
+python3 /opt/dual-catalog/app/scripts/verify_crawler_defense.py
+python3 /opt/dual-catalog/app/scripts/prepare_crawler_defense.py
+```
+
+隔离验证临时监听127.0.0.1:18080/18443，结束删除测试容器；真实证书只读挂载。发布回执在artifacts/acceptance/crawler-defense-deployment.json，限流验证在crawler-defense-shadow.json。已备份的原配置在backups/crawler-defense-*，无需重启应用、改数据库或停用缓存。

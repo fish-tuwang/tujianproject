@@ -2,7 +2,7 @@ const browserAuth=require('./browser-auth.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium,webkit,devices}=require('playwright');
 const base=process.env.PREVIEW_URL||'https://117.72.11.77',local=process.argv.includes('--local'),out='artifacts/acceptance';
-const report={status:'fail',checks:[],errors:[],profiles:[]};
+const report={status:'fail',checks:[],errors:[],profiles:[],rateLimited:[]};
 const check=(name,value)=>{assert.ok(value,name);report.checks.push(name);console.log('PASS '+name);};
 const ready=(p,count)=>p.waitForFunction(count=>!state.loading&&!restoringBrowse&&state.items.length===count,count);
 const snapshot=p=>p.evaluate(()=>({ids:state.items.map(i=>i.dex||i.id),query:{...state.query},y:scrollY}));
@@ -25,6 +25,7 @@ async function overlay(p){if(local)await p.route('**/preview/**',async r=>{const
   const b=await profile.engine.launch(profile.engine===chromium?{headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{headless:true});
   try{
    const c=await b.newContext({...profile.options,...browserAuth.contextOptions()}),p=await c.newPage();await overlay(p);p.on('pageerror',e=>report.errors.push(profile.name+': '+e.message));let requests=0;p.on('request',r=>{if(new URL(r.url()).pathname==='/api/pokemon')requests++;});
+   p.on('response',r=>{if(r.status()===429&&new URL(r.url()).origin===base)report.rateLimited.push(new URL(r.url()).pathname);});
    const pass=(n,v)=>check(profile.name+' '+n,v);
    await p.goto(base+'/preview/?catalog=pokemon&v=0.9.1',{waitUntil:'domcontentloaded'});await ready(p,12);
    pass('there is no continue-exploring button',await p.locator('#load-more').count()===0);
@@ -96,6 +97,6 @@ async function overlay(p){if(local)await p.route('**/preview/**',async r=>{const
    report.profiles.push({name:profile.name,status:'pass'});await c.close();
   }finally{await b.close();fs.writeFileSync(out+'/ui-regions-'+(local?'local':'public')+'.json',JSON.stringify(report,null,2));}
  }
- check('no JavaScript errors',report.errors.length===0);report.status='pass';console.log(JSON.stringify({status:report.status,checks:report.checks.length,profiles:report.profiles}));
+ check('normal regional browsing is not rate limited',report.rateLimited.length===0);check('no JavaScript errors',report.errors.length===0);report.status='pass';console.log(JSON.stringify({status:report.status,checks:report.checks.length,profiles:report.profiles}));
  fs.writeFileSync(out+'/ui-regions-'+(local?'local':'public')+'.json',JSON.stringify(report,null,2));
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});
