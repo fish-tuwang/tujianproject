@@ -253,8 +253,8 @@ Task 2已约定品牌/作品/比例/销售类型索引、分页摘要、全图�
 
 **执行步骤:**
 - [x] 阅读同一真实爬虫终态、导入最终快照并刷新高达预热，保存逐品牌/四类/排除项/失败覆盖报告。运行中快照不代表完整；来源错误如实报告，不用取消/limited冒充完成。
-- [ ] 在同一临时QA会话执行公网高达及历史27/29/61回归，截图检查桌面与手机；最终撤销并删除本次创建的精确测试账户、校验旧会话401及两个真实账号指纹不变后清理私有测试文件，不改两个真实账号密码或会话。
-- [ ] 完成中文acceptance.md、CHANGELOG与部署说明、真实数据/缓存/任务状态，提交并同步已授权GitHub，只包含任务源码及无秘密材料。
+- [x] 在同一临时QA会话执行公网高达及历史27/29/61回归，截图检查桌面与手机；最终撤销并删除本次创建的精确测试账户、校验旧会话401及两个真实账号指纹不变后清理私有测试文件，不改两个真实账号密码或会话。
+- [x] 完成中文acceptance.md、CHANGELOG与部署说明、真实数据/缓存/任务状态，提交并同步已授权GitHub，只包含任务源码及无秘密材料。
 
 **检查步骤:**
 - [x] 运行最终完整后端与Node。
@@ -269,6 +269,6 @@ Task 2已约定品牌/作品/比例/销售类型索引、分页摘要、全图�
 - [x] 验证真实数据与页面可用性及历史契约。
   - `node scripts/verify-gunpla.cjs`；`node scripts/verify-tomica-display.cjs`；`node scripts/verify-both-catalog-refresh.cjs`；`node scripts/verify-ui-regions.cjs`
   - 预期：可信HTTPS无验证绕过、各退出0，四类原地切换/作品跨类/年代/全图/价格日期/无来源/原图放大/两侧模块/搜索及刷新返回通过；历史27/29/61断言和3px位置标准保持。
-- [ ] 核对服务器最终0005、鉴权、持续同步、图片预热及原插件。
+- [x] 核对服务器最终0005、鉴权、持续同步、图片预热及原插件。
   - `curl --fail https://117.72.11.77/health/ready`；`systemctl is-active dual-catalog-gunpla-sync.timer dual-catalog-cert-renew.timer dual-catalog-redis`
   - 预期：ready revision=0005_gunpla，timer/Redis active，匿名高达API和图片401，两个真实账号保留、临时QA不存在、三原插件ID不变、无OOM或异常重启；公开交付页面与真实截图。
