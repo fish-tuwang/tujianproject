@@ -61,3 +61,18 @@ Redis缓存：本项目独立systemd服务dual-catalog-redis，127.0.0.1:6382，
 0.9.1按用户新确认的Wiki全国编号分段归类，全国1025种无重复、无遗漏；洗翠899–905与未确认808–809单列。离线分段表在backend/app/pokemon_regions.py，python -m backend.app.pokemon_regions --refresh仅重建该规则，核对新编号后需先更新分段表并重新测试发布；线上不访问外站。地区元数据/列表缓存和筛选游标继续绑定索引版本，无需清空其他Redis图片缓存。本轮不迁移数据库、重新导入资料或修改照片。修正及实际验收见spec/feature_20261111_F001_ui-regions/wiki-region-classification-fix.md。
 
 0.10.0增加私有账户、首次强制改密、单会话替换及HTTPS。管理操作仅服务器CLI；持久鉴权数据库独立于0004图鉴库，无图鉴迁移/重导。发布脚本在实际镜像内执行禁网测试，失败维持503门禁；证书每12小时检查续签，账户与恢复命令见[鉴权运维](auth.md)。身份信息和会话不存Redis，缓存命中也须先鉴权。鉴权启用时浏览器资源统一private,no-store，服务器Redis与磁盘缓存继续有效。
+
+
+0.11.1增加高达独立表与17种模型规格、39个作品索引。来源为万代中文官网，排除配件品牌与独立配件，四种售卖分类取官方筛选结果。模型列表不下发图库，详情才读取全部原图与详细图；价格缺项不估算。
+
+升级命令（仅本项目，显式迁移模式）：
+
+```sh
+python3 /opt/dual-catalog/app/scripts/deploy_release.py --image dual-catalog:0.11.1 --reason 'Gunpla model catalog with complete product galleries' --migrate --import-gunpla /opt/dual-catalog/data/artifacts/gunpla-source/catalog.json
+```
+
+发布器先对实际镜像禁网测试，停本项目写入并在backups/gunpla-时间目录冻结采集快照、备份两套PostgreSQL和SQLite鉴权库，随后两库升级0005、仅生产导入模型。已有账号指纹须一致。迁移失败保留maintenance关闭与备份，不自动回退0004镜像或降库；按日志修复后用0005镜像继续恢复，再运行prepare_auth.py gate --mode open检查后开放。
+
+每日上海03:30由dual-catalog-gunpla-sync.timer启动增量采集，镜像取当前APP_IMAGE。每来源串行2秒，HTML检查点与文件锁避免重复全量，7天重核详情，单项失败保留旧记录。覆盖报告在data/artifacts/gunpla-source/catalog.json，status=running/partial不代表完整。原始HTML仅私有目录保存。
+
+发布只等待最多180秒的首屏封面、规格图标与样例图库预热；完整封面/图库由已有cache-warmer在后台继续。磁盘缓存30天、Redis热点24小时，不清空旧图片。通过systemctl list-timers dual-catalog-gunpla-sync.timer及docker logs --tail 2 dual-catalog-cache-warmer-1核对真实进度。公网入口/preview/gunpla.html沿用私有登录与可信HTTPS；微信正式发布仍待AppID和域名。

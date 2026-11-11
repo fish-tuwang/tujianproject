@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.cache import CatalogCache
 from backend.app.config import Settings
-from backend.app.models import ImageAsset
+from backend.app.models import GunplaEntry, ImageAsset
 from backend.app.reference_images import image_type, read_reference, reference_path
 from backend.app.repository import CatalogRepository
 
@@ -26,6 +26,13 @@ def build_manifest(session):
     pokemon = sorted(repo.catalog_rows('pokemon'), key=lambda r: r['dex'])
     covers = {row['primary_image_id'] for row in cars + pokemon if row['primary_image_id']}
     order = {row['primary_image_id']: index for index, row in enumerate(cars + pokemon)}
+    gunpla = list(session.scalars(select(GunplaEntry).where(GunplaEntry.kind == 'product')))
+    gunpla.sort(key=lambda row: (row.data.get('release_sort') or '', int(row.source_key)), reverse=True)
+    for row in gunpla:
+        image_id = row.data.get('cover_image_id')
+        if image_id:
+            covers.add(image_id)
+            order.setdefault(image_id, len(order))
     groups = {}
     skipped = 0
     for asset in session.scalars(select(ImageAsset).execution_options(yield_per=500)):
@@ -39,6 +46,7 @@ def build_manifest(session):
         group['order'] = min(group['order'], order.get(asset.id, len(order)))
     images = sorted(groups.values(), key=lambda g: (not g['cover'], g['order'], g['url']))
     details = ['/api/tomica/' + row['id'] for row in cars] + ['/api/pokemon/' + str(row['dex']) for row in pokemon]
+    details += ['/api/gunpla/products/' + row.source_key for row in gunpla]
     return images, details, skipped
 
 

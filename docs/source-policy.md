@@ -16,9 +16,11 @@ Tomica robots.txt返回404，状态未知，不代表内容或图片复用许可
 正式公开内容的复用状态单独核对，正式图片交付默认pending；本地演示可采用自有原创插画，明确示意用途，不能冒充实物照片。更新责任：项目维护者在正式发布前核对来源条款与署名。
 
 ```json
-{"tomica":{"crawl":"public-limited","text":"pending","images":"pending","evidence":[]},"pokemon":{"crawl":"robots-checked","text":"pending","images":"pending","evidence":[]}}
+{"tomica":{"crawl":"public-limited","text":"pending","images":"pending","evidence":[]},"pokemon":{"crawl":"robots-checked","text":"pending","images":"pending","evidence":[]},"gunpla":{"crawl":"robots-checked","text":"pending","images":"pending","evidence":[]}}
 ```
 
 浏览器与开发版客户端允许引用白名单源站缩略图，标注“源站图片”，加载失败显示原创插画。source_image_url不等于已获复用许可或转存完成；image_status仍pending，image_url仅返回经确认且已交付自有HTTPS的图片。正式发布检查要求内容复用、HTTPS图片及合法域名证据。
 
 2026-11-09图片修复：预览使用登记图片ID的同源原图缓存，图片字节不重绘、不调色；保留source_image_url与来源。缓存只允许既定来源、图片签名与体积上限，每源至少2秒。缓存不更改rights_status、正式image_url及HTTPS发布保护。原图缺失时显示缺图，不再显示角色或汽车插画。
+
+2026-11-11增加万代中文官网高达模型公开目录。robots.txt实测200、Disallow为空；列表只访问/gunpla及/index/index/brand/cate/...，详情只访问/index/index/detail/id/...。来源内串行至少2秒、尊重robots和失败重试；商品图只接受HTTPS staticcdn.bandaihobbysite.cn的/www/uploads/与/www/assets/路径，不下载跳转目标。真实固定样本、采集时间和摘要见backend/tests/fixtures/gunpla/capture.json，包含3425四图、3027十图。预览沿用私有鉴权原图缓存，不新增来源入口，不更改图片复用审批状态。

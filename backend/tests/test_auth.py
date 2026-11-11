@@ -208,3 +208,14 @@ def test_private_auth_log_contains_events_but_no_password_or_session(auth_client
     for secret in [PASSWORD, NEW_PASSWORD, old, current]:
         assert secret not in text
     assert {'login_succeeded', 'password_changed', 'logout_succeeded'} <= {json.loads(line)['event'] for line in text.splitlines()}
+
+
+def test_gunpla_remains_private_and_legacy_document_clients_redirect(auth_client):
+    assert auth_client.get('/preview/gunpla.html', follow_redirects=False).status_code == 303
+    assert auth_client.get('/api/gunpla').status_code == 401
+    headers = {'X-Catalog-Service': 'unit-internal-service-token'}
+    assert auth_client.get('/api/gunpla', headers=headers).status_code == 401
+    with TestClient(auth_client.app, base_url='https://testserver', client=('127.0.0.1', 1234)) as local:
+        assert local.get('/api/gunpla', headers=headers).status_code == 200
+        assert local.post('/api/gunpla', headers=headers).status_code == 401
+        assert local.get('/api/auth/me', headers=headers).status_code == 401

@@ -9,7 +9,7 @@ import httpx
 from .repository import CatalogError
 from .sync.images import MAX_BYTES, validate_image_url
 
-LOCKS = {host: threading.Lock() for host in ('tomica.minibird.jp', 's1.52poke.com')}
+LOCKS = {host: threading.Lock() for host in ('tomica.minibird.jp', 's1.52poke.com', 'staticcdn.bandaihobbysite.cn')}
 LAST_REQUEST = {}
 REFERENCE_CACHE_SECONDS = 30 * 86400
 
@@ -56,6 +56,8 @@ def cached_reference(asset_id, url, directory, *, transport=None, validate=valid
             time.sleep(max(0, 2 - (time.monotonic() - LAST_REQUEST.get(host, 0))))
             LAST_REQUEST[host] = time.monotonic()
             referer = 'https://wiki.52poke.com/' if host == 's1.52poke.com' else 'http://tomica.minibird.jp/t-tomica/'
+            if host == 'staticcdn.bandaihobbysite.cn':
+                referer = 'https://bandaihobbysite.cn/gunpla'
             # Request the image as a resource of its recorded public source page.
             with httpx.Client(timeout=20, follow_redirects=False, transport=transport) as client:
                 with client.stream('GET', url, headers={'Referer': referer, 'User-Agent': 'DualCatalog/0.1'}) as response:

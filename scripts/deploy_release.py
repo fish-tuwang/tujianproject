@@ -34,7 +34,7 @@ def health():
             try:
                 with urllib.request.urlopen(f'http://127.0.0.1:{port}/health/ready', timeout=3) as response:
                     value = json.load(response)
-                if value.get('status') == 'ready' and value.get('revision') == '0004_tomica_news':
+                if value.get('status') == 'ready' and value.get('revision') == '0005_gunpla':
                     result[str(port)] = value
                     break
             except OSError:
@@ -49,7 +49,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--image', required=True)
     parser.add_argument('--reason', required=True)
+    parser.add_argument('--migrate', action='store_true')
+    parser.add_argument('--import-gunpla')
     args = parser.parse_args()
+    if bool(args.import_gunpla) != args.migrate:
+        parser.error('--migrate requires --import-gunpla, and imports require --migrate')
     if not re.fullmatch(r'dual-catalog:[0-9]+\.[0-9]+\.[0-9]+', args.image):
         parser.error('only a versioned dual-catalog image is allowed')
     if not 1 <= len(args.reason) <= 300:
@@ -80,7 +84,7 @@ def main():
     private_mode = (ROOT / 'tls/gates').is_dir() or any('AUTH_ENABLED=true' in content for content in old.values())
     previous = {env: next((line.split('=', 1)[1] for line in value.splitlines() if line.startswith('APP_IMAGE=')), 'unknown') for env, value in old.items()}
     before = plugins()
-    paths = ['Dockerfile.release', 'backend/app/audit.py', 'backend/app/repository.py', 'backend/app/sync/service.py', 'backend/app/worker.py', 'deploy/preview-nginx.conf', 'backend/app/auth_store.py', 'backend/app/auth.py', 'backend/app/auth_cli.py']
+    paths = ['Dockerfile.release', 'backend/app/audit.py', 'backend/app/repository.py', 'backend/app/sync/service.py', 'backend/app/worker.py', 'deploy/preview-nginx.conf', 'backend/app/auth_store.py', 'backend/app/auth.py', 'backend/app/auth_cli.py', 'backend/app/gunpla.py', 'backend/app/sources/gunpla.py', 'backend/migrations/versions/0005_gunpla.py']
     hashes = {name: hashlib.sha256((ROOT / 'app' / name).read_bytes()).hexdigest() for name in paths}
     emit('deployment_started', previous_images=previous, reason=args.reason, source_sha256=hashes)
     try:
@@ -98,6 +102,20 @@ def main():
             raise RuntimeError('image version mismatch')
         if private_mode:
             stage('test_private_image', ['docker', 'run', '--rm', '--network', 'none', '--memory', '384m', '--pids-limit', '128', '-e', 'PYTHONDONTWRITEBYTECODE=1', '--entrypoint', 'python', args.image, '-m', 'pytest', '-q', '-p', 'no:cacheprovider'])
+        if args.migrate:
+            from scripts.gunpla_ops import backup_and_freeze, container, install_timer, account_fingerprints
+            for env, project in PROJECTS:
+                stage('stop_writes_' + project, compose(env, project) + ['stop', 'api'] + ([] if project.endswith('demo') else ['worker', 'scheduler', 'cache-warmer']))
+            frozen = backup_and_freeze(ROOT, args.image, args.import_gunpla)
+            accounts_before = account_fingerprints(ROOT, args.image)
+            emit('migration_backup_finished', directory=str(frozen.parent))
+            for env, project in PROJECTS:
+                stage('migrate_' + project, container(ROOT, env, args.image, ['-m', 'backend.app.worker', 'init-db']))
+            stage('import_gunpla', container(ROOT, '.env', args.image, ['-m', 'scripts.sync_gunpla', '--import-file', '/app/gunpla-import.json'], mounts=['-v', str(frozen) + ':/app/gunpla-import.json:ro']))
+            stage('warm_gunpla_first_screen', container(ROOT, '.env', args.image, ['-m', 'scripts.sync_gunpla', '--warm-start']))
+            if accounts_before != account_fingerprints(ROOT, args.image):
+                raise RuntimeError('existing project accounts changed during migration')
+            emit('migration_accounts_preserved', fingerprints=accounts_before)
         for env, _ in PROJECTS:
             path = ROOT / env
             path.write_text('\n'.join('APP_IMAGE=' + args.image if line.startswith('APP_IMAGE=') else line for line in old[env].splitlines()) + '\n')
@@ -107,15 +125,22 @@ def main():
         stage('start_cache_warmer', compose('.env', 'dual-catalog') + ['up', '-d', 'cache-warmer'])
         if before != plugins():
             raise RuntimeError('unrelated plugin container changed')
+        if args.migrate:
+            install_timer(ROOT)
         if private_mode:
             set_gate('open')
             emit('private_gate_opened')
-        emit('deployment_finished', health=ready, plugins_unchanged=True, database_migration=False, data_import=False)
-        report = {'status': 'pass', 'image': args.image, 'operation_id': context['operation_id'], 'health': ready, 'plugins_unchanged': True, 'database_migration': False, 'data_import': False}
+        emit('deployment_finished', health=ready, plugins_unchanged=True, database_migration=args.migrate, data_import=args.migrate)
+        report = {'status': 'pass', 'image': args.image, 'operation_id': context['operation_id'], 'health': ready, 'plugins_unchanged': True, 'database_migration': args.migrate, 'data_import': args.migrate}
         (ROOT / 'data/artifacts/acceptance/logging-deployment.json').write_text(json.dumps(report, indent=2))
         print(json.dumps(report), flush=True)
     except Exception as error:
         emit('deployment_failed', error_type=type(error).__name__)
+        if args.migrate:
+            from scripts.prepare_auth import set_gate
+            set_gate('closed')
+            emit('migration_recovery_required', automatic_legacy_rollback=False)
+            raise
         for env, _ in PROJECTS:
             path = ROOT / env
             path.write_text(old[env])

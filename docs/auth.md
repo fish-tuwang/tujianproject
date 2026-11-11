@@ -27,8 +27,10 @@ python3 /opt/dual-catalog/app/scripts/renew_tls.py --dry-run
 curl --fail https://117.72.11.77/health/ready
 ```
 
-证书和ACME账户仅保留服务器 `tls/`，代理只挂载live/archive，不挂载账户私钥。禁止把证书和环境配置加入源码包。首次部署使用 `prepare_auth.py tls`、构建镜像、`accounts --username peyro-gogogo`、`deploy_release.py`；后续发布继续使用版本化发布脚本。发布期间maintenance文件让私有入口503，健康和ACME保持可用；实际镜像禁网测试、双环境鉴权与唯一首账户检查通过后才开放。失败回退旧镜像仍保持maintenance关闭，避免旧版匿名公开。修复后执行 `prepare_auth.py gate --mode open`重新检查，不直接删除门禁文件。
+证书和ACME账户仅保留服务器 `tls/`，代理只挂载live/archive，不挂载账户私钥。禁止把证书和环境配置加入源码包。首次部署使用 `prepare_auth.py tls`、构建镜像、`accounts --username peyro-gogogo`、`deploy_release.py`；后续发布继续使用版本化发布脚本。发布期间maintenance文件让私有入口503，健康和ACME保持可用；实际镜像禁网测试、双环境鉴权与主账号可用性检查通过后才开放。失败回退旧镜像仍保持maintenance关闭，避免旧版匿名公开。修复后执行 `prepare_auth.py gate --mode open`重新检查，不直接删除门禁文件。
 
 公网代理拒绝管理路径，内部管理Bearer与缓存预热服务令牌各自独立；服务令牌仅用于回环读接口，公开代理会清除传入服务头。原有插件与6379 Redis不变。
 
 微信原生页面已接入登录与私有图片下载，但正式小程序仍需要真实AppID、HTTPS域名和微信真机验收；IP证书用于当前网页交付。
+
+高达版本0.11.1将图鉴库升级至0005_gunpla；鉴权SQLite保持独立，迁移前后比对两个环境的账号指纹，不重置已有账号或会话。临时验收账号按唯一名称创建、撤销并精确删除，不使用真实账号测试互踢。

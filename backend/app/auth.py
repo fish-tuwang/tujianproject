@@ -17,7 +17,7 @@ from .config import ROOT
 COOKIE = 'catalog_session'
 PUBLIC = {'/health/live', '/health/ready', '/login', '/login/', '/auth-assets/auth.css', '/auth-assets/auth.js', '/api/auth/login', '/api/auth/logout'}
 ACCOUNT_PATHS = {'/account', '/account/', '/api/auth/me', '/api/auth/password'}
-SERVICE_ROOTS = ('/api/tomica', '/api/pokemon', '/api/reference-images', '/api/tomica-news')
+SERVICE_ROOTS = ('/api/tomica', '/api/pokemon', '/api/reference-images', '/api/tomica-news', '/api/gunpla')
 router = APIRouter(prefix='/api/auth')
 
 
@@ -126,7 +126,7 @@ def service_request(request, settings):
 
 def document_request(request):
     path = request.url.path
-    return request.method in {'GET', 'HEAD'} and (path in {'/', '/preview', '/preview/', '/preview/index.html', '/account', '/account/'}
+    return request.method in {'GET', 'HEAD'} and (path in {'/', '/preview', '/preview/', '/preview/index.html', '/preview/gunpla.html', '/account', '/account/'}
                                                 or request.headers.get('sec-fetch-dest') == 'document')
 
 

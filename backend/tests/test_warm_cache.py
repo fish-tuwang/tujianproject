@@ -30,6 +30,18 @@ def test_warmer_deduplicates_registered_urls_and_prioritizes_covers(session):
     assert len(details) == 2 and details[1] == '/api/pokemon/1'
 
 
+def test_gunpla_cover_precedes_its_detail_and_includes_protected_detail_endpoint(session):
+    from backend.app.models import GunplaEntry
+    assets = [ImageAsset(source_url='https://staticcdn.bandaihobbysite.cn/www/uploads/cover.jpg'), ImageAsset(source_url='https://staticcdn.bandaihobbysite.cn/www/uploads/detail.jpg')]
+    session.add_all(assets); session.flush()
+    session.add(GunplaEntry(kind='product', source_key='3425', name='fixture', content_hash='fixture', data={'cover_image_id': assets[0].id, 'gallery_image_ids': [assets[1].id], 'release_sort': '2026-08-01'}))
+    session.flush()
+    groups, details, skipped = build_manifest(session)
+    assert groups[0]['cover'] and groups[0]['ids'] == [assets[0].id]
+    assert not groups[1]['cover'] and skipped == 0
+    assert details == ['/api/gunpla/products/3425']
+
+
 def test_warmer_fetches_once_and_resumes_from_exact_original_bytes(tmp_path):
     data = b'GIF89a' + b'original pixels'
     requests = []

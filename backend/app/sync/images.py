@@ -8,12 +8,14 @@ import httpx
 import boto3
 from backend.app.models import ImageAsset, now
 
-ALLOWED_HOSTS = {'tomica.minibird.jp', 's1.52poke.com'}
+ALLOWED_HOSTS = {'tomica.minibird.jp', 's1.52poke.com', 'staticcdn.bandaihobbysite.cn'}
 MAX_BYTES = 10 * 1024 * 1024
 
 
 def validate_image_url(url, resolver=socket.getaddrinfo):
     parsed = urlsplit(url)
+    if parsed.hostname == 'staticcdn.bandaihobbysite.cn' and parsed.scheme != 'https':
+        raise ValueError('official CDN requires HTTPS')
     if parsed.scheme not in {'http', 'https'} or parsed.hostname not in ALLOWED_HOSTS or parsed.username or parsed.password or parsed.port:
         raise ValueError('image URL outside allowed source')
     for record in resolver(parsed.hostname, 443 if parsed.scheme == 'https' else 80, type=socket.SOCK_STREAM):

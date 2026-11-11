@@ -51,6 +51,16 @@ class TomicaNews(Record, Base):
     data: Mapped[dict] = mapped_column(JSON)
 
 
+class GunplaEntry(Record, Base):
+    __tablename__ = 'gunpla_entries'
+    kind: Mapped[str] = mapped_column(String(20), index=True)
+    source_key: Mapped[str] = mapped_column(String(120))
+    name: Mapped[str] = mapped_column(Text)
+    data: Mapped[dict] = mapped_column(JSON, default=dict)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    __table_args__ = (UniqueConstraint('kind', 'source_key'),)
+
+
 class TomicaVariant(Record, Base):
     __tablename__ = 'tomica_variants'
     model_id: Mapped[str] = mapped_column(ForeignKey('tomica_models.id'), index=True)

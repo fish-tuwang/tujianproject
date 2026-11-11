@@ -11,7 +11,7 @@ def upgrade():
     excluded = {'source_pages': {'discovered_urls', 'accepted_count'}, 'sync_runs': {'limit', 'replay_of', 'followup_mode', 'last_error'}, 'image_assets': {'rights_status', 'next_retry_at', 'attempts', 'public_url'}}
     metadata = MetaData()
     for original in Base.metadata.sorted_tables:
-        if original.name in {'pokemon_details', 'tomica_news'}:
+        if original.name in {'pokemon_details', 'tomica_news', 'gunpla_entries'}:
             continue
         table = original.to_metadata(metadata)
         for name in excluded.get(table.name, set()):

@@ -20,7 +20,7 @@ def project(tmp_path, monkeypatch):
 
 def test_gate_stays_closed_when_an_old_image_serves_anonymous_data(project, monkeypatch):
     prepare_auth.set_gate('closed')
-    monkeypatch.setattr(prepare_auth, 'json_get', lambda url: {'status': 'ready', 'revision': '0004_tomica_news'} if 'health' in url else {'items': []})
+    monkeypatch.setattr(prepare_auth, 'json_get', lambda url: {'status': 'ready', 'revision': '0005_gunpla'} if 'health' in url else {'items': []})
     with pytest.raises(RuntimeError, match='anonymous'):
         prepare_auth.set_gate('open')
     assert prepare_auth.gate_file().exists()
@@ -34,7 +34,7 @@ def test_operator_created_accounts_do_not_replace_the_required_owner_check(proje
     def response(url):
         if '/api/tomica' in url:
             raise urllib.error.HTTPError(url, 401, 'Unauthorized', {}, io.BytesIO(b'{"code":"AUTH_REQUIRED"}'))
-        return {'status': 'ready', 'revision': '0004_tomica_news'}
+        return {'status': 'ready', 'revision': '0005_gunpla'}
     monkeypatch.setattr(prepare_auth, 'json_get', response)
     monkeypatch.setattr(prepare_auth.urllib.request, 'urlopen', lambda *a, **k: nullcontext(SimpleNamespace(geturl=lambda: 'http://127.0.0.1/login/')))
     monkeypatch.setattr(prepare_auth, 'run', lambda *a, **k: SimpleNamespace(stdout=json.dumps({'users': users})))

@@ -64,7 +64,8 @@ class CatalogRepository:
         reference = None
         if row:
             parts = urlsplit(row.source_url)
-            if parts.scheme in {'http', 'https'} and parts.hostname in {'tomica.minibird.jp', 's1.52poke.com'} and not parts.username and not parts.password and not parts.port and not parts.query:
+            allowed = parts.hostname in {'tomica.minibird.jp', 's1.52poke.com'} or (parts.hostname == 'staticcdn.bandaihobbysite.cn' and parts.scheme == 'https')
+            if parts.scheme in {'http', 'https'} and allowed and not parts.username and not parts.password and not parts.port and not parts.query:
                 try:
                     if parts.hostname == 'tomica.minibird.jp':
                         from .sources.http import normalize_url

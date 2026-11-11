@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 import hashlib
 import time
-from urllib.parse import quote, unquote, unquote_to_bytes, urljoin, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, quote, unquote, unquote_to_bytes, urlencode, urljoin, urlsplit, urlunsplit
+import re
 from urllib.robotparser import RobotFileParser
 import httpx
 from backend.app.sources.base import FetchResult
@@ -12,6 +13,16 @@ AGENT = 'DualCatalog/0.1 (+personal catalog; limited serial requests)'
 
 def normalize_url(base: str, href: str, source: str) -> str:
     parts = urlsplit(urljoin(base, href.strip()))
+    if source == 'gunpla':
+        path = unquote(parts.path)
+        listing = re.fullmatch(r'/index/index/(brand|series)/cate/[1-9][0-9]*', path)
+        valid = path in {'/gunpla', '/schedule'} or listing or re.fullmatch(r'/index/index/detail/id/[1-9][0-9]*', path)
+        if parts.scheme != 'https' or parts.hostname != 'bandaihobbysite.cn' or parts.username or parts.password or parts.port or parts.fragment or not valid or '\\' in path or '\x00' in path:
+            raise ValueError('URL outside gunpla source boundary')
+        pairs = parse_qsl(parts.query, keep_blank_values=True)
+        if len({key for key, _ in pairs}) != len(pairs) or any(key not in {'page', 'tag'} or not listing or not re.fullmatch(r'[1-9][0-9]{0,3}', value) or (key == 'tag' and value not in {'1', '2', '3', '4'}) for key, value in pairs):
+            raise ValueError('invalid gunpla query')
+        return urlunsplit(('https', 'bandaihobbysite.cn', path, urlencode(sorted(pairs)), ''))
     expected = ('http', 'tomica.minibird.jp') if source == 'tomica' else ('https', 'wiki.52poke.com')
     raw_path = unquote_to_bytes(parts.path)
     try:

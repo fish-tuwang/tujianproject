@@ -46,3 +46,23 @@ def test_news_upgrade_and_downgrade_preserve_existing_catalogs(tmp_path):
         assert connection.scalar(text('SELECT name_zh FROM pokemon WHERE dex=1')) == '妙蛙种子'
         assert connection.scalar(text("SELECT name_original FROM tomica_models WHERE number='114'")) == 'existing car'
     engine.dispose()
+
+
+def test_gunpla_migration_only_adds_its_table_and_preserves_catalogs(tmp_path):
+    config = Config(str(ROOT / 'backend/alembic.ini'))
+    config.attributes['database_url'] = 'sqlite:///' + str(tmp_path / 'gunpla-migration.db')
+    command.upgrade(config, '0004_tomica_news')
+    engine = create_engine(config.attributes['database_url'])
+    assert 'gunpla_entries' not in inspect(engine).get_table_names()
+    with engine.begin() as connection:
+        connection.execute(text("INSERT INTO pokemon (id,dex,name_zh,types,abilities,source_url,checked_at,updated_at) VALUES ('retained',1,'retained','[]','[]','','2026-11-11','2026-11-11')"))
+    command.upgrade(config, 'head')
+    assert 'gunpla_entries' in inspect(engine).get_table_names()
+    with engine.connect() as connection:
+        assert connection.scalar(text('SELECT version_num FROM alembic_version')) == '0005_gunpla'
+    command.downgrade(config, '0004_tomica_news')
+    assert 'gunpla_entries' not in inspect(engine).get_table_names()
+    with engine.connect() as connection:
+        assert connection.scalar(text('SELECT name_zh FROM pokemon WHERE dex=1')) == 'retained'
+    command.upgrade(config, 'head')
+    engine.dispose()

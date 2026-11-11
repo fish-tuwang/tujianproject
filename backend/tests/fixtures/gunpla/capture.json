@@ -1,0 +1,32 @@
+{
+  "home": {
+    "captured_at": "2026-11-11",
+    "original_sha256": "671ab72f7cfa10b514dd0ccfe622c0aab00faf8a1dbfe3fa89257fc9c41fcd9d",
+    "extraction": "unaltered main element; navigation and scripts omitted"
+  },
+  "eg": {
+    "captured_at": "2026-11-11",
+    "original_sha256": "62a25048ec28188c9564c41d6ec55924451a18fd7cba44411910c825cd865273",
+    "extraction": "unaltered main element; navigation and scripts omitted"
+  },
+  "eg-base": {
+    "captured_at": "2026-11-11",
+    "original_sha256": "8c27e0190ccbe330154d67286464c82c443367359a1d693e468773c0d5fe19d3",
+    "extraction": "unaltered main element; navigation and scripts omitted"
+  },
+  "hg-online": {
+    "captured_at": "2026-11-11",
+    "original_sha256": "4e844435b5994a33de425da1c33689c6171e418674ca69e1ae73007de1609f5e",
+    "extraction": "unaltered main element; navigation and scripts omitted"
+  },
+  "detail-3425": {
+    "captured_at": "2026-11-11",
+    "original_sha256": "8a5f249617fc1e4352a705382c2fe56bbfb59330f257893675ff2fd502241a90",
+    "extraction": "unaltered main element; navigation and scripts omitted"
+  },
+  "detail-3027": {
+    "captured_at": "2026-11-11",
+    "original_sha256": "e6e75be1c27ddc0787db61bc22d11803ddb3f17b74a9ab30faa5371cb58c2b57",
+    "extraction": "unaltered main element; navigation and scripts omitted"
+  }
+}

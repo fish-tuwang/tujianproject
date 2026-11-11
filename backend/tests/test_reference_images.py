@@ -32,3 +32,18 @@ def test_unknown_reference_host_and_svg_are_rejected(tmp_path):
         cached_reference('id', 'http://127.0.0.1/a.png', tmp_path)
     with pytest.raises(ValueError):
         image_type(b'<svg onload="alert(1)"></svg>')
+
+
+def test_bandai_original_is_not_modified_and_uses_its_own_referer(tmp_path):
+    data = b'\xff\xd8\xfforiginal Bandai fixture bytes'
+    calls = []
+    def respond(request):
+        calls.append(request)
+        assert request.headers['referer'] == 'https://bandaihobbysite.cn/gunpla'
+        return httpx.Response(200, content=data, headers={'content-type': 'image/jpeg'})
+    LAST_REQUEST.clear()
+    args = ('bandai-registered', 'https://staticcdn.bandaihobbysite.cn/www/uploads/model.jpg', tmp_path)
+    original, mime = cached_reference(*args, transport=httpx.MockTransport(respond), validate=lambda _: None)
+    assert original.read_bytes() == data and mime == 'image/jpeg'
+    assert cached_reference(*args, transport=httpx.MockTransport(respond), validate=lambda _: None)[0] == original
+    assert len(calls) == 1

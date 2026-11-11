@@ -11,8 +11,9 @@ COPY scripts/audit_tomica_coverage.py /app/scripts/
 COPY scripts/repair_tomica_editions.py /app/scripts/
 COPY scripts/verify_tomica_snapshot.py /app/scripts/
 COPY scripts/prepare_auth.py scripts/renew_tls.py /app/scripts/
+COPY scripts/sync_gunpla.py scripts/gunpla_ops.py /app/scripts/
 COPY miniprogram /app/miniprogram
 COPY pyproject.toml package.json package-lock.json /app/
-LABEL org.opencontainers.image.version="0.10.0"
+LABEL org.opencontainers.image.version="0.11.1"
 USER 10001:10001
 CMD ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8092"]

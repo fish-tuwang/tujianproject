@@ -17,7 +17,7 @@ from backend.app.audit import audit, configure_audit
 ROOT = Path('/opt/dual-catalog')
 PROXY = 'dual-catalog-preview-proxy'
 IP = '117.72.11.77'
-IMAGE = 'dual-catalog:0.10.0'
+IMAGE = 'dual-catalog:0.11.1'
 
 
 def run(command, **kwargs):
@@ -71,7 +71,7 @@ def json_get(url):
 def verify_private_backend():
     for port in [8092, 8093]:
         ready = json_get(f'http://127.0.0.1:{port}/health/ready')
-        if ready.get('status') != 'ready' or ready.get('revision') != '0004_tomica_news':
+        if ready.get('status') != 'ready' or ready.get('revision') != '0005_gunpla':
             raise RuntimeError('catalog readiness mismatch')
         try:
             json_get(f'http://127.0.0.1:{port}/api/tomica?limit=1')

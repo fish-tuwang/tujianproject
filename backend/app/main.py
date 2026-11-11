@@ -31,8 +31,10 @@ def create_app(settings):
     from .api import router as api_router
     from .admin import router as admin_router
     from .news import router as news_router
+    from .gunpla import router as gunpla_router
     app.include_router(api_router)
     app.include_router(news_router)
+    app.include_router(gunpla_router)
     app.include_router(admin_router)
 
     @app.exception_handler(CatalogError)

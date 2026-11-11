@@ -22,6 +22,16 @@ def test_private_dns_rejected():
         validate_image_url('https://s1.52poke.com/a.png', resolver=lambda *a,**k: [(0,0,0,'',('127.0.0.1',443))])
 
 
+def test_bandai_cdn_requires_https_and_a_public_address():
+    public = lambda *a, **k: [(0, 0, 0, '', ('203.1.1.1', 443))]
+    validate_image_url('https://staticcdn.bandaihobbysite.cn/www/uploads/model.jpg', resolver=public)
+    for url in ['http://staticcdn.bandaihobbysite.cn/www/uploads/model.jpg', 'https://staticcdn.bandaihobbysite.cn.evil.test/a.jpg', 'https://staticcdn.bandaihobbysite.cn:443/a.jpg']:
+        with pytest.raises(ValueError):
+            validate_image_url(url, resolver=public)
+    with pytest.raises(ValueError):
+        validate_image_url('https://staticcdn.bandaihobbysite.cn/a.jpg', resolver=lambda *a, **k: [(0, 0, 0, '', ('127.0.0.1', 443))])
+
+
 def test_upload_failure_retry_and_idempotency(session):
     image = ImageAsset(source_url='https://s1.52poke.com/a.png', rights_status='approved', rights_reference='internal-test-evidence')
     session.add(image); session.flush()
