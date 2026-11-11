@@ -1,5 +1,9 @@
 from types import SimpleNamespace
+from contextlib import nullcontext
+import io
+import json
 import subprocess
+import urllib.error
 
 import pytest
 from scripts import prepare_auth, renew_tls
@@ -20,6 +24,28 @@ def test_gate_stays_closed_when_an_old_image_serves_anonymous_data(project, monk
     with pytest.raises(RuntimeError, match='anonymous'):
         prepare_auth.set_gate('open')
     assert prepare_auth.gate_file().exists()
+
+
+@pytest.mark.parametrize('owner', [{'username': 'owner', 'disabled': 0}, {'username': 'owner', 'disabled': 1}, None])
+def test_operator_created_accounts_do_not_replace_the_required_owner_check(project, monkeypatch, owner):
+    (project / '.env').write_text('APP_IMAGE=dual-catalog:0.10.0\nPROJECT_DATA_DIR=' + str(project / 'data'))
+    (project / 'auth-owner.json').write_text(json.dumps({'username': 'owner'}))
+    users = [{'username': 'invited', 'disabled': 0}] + ([owner] if owner else [])
+    def response(url):
+        if '/api/tomica' in url:
+            raise urllib.error.HTTPError(url, 401, 'Unauthorized', {}, io.BytesIO(b'{"code":"AUTH_REQUIRED"}'))
+        return {'status': 'ready', 'revision': '0004_tomica_news'}
+    monkeypatch.setattr(prepare_auth, 'json_get', response)
+    monkeypatch.setattr(prepare_auth.urllib.request, 'urlopen', lambda *a, **k: nullcontext(SimpleNamespace(geturl=lambda: 'http://127.0.0.1/login/')))
+    monkeypatch.setattr(prepare_auth, 'run', lambda *a, **k: SimpleNamespace(stdout=json.dumps({'users': users})))
+    prepare_auth.set_gate('closed')
+    if owner and not owner['disabled']:
+        prepare_auth.set_gate('open')
+        assert not prepare_auth.gate_file().exists()
+    else:
+        with pytest.raises(RuntimeError, match='owner account'):
+            prepare_auth.set_gate('open')
+        assert prepare_auth.gate_file().exists()
 
 
 def test_invalid_configuration_never_stops_or_overwrites_existing_proxy(project, monkeypatch):

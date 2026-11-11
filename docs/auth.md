@@ -6,7 +6,7 @@
 
 ## 服务器管理命令
 
-仅服务器管理员可以运行以下命令；网页和公开接口无法创建账户。新增账号也会获得相同图鉴权限，只有明确需要时才创建。
+仅服务器管理员可以运行以下命令；网页和公开接口无法创建账户。新增账号也会获得相同图鉴权限，只有明确需要时才创建。发布检查保留主账号启用的要求，允许管理员创建的其他账号存在；单会话限制按每个账号分别执行。
 
 ```sh
 docker compose --env-file /opt/dual-catalog/.env -f /opt/dual-catalog/app/compose.production.yaml -p dual-catalog exec -T api python -m backend.app.auth_cli list-users

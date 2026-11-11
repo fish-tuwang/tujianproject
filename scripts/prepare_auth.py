@@ -85,7 +85,7 @@ def verify_private_backend():
                 raise RuntimeError('private page does not lead to login')
     owner = json.loads((ROOT / 'auth-owner.json').read_text())['username']
     info = json.loads(run(account_command('.env', ['list-users'], image=values(ROOT / '.env')['APP_IMAGE']), capture_output=True).stdout)
-    if len(info['users']) != 1 or not any(u['username'] == owner and not u['disabled'] for u in info['users']):
+    if not any(u['username'] == owner and not u['disabled'] for u in info['users']):
         raise RuntimeError('owner account is missing or disabled')
     if json_get('https://' + IP + '/health/ready').get('status') != 'ready':
         raise RuntimeError('trusted HTTPS is not ready')
