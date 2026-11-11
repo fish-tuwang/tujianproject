@@ -1,0 +1,39 @@
+x-service: &service
+  image: ${APP_IMAGE:-dual-catalog:0.1.0}
+  build: .
+  network_mode: host
+  env_file: ["${APP_ENV_FILE:-/opt/dual-catalog/.env}"]
+  restart: unless-stopped
+  user: "10001:10001"
+  read_only: true
+  tmpfs: ["/tmp:size=64m"]
+  volumes: ["${PROJECT_DATA_DIR:-/opt/dual-catalog/data}/artifacts:/app/artifacts"]
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "3"}
+  pids_limit: 128
+services:
+  api:
+    <<: *service
+    command: ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "${API_BIND:-127.0.0.1}", "--port", "${API_PORT:-8092}"]
+    mem_limit: 640m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,os; urllib.request.urlopen('http://127.0.0.1:'+os.getenv('API_PORT','8092')+'/health/ready',timeout=5)"]
+      interval: 30s
+      timeout: 6s
+      retries: 3
+  worker:
+    <<: *service
+    command: ["python", "-m", "backend.app.worker", "work"]
+    mem_limit: 384m
+  scheduler:
+    <<: *service
+    command: ["python", "-m", "backend.app.worker", "schedule"]
+    mem_limit: 96m
+  cache-warmer:
+    <<: *service
+    command: ["python", "-m", "scripts.warm_cache", "--watch"]
+    depends_on:
+      api:
+        condition: service_healthy
+    mem_limit: 384m

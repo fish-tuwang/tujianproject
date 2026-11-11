@@ -1,0 +1,17 @@
+ARG BASE_IMAGE=dual-catalog:0.1.0
+FROM ${BASE_IMAGE}
+USER root
+COPY vendor/redis-6.4.0-py3-none-any.whl /tmp/redis-6.4.0-py3-none-any.whl
+RUN python -m pip install --no-index --no-deps /tmp/redis-6.4.0-py3-none-any.whl
+WORKDIR /app
+COPY backend /app/backend
+COPY scripts/acceptance.py scripts/check_release.py scripts/check_toolchain.py scripts/repair_images.py scripts/verify_cache.py scripts/warm_cache.py scripts/backfill_pokemon_details.py scripts/cache_pokemon_pages.py scripts/audit_pokemon_details.py scripts/seed_tomica_news.py scripts/view_logs.py scripts/deploy_release.py scripts/prepare_logging.py /app/scripts/
+COPY docs /app/docs
+COPY scripts/audit_tomica_coverage.py /app/scripts/
+COPY scripts/repair_tomica_editions.py /app/scripts/
+COPY scripts/verify_tomica_snapshot.py /app/scripts/
+COPY miniprogram /app/miniprogram
+COPY pyproject.toml package.json package-lock.json /app/
+LABEL org.opencontainers.image.version="0.9.0"
+USER 10001:10001
+CMD ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8092"]

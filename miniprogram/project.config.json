@@ -1,0 +1,1 @@
+{"appid":"touristappid","projectname":"Little Atlas","compileType":"miniprogram","miniprogramRoot":"./","setting":{"urlCheck":false,"es6":true,"minified":true},"packOptions":{"ignore":[{"type":"folder","value":"tests"}]}}

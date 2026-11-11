@@ -1,0 +1,29 @@
+<template name="pokemon-extra">
+  <view class="section">
+    <view class="section-title">种族值</view>
+    <picker wx:if="{{extras.statLabels.length}}" range="{{extras.statLabels}}" bindchange="chooseExtra" data-key="stats"><view class="extra-picker">{{extras.stats.label}} ▾</view></picker>
+    <block wx:if="{{extras.stats}}"><view class="stat-total">合计 {{extras.stats.total}}</view><view class="stat-row" wx:for="{{extras.stats.stats}}" wx:key="name"><text>{{item.name}}</text><text>{{item.value}}</text><view class="stat-track"><view class="stat-fill" style="width:{{item.width}}%"/></view></view></block><view wx:else class="muted">源站暂无这项资料</view>
+  </view>
+  <view class="section"><view class="section-title">获得方式</view>
+    <picker range="{{extras.acquisitionGames}}" bindchange="chooseExtra" data-key="acquisition"><view class="extra-picker">选择游戏版本 ▾</view></picker>
+    <scroll-view scroll-y class="extra-scroll"><view class="move-row" wx:for="{{extras.locations}}" wx:key="rowKey"><view>{{item.games}} · {{item.form}}</view><view class="muted">{{item.location}} · {{item.method}}</view><view class="muted">{{item.note}}</view></view></scroll-view>
+  </view>
+  <view class="section"><view class="section-title">属性相性</view>
+    <picker wx:if="{{extras.matchupLabels.length}}" range="{{extras.matchupLabels}}" bindchange="chooseExtra" data-key="matchup"><view class="extra-picker">{{extras.matchup.label}} ▾</view></picker>
+    <view class="muted">受到对应属性招式攻击时的伤害倍率</view><view class="matchup-grid"><view wx:for="{{extras.matchup.types}}" wx:key="name" class="matchup-cell"><view>{{item.name}}</view><view>{{item.multiplier}}×</view></view></view>
+  </view>
+  <view class="section"><view class="section-title">学会的招式</view>
+    <picker wx:if="{{extras.learnLabels.length}}" range="{{extras.learnLabels}}" bindchange="chooseExtra" data-key="learn"><view class="extra-picker">{{extras.learn.game}} · {{extras.learn.form}} · {{extras.learn.method}} ▾</view></picker>
+    <input class="extra-search" placeholder="搜索招式、属性或等级" bindinput="searchMoves" data-key="learn"/>
+    <scroll-view scroll-y class="extra-scroll"><view wx:for="{{extras.learn.moves}}" wx:key="rowKey" class="move-row"><view>{{item.learn || '—'}} · {{item.name}} <text class="chip">{{item.type}}</text></view><view class="muted">{{item.category}} · 威力 {{item.power}}<text wx:if="{{item.cooldown !== null}}"> · 发动 {{item.cooldown}} 秒</text><text wx:else> · 命中 {{item.accuracy}} · PP {{item.pp}}</text></view></view></scroll-view>
+  </view>
+  <view class="section"><view class="section-title">能使用的招式学习器</view>
+    <picker wx:if="{{extras.machineLabels.length}}" range="{{extras.machineLabels}}" bindchange="chooseExtra" data-key="machine"><view class="extra-picker">{{extras.machine.game}} · {{extras.machine.form}} ▾</view></picker>
+    <input class="extra-search" placeholder="搜索招式或学习器编号" bindinput="searchMoves" data-key="machine"/>
+    <scroll-view scroll-y class="extra-scroll"><view wx:for="{{extras.machine.moves}}" wx:key="rowKey" class="move-row"><view>{{item.learn}} · {{item.name}} <text class="chip">{{item.type}}</text></view><view class="muted">{{item.category}} · 威力 {{item.power}}<text wx:if="{{item.cooldown !== null}}"> · 发动 {{item.cooldown}} 秒</text><text wx:else> · 命中 {{item.accuracy}} · PP {{item.pp}}</text></view></view></scroll-view>
+  </view>
+  <view class="section"><view class="section-title">异色对比</view>
+    <picker wx:if="{{extras.shinyLabels.length}}" range="{{extras.shinyLabels}}" bindchange="chooseExtra" data-key="shiny"><view class="extra-picker">{{extras.shiny.game}} · {{extras.shiny.form}} ▾</view></picker>
+    <view wx:if="{{extras.shiny}}" class="shiny-pair"><view><image src="{{extras.shiny.normal_url}}" mode="aspectFit"/><view>普通</view></view><view><image src="{{extras.shiny.shiny_url}}" mode="aspectFit"/><view>✦ 异色</view></view></view><view wx:else class="muted">源站暂无这项资料</view>
+  </view>
+</template>

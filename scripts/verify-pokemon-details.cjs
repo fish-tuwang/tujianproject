@@ -1,0 +1,106 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const { chromium } = require('playwright');
+
+async function main() {
+  const base = process.env.PREVIEW_URL || 'http://117.72.11.77';
+  const output = path.resolve('artifacts/acceptance');
+  const local = process.argv.includes('--local');
+  const report = { status: 'fail', mode: local ? 'local frontend with live read-only API' : 'deployed public frontend', assertions: 0, checks: [], errors: [] };
+  const browser = await chromium.launch({ headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1050 } });
+  if (local) await page.route('**/preview/**', async route => {
+    const file = new URL(route.request().url()).pathname.split('/').pop() || 'index.html';
+    if (['index.html', 'app.js', 'pokemon-details.js', 'style.css'].includes(file)) await route.fulfill({ path: path.resolve('backend/preview', file), contentType: file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html' });
+    else await route.continue();
+  });
+  page.on('pageerror', error => report.errors.push(error.message));
+  const check = (name, value) => { assert.ok(value, name); report.assertions++; report.checks.push(name); console.log('PASS ' + name); };
+  const tab = async key => page.locator('[data-extra-tab="' + key + '"]').click();
+  const open = async (dex, name) => {
+    await page.goto(base + '/preview/?catalog=pokemon&v=0.3.3#pokemon/' + dex, { waitUntil: 'domcontentloaded' });
+    await page.locator('.detail-content h2').filter({ hasText: name }).waitFor();
+    await page.locator('#pokemon-extra').waitFor();
+  };
+  const decodedPair = async () => page.waitForFunction(() => {
+    const images = [...document.querySelectorAll('.shiny-photo img')];
+    return images.length === 2 && images.every(i => i.complete && i.naturalWidth > 0 && getComputedStyle(i).opacity === '1');
+  }, null, { timeout: 120000 });
+  try {
+    const response = await page.request.get(base + '/api/pokemon/1');
+    const details = await response.json();
+    check('public API contains all six detail categories', ['base_stats', 'acquisition', 'matchups', 'movesets', 'shiny_pairs'].every(k => details.extra[k].length > 0) && details.extra.movesets.some(g => g.kind === 'machine'));
+    await open(1, '妙蛙种子');
+    check('six usable detail tabs', await page.locator('[data-extra-tab]').count() === 6);
+    check('correct six base stats and total 318', await page.locator('.stat-row').count() === 6 && (await page.locator('.stat-total').textContent()).includes('318'));
+    await page.locator('#pokemon-extra').screenshot({ path: output + '/pokemon-stats.png' });
+    await tab('acquisition');
+    check('acquisition includes game, location and method', (await page.locator('.acquisition-table').textContent()).includes('大木博士'));
+    const game = await page.locator('#extra-game option').evaluateAll(options => options.find(o => o.textContent === '红 绿 蓝')?.value);
+    if (game) await page.locator('#extra-game').selectOption(game);
+    await page.locator('#extra-search').fill('华蓝');
+    if (game) await page.locator('#extra-game').selectOption('');
+    check('acquisition search filters the actual records', await page.locator('.acquisition-table tbody tr').count() > 0 && (await page.locator('.acquisition-table tbody').textContent()).includes('华蓝'));
+    await tab('matchups');
+    check('18 attack types with correct grass quarter damage', await page.locator('.matchup-grid .matchup').count() === 18 && (await page.locator('.matchup').filter({ hasText: '草' }).textContent()).includes('1/4'));
+    await tab('learn');
+    await page.locator('#extra-search').fill('藤鞭');
+    check('learned moves search works', await page.locator('.move-table tbody tr').count() === 1 && (await page.locator('.move-table tbody').textContent()).includes('藤鞭'));
+    await tab('machine');
+    await page.locator('#extra-search').fill('001');
+    check('TM search matches code and corresponding move', await page.locator('.move-table tbody tr').count() === 1 && (await page.locator('.move-table tbody').textContent()).includes('猛撞'));
+    const zaIndex = await page.locator('#extra-select option').evaluateAll(options => options.find(o => o.textContent.includes('Z-A'))?.value);
+    check('separate Z-A game version exists', zaIndex !== undefined);
+    await page.locator('#extra-select').selectOption(zaIndex);
+    check('Z-A uses activation time rather than PP columns', (await page.locator('.move-table thead').textContent()).includes('发动时间') && !(await page.locator('.move-table thead').textContent()).includes('PP'));
+    await page.locator('#pokemon-extra').screenshot({ path: output + '/pokemon-tm.png' });
+    await open(37, '六尾');
+    await tab('learn');
+    const alolaIndex = await page.locator('#extra-select option').evaluateAll(options => options.find(o => o.textContent.includes('阿罗拉') && o.textContent.includes('可学会'))?.value);
+    await page.locator('#extra-select').selectOption(alolaIndex);
+    check('Alolan moves retain ice form and exclude normal fire move', !(await page.locator('.move-table tbody').textContent()).includes('火花') && (await page.locator('.move-table tbody').textContent()).includes('冰'));
+    await tab('shiny');
+    await decodedPair();
+    const normal = await page.locator('.shiny-photo img').evaluateAll(images => images.map(i => i.src));
+    check('normal and shiny are two distinct decoded source images', new Set(normal).size === 2 && normal.every(url => url.startsWith(base + '/api/reference-images/')));
+    await page.locator('#extra-select').selectOption('1');
+    await decodedPair();
+    const alola = await page.locator('.shiny-photo img').evaluateAll(images => images.map(i => i.src));
+    check('regional shiny comparison changes both matching form pictures', alola.every((url,index) => url !== normal[index]));
+    await page.locator('#pokemon-extra').screenshot({ path: output + '/pokemon-shiny-alola.png' });
+    await open(6, '喷火龙');
+    await page.locator('#extra-select').selectOption('1');
+    check('mega X stats preserve separate 634 total', (await page.locator('.stat-total').textContent()).includes('634') && (await page.locator('#extra-select option:checked').textContent()).includes('X'));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await tab('shiny');
+    await decodedPair();
+    check('mobile detail and comparison stay within viewport', await page.evaluate(() => document.querySelector('#detail-dialog').scrollWidth <= document.querySelector('#detail-dialog').clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
+    await page.locator('#pokemon-extra').screenshot({ path: output + '/pokemon-details-mobile.png' });
+    await page.setViewportSize({ width: 1440, height: 1050 });
+    await open(25, '皮卡丘');
+    await tab('shiny');
+    await decodedPair();
+    check('Pikachu multirow source exposes eleven paired form comparisons', await page.locator('#extra-select option').count() === 11);
+    await open(201, '未知图腾');
+    await tab('shiny');
+    await page.locator('#extra-select').selectOption('27');
+    await decodedPair();
+    check('all twenty-eight Unown forms remain selectable with decoded pictures', await page.locator('#extra-select option').count() === 28);
+    await open(1025, '桃歹郎');
+    await tab('shiny');
+    await decodedPair();
+    check('last national entry opens its own detail with paired original pictures', page.url().endsWith('#pokemon/1025') && await page.locator('[data-extra-tab]').count() === 6);
+    const dartrix = await (await page.request.get(base + '/api/pokemon/723')).json();
+    await open(723, dartrix.name_zh);
+    await tab('matchups');
+    check('traditional source section title still renders all eighteen matchups', await page.locator('.matchup-grid .matchup').count() === 18 && (await page.locator('.matchup').filter({ hasText: '冰' }).textContent()).includes('4'));
+    check('no JavaScript runtime errors', report.errors.length === 0);
+    report.status = 'pass';
+  } finally {
+    await browser.close();
+    fs.writeFileSync(output + '/pokemon-details-' + (local ? 'local' : 'public') + '.json', JSON.stringify(report, null, 2));
+    console.log(JSON.stringify(report));
+  }
+}
+main().catch(error => { console.error(error.stack); process.exitCode = 1; });

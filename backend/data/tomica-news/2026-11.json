@@ -1,0 +1,84 @@
+{
+  "slug": "2026-11-tomica",
+  "archive_month": "2026-11",
+  "title": "2026年11月新製品情報（多美卡TOMICA）",
+  "source_name": "多美卡TOMY新品情報",
+  "source_url": "https://mp.weixin.qq.com/s/QX8hnHK6WcNHEGEqq9U4rQ",
+  "data": {
+    "origin": "user-upload",
+    "summary": "本期展示园艺作业卡车、红色救援主题车辆，以及SUV与初回特别仕様。",
+    "products": [
+      {
+        "id": "no-114-gardener-truck",
+        "number": "114",
+        "name": "No.114 植木屋さんトラック",
+        "name_zh": "园艺作业卡车",
+        "cover_digest": "9c18b06f8f4b4746b14262a271c97e2e0b51db77237c211a9629bff49898e9ad",
+        "summary": "白色作业卡车，搭配透明梯子、木纹侧板和绿色植栽造型配件。",
+        "observations": [
+          "白色驾驶室与开放式货斗，车门印有“佐藤造園”字样。",
+          "多张图片展示了配件单独摆放与装载后的不同视角。",
+          "木纹侧板、绿色植栽造型及车顶透明梯子，是这组图片的主要看点。"
+        ],
+        "photos": [
+          {
+            "digest": "9c18b06f8f4b4746b14262a271c97e2e0b51db77237c211a9629bff49898e9ad",
+            "caption": "前侧视角 · 梯子与木纹侧板"
+          },
+          {
+            "digest": "c84f407b7f2e90bd2e40258405bb69601672e1f65907b0fd5679ca74cb30e580",
+            "caption": "配件与车体分开展示"
+          },
+          {
+            "digest": "30ca56536fca0ba1d94dc7c3185b7ac4f8d25f911d47ec366b3e4676dbfd37c1",
+            "caption": "后侧视角 · 植栽与货斗"
+          },
+          {
+            "digest": "e26100cb59f68a9d1cd3502f034ef4257866c398a3d0abec63bb8bb3cec28618",
+            "caption": "装载状态 · 前侧视角"
+          },
+          {
+            "digest": "d9de38651b19c3f8405868063c874c71f6539b32e439e14d4fc84982f93a6f7e",
+            "caption": "侧面视角 · 佐藤造園字样"
+          }
+        ]
+      },
+      {
+        "id": "red-rescue-vehicles",
+        "number": null,
+        "name": "红色救援主题车辆",
+        "name_zh": "XROSS RESCUE 图组",
+        "cover_digest": "4cc8103019e80de9d7f8b327d1b5b00fe0e26564b52e7b4582465c288b1bc855",
+        "summary": "同图展示四台红色救援主题车辆，车身可见01、02及XROSS RESCUE字样。",
+        "observations": [
+          "图中可见消防车辆、带黄色梯架的车辆及多轮造型车辆。",
+          "不同车辆使用红色主体与白色救援图案，部分搭配黄色或黑色部件。"
+        ],
+        "photos": [
+          {
+            "digest": "4cc8103019e80de9d7f8b327d1b5b00fe0e26564b52e7b4582465c288b1bc855",
+            "caption": "四台救援主题车辆同图展示"
+          }
+        ]
+      },
+      {
+        "id": "suv-first-edition",
+        "number": null,
+        "name": "深蓝色SUV／初回特别仕様",
+        "name_zh": "两种配色同图对照",
+        "cover_digest": "14dabddb217529c251fe71415b57ed2098199bc0580895b3e93d99e91ee36680",
+        "summary": "深蓝色SUV与标注“初回特別仕様”的深灰色车辆同图展示。",
+        "observations": [
+          "同一张图可对照两种车身配色及车尾、侧窗和轮毂外观。",
+          "右下方的深灰色车型标注“初回特別仕様”，可直接对照两种配色。"
+        ],
+        "photos": [
+          {
+            "digest": "14dabddb217529c251fe71415b57ed2098199bc0580895b3e93d99e91ee36680",
+            "caption": "深蓝色SUV与初回特别仕様对照"
+          }
+        ]
+      }
+    ]
+  }
+}

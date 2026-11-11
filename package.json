@@ -1,0 +1,19 @@
+{
+  "name": "dual-catalog",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test miniprogram/tests/*.test.js",
+    "smoke": "node scripts/miniprogram-smoke.js"
+  },
+  "devDependencies": {
+    "miniprogram-automator": "^0.13.0",
+    "playwright": "^1.56.0"
+  },
+  "overrides": {
+    "debug": "^4.4.3",
+    "mkdirp": "^0.5.6",
+    "jpeg-js": "^0.4.4",
+    "phin": "^3.7.1"
+  }
+}

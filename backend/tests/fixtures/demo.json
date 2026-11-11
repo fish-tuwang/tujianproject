@@ -1,0 +1,1256 @@
+{
+  "synthetic": true,
+  "candidates": [
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:0",
+      "fields": {
+        "number": "001",
+        "generation": "1",
+        "name_original": "NISSAN GT-R",
+        "name_display": "日产 GT-R",
+        "brand": "Nissan",
+        "release_year": 2024,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:0"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:0:standard",
+      "fields": {
+        "variant_code": "001-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:0",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:1",
+      "fields": {
+        "number": "001",
+        "generation": "2",
+        "name_original": "BLUEBIRD SSS COUPE",
+        "name_display": "蓝鸟 SSS Coupe",
+        "brand": "Nissan",
+        "release_year": 1970,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:1"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:1:standard",
+      "fields": {
+        "variant_code": "001-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:1",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:2",
+      "fields": {
+        "number": "002",
+        "generation": "3",
+        "name_original": "TOYOTA GR 86",
+        "name_display": "丰田 GR 86",
+        "brand": "Toyota",
+        "release_year": 2021,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:2"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:2:standard",
+      "fields": {
+        "variant_code": "002-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:2",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:3",
+      "fields": {
+        "number": "003",
+        "generation": "4",
+        "name_original": "HONDA CIVIC TYPE R",
+        "name_display": "本田 Civic Type R",
+        "brand": "Honda",
+        "release_year": 2023,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:3"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:3:standard",
+      "fields": {
+        "variant_code": "003-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:3",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:4",
+      "fields": {
+        "number": "004",
+        "generation": "5",
+        "name_original": "LAMBORGHINI COUNTACH",
+        "name_display": "兰博基尼 Countach",
+        "brand": "Lamborghini",
+        "release_year": 2024,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:4"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:4:standard",
+      "fields": {
+        "variant_code": "004-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:4",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:5",
+      "fields": {
+        "number": "005",
+        "generation": "6",
+        "name_original": "PORSCHE 911 CARRERA",
+        "name_display": "保时捷 911 Carrera",
+        "brand": "Porsche",
+        "release_year": 2022,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:5"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:5:standard",
+      "fields": {
+        "variant_code": "005-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:5",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:6",
+      "fields": {
+        "number": "006",
+        "generation": "7",
+        "name_original": "TOYOTA LAND CRUISER",
+        "name_display": "丰田 Land Cruiser",
+        "brand": "Toyota",
+        "release_year": 2023,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:6"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:6:standard",
+      "fields": {
+        "variant_code": "006-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:6",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:7",
+      "fields": {
+        "number": "007",
+        "generation": "8",
+        "name_original": "FERRARI ROMA",
+        "name_display": "法拉利 Roma",
+        "brand": "Ferrari",
+        "release_year": 2021,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:7"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:7:standard",
+      "fields": {
+        "variant_code": "007-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:7",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:8",
+      "fields": {
+        "number": "008",
+        "generation": "9",
+        "name_original": "MAZDA RX-7",
+        "name_display": "马自达 RX-7",
+        "brand": "Mazda",
+        "release_year": 2024,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:8"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:8:standard",
+      "fields": {
+        "variant_code": "008-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:8",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:9",
+      "fields": {
+        "number": "009",
+        "generation": "10",
+        "name_original": "SUBARU BRZ",
+        "name_display": "斯巴鲁 BRZ",
+        "brand": "Subaru",
+        "release_year": 2022,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:9"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:9:standard",
+      "fields": {
+        "variant_code": "009-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:9",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:10",
+      "fields": {
+        "number": "010",
+        "generation": "11",
+        "name_original": "UNIDENTIFIED MODEL",
+        "name_display": "待整理车型",
+        "brand": null,
+        "release_year": null,
+        "release_month": null,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:10"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:10:standard",
+      "fields": {
+        "variant_code": "010-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:10",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_model",
+      "source_key": "demo:11",
+      "fields": {
+        "number": "011",
+        "generation": "12",
+        "name_original": "HONDA NSX",
+        "name_display": "本田 NSX",
+        "brand": "Honda",
+        "release_year": 2016,
+        "release_month": 6,
+        "scale": "1/64",
+        "source_url": "demo://synthetic",
+        "source_locator": "demo:11"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "tomica_variant",
+      "source_key": "demo:11:standard",
+      "fields": {
+        "variant_code": "011-1-1",
+        "description": "通常版 · 演示记录",
+        "country": "VIETNAM"
+      },
+      "evidence": {
+        "model_key": "demo:11",
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "1",
+      "fields": {
+        "dex": 1,
+        "name_zh": "妙蛙种子",
+        "name_en": "Bulbasaur",
+        "types": [
+          "草",
+          "毒"
+        ],
+        "height_m": 0.7,
+        "weight_kg": 6.9,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "1:default",
+      "fields": {
+        "dex": 1,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "草",
+          "毒"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "2",
+      "fields": {
+        "dex": 2,
+        "name_zh": "妙蛙草",
+        "name_en": "Ivysaur",
+        "types": [
+          "草",
+          "毒"
+        ],
+        "height_m": 1.0,
+        "weight_kg": 13,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "2:default",
+      "fields": {
+        "dex": 2,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "草",
+          "毒"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "3",
+      "fields": {
+        "dex": 3,
+        "name_zh": "妙蛙花",
+        "name_en": "Venusaur",
+        "types": [
+          "草",
+          "毒"
+        ],
+        "height_m": 2.0,
+        "weight_kg": 100,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "3:default",
+      "fields": {
+        "dex": 3,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "草",
+          "毒"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "4",
+      "fields": {
+        "dex": 4,
+        "name_zh": "小火龙",
+        "name_en": "Charmander",
+        "types": [
+          "火"
+        ],
+        "height_m": 0.6,
+        "weight_kg": 8.5,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "4:default",
+      "fields": {
+        "dex": 4,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "火"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "5",
+      "fields": {
+        "dex": 5,
+        "name_zh": "火恐龙",
+        "name_en": "Charmeleon",
+        "types": [
+          "火"
+        ],
+        "height_m": 1.1,
+        "weight_kg": 19,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "5:default",
+      "fields": {
+        "dex": 5,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "火"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "6",
+      "fields": {
+        "dex": 6,
+        "name_zh": "喷火龙",
+        "name_en": "Charizard",
+        "types": [
+          "火",
+          "飞行"
+        ],
+        "height_m": 1.7,
+        "weight_kg": 90.5,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "6:default",
+      "fields": {
+        "dex": 6,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "火",
+          "飞行"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "7",
+      "fields": {
+        "dex": 7,
+        "name_zh": "杰尼龟",
+        "name_en": "Squirtle",
+        "types": [
+          "水"
+        ],
+        "height_m": 0.5,
+        "weight_kg": 9,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "7:default",
+      "fields": {
+        "dex": 7,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "水"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "8",
+      "fields": {
+        "dex": 8,
+        "name_zh": "卡咪龟",
+        "name_en": "Wartortle",
+        "types": [
+          "水"
+        ],
+        "height_m": 1.0,
+        "weight_kg": 22.5,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "8:default",
+      "fields": {
+        "dex": 8,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "水"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "9",
+      "fields": {
+        "dex": 9,
+        "name_zh": "水箭龟",
+        "name_en": "Blastoise",
+        "types": [
+          "水"
+        ],
+        "height_m": 1.6,
+        "weight_kg": 85.5,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "9:default",
+      "fields": {
+        "dex": 9,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "水"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "10",
+      "fields": {
+        "dex": 10,
+        "name_zh": "绿毛虫",
+        "name_en": "Caterpie",
+        "types": [
+          "虫"
+        ],
+        "height_m": 0.3,
+        "weight_kg": 2.9,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "10:default",
+      "fields": {
+        "dex": 10,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "虫"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "25",
+      "fields": {
+        "dex": 25,
+        "name_zh": "皮卡丘",
+        "name_en": "Pikachu",
+        "types": [
+          "电"
+        ],
+        "height_m": 0.4,
+        "weight_kg": 6,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "25:default",
+      "fields": {
+        "dex": 25,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "电"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "37",
+      "fields": {
+        "dex": 37,
+        "name_zh": "六尾",
+        "name_en": "Vulpix",
+        "types": [
+          "火"
+        ],
+        "height_m": 0.6,
+        "weight_kg": 9.9,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "37:default",
+      "fields": {
+        "dex": 37,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "火"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "133",
+      "fields": {
+        "dex": 133,
+        "name_zh": "伊布",
+        "name_en": "Eevee",
+        "types": [
+          "一般"
+        ],
+        "height_m": 0.3,
+        "weight_kg": 6.5,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "133:default",
+      "fields": {
+        "dex": 133,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "一般"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "134",
+      "fields": {
+        "dex": 134,
+        "name_zh": "水伊布",
+        "name_en": "Vaporeon",
+        "types": [
+          "水"
+        ],
+        "height_m": 1.0,
+        "weight_kg": 29,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "134:default",
+      "fields": {
+        "dex": 134,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "水"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "135",
+      "fields": {
+        "dex": 135,
+        "name_zh": "雷伊布",
+        "name_en": "Jolteon",
+        "types": [
+          "电"
+        ],
+        "height_m": 0.8,
+        "weight_kg": 24.5,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "135:default",
+      "fields": {
+        "dex": 135,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "电"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "136",
+      "fields": {
+        "dex": 136,
+        "name_zh": "火伊布",
+        "name_en": "Flareon",
+        "types": [
+          "火"
+        ],
+        "height_m": 0.9,
+        "weight_kg": 25,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "136:default",
+      "fields": {
+        "dex": 136,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "火"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "196",
+      "fields": {
+        "dex": 196,
+        "name_zh": "太阳伊布",
+        "name_en": "Espeon",
+        "types": [
+          "超能力"
+        ],
+        "height_m": 0.9,
+        "weight_kg": 26.5,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "196:default",
+      "fields": {
+        "dex": 196,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "超能力"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "197",
+      "fields": {
+        "dex": 197,
+        "name_zh": "月亮伊布",
+        "name_en": "Umbreon",
+        "types": [
+          "恶"
+        ],
+        "height_m": 1.0,
+        "weight_kg": 27,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "197:default",
+      "fields": {
+        "dex": 197,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "恶"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "470",
+      "fields": {
+        "dex": 470,
+        "name_zh": "叶伊布",
+        "name_en": "Leafeon",
+        "types": [
+          "草"
+        ],
+        "height_m": 1.0,
+        "weight_kg": 25.5,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "470:default",
+      "fields": {
+        "dex": 470,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "草"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "471",
+      "fields": {
+        "dex": 471,
+        "name_zh": "冰伊布",
+        "name_en": "Glaceon",
+        "types": [
+          "冰"
+        ],
+        "height_m": 0.8,
+        "weight_kg": 25.9,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "471:default",
+      "fields": {
+        "dex": 471,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "冰"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon",
+      "source_key": "700",
+      "fields": {
+        "dex": 700,
+        "name_zh": "仙子伊布",
+        "name_en": "Sylveon",
+        "types": [
+          "妖精"
+        ],
+        "height_m": 1.0,
+        "weight_kg": 23.5,
+        "abilities": [],
+        "source_url": "demo://synthetic"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "700:default",
+      "fields": {
+        "dex": 700,
+        "form_key": "default",
+        "display_name": "通常形态",
+        "types": [
+          "妖精"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "pokemon_form",
+      "source_key": "37:alola",
+      "fields": {
+        "dex": 37,
+        "form_key": "alola",
+        "display_name": "阿罗拉六尾",
+        "types": [
+          "冰"
+        ]
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "evolution",
+      "source_key": "1:2:等级16以上",
+      "fields": {
+        "relation_key": "1:2:等级16以上",
+        "from_dex": 1,
+        "to_dex": 2,
+        "condition": "等级16以上"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "evolution",
+      "source_key": "2:3:等级32以上",
+      "fields": {
+        "relation_key": "2:3:等级32以上",
+        "from_dex": 2,
+        "to_dex": 3,
+        "condition": "等级32以上"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "evolution",
+      "source_key": "133:134:使用水之石",
+      "fields": {
+        "relation_key": "133:134:使用水之石",
+        "from_dex": 133,
+        "to_dex": 134,
+        "condition": "使用水之石"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "evolution",
+      "source_key": "133:135:使用雷之石",
+      "fields": {
+        "relation_key": "133:135:使用雷之石",
+        "from_dex": 133,
+        "to_dex": 135,
+        "condition": "使用雷之石"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "evolution",
+      "source_key": "133:136:使用火之石",
+      "fields": {
+        "relation_key": "133:136:使用火之石",
+        "from_dex": 133,
+        "to_dex": 136,
+        "condition": "使用火之石"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "evolution",
+      "source_key": "133:196:友好度提升等级，白天",
+      "fields": {
+        "relation_key": "133:196:友好度提升等级，白天",
+        "from_dex": 133,
+        "to_dex": 196,
+        "condition": "友好度提升等级，白天"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "evolution",
+      "source_key": "133:197:友好度提升等级，夜晚",
+      "fields": {
+        "relation_key": "133:197:友好度提升等级，夜晚",
+        "from_dex": 133,
+        "to_dex": 197,
+        "condition": "友好度提升等级，夜晚"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "evolution",
+      "source_key": "133:470:使用叶之石",
+      "fields": {
+        "relation_key": "133:470:使用叶之石",
+        "from_dex": 133,
+        "to_dex": 470,
+        "condition": "使用叶之石"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "evolution",
+      "source_key": "133:471:使用冰之石",
+      "fields": {
+        "relation_key": "133:471:使用冰之石",
+        "from_dex": 133,
+        "to_dex": 471,
+        "condition": "使用冰之石"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    },
+    {
+      "kind": "evolution",
+      "source_key": "133:700:学会妖精属性招式并提升等级",
+      "fields": {
+        "relation_key": "133:700:学会妖精属性招式并提升等级",
+        "from_dex": 133,
+        "to_dex": 700,
+        "condition": "学会妖精属性招式并提升等级"
+      },
+      "evidence": {
+        "synthetic": true
+      }
+    }
+  ]
+}

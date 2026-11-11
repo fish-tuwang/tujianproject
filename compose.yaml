@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: public.ecr.aws/docker/library/postgres:18
+    environment:
+      POSTGRES_USER: dual_catalog_app
+      POSTGRES_PASSWORD: local-demo-only
+      POSTGRES_DB: dual_catalog_demo
+    ports: ["127.0.0.1:15432:5432"]
+    volumes: ["catalog-local-db:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dual_catalog_app -d dual_catalog_demo"]
+      interval: 5s
+      retries: 10
+  api:
+    build: .
+    image: ${APP_IMAGE:-dual-catalog:dev}
+    environment: &environment
+      DATABASE_URL: postgresql+psycopg://dual_catalog_app:local-demo-only@postgres:5432/dual_catalog_demo
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-local-demo-admin}
+    ports: ["127.0.0.1:8092:8092"]
+    depends_on:
+      postgres: {condition: service_healthy}
+  worker:
+    image: ${APP_IMAGE:-dual-catalog:dev}
+    environment: *environment
+    command: ["python", "-m", "backend.app.worker", "work"]
+    depends_on: [postgres]
+  scheduler:
+    image: ${APP_IMAGE:-dual-catalog:dev}
+    environment: *environment
+    command: ["python", "-m", "backend.app.worker", "schedule"]
+    depends_on: [postgres]
+volumes:
+  catalog-local-db:
