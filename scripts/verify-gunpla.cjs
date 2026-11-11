@@ -66,7 +66,26 @@ const shape=v=>JSON.stringify({query:v.query,ids:v.ids});
    await p.reload({waitUntil:'domcontentloaded'});await p.locator('.gunpla-detail h2').waitFor();await p.locator('#close-detail').click();await p.waitForFunction(y=>Math.abs(scrollY-y)<=3,before.y,{timeout:15000});await ready(p);
    pass('detail reload and close preserve page size page filters records and exact position',shape(await snapshot(p))===shape(before));
    await p.evaluate(()=>GunplaPage.openProduct('3027'));await p.locator('.gunpla-detail h2').waitFor();
-   pass('second official product retains ten photos and both actual prices',await p.locator('.gunpla-thumbnails button').count()===10&&await p.locator('.gunpla-facts').textContent().then(t=>t.includes('60元')&&t.includes('1,100日元(含税)')&&t.includes('2025年10月')));await p.locator('#close-detail').click();
+   pass('second official product retains ten photos and both actual prices',await p.locator('.gunpla-thumbnails button').count()===10&&await p.locator('.gunpla-facts').textContent().then(t=>t.includes('60元')&&t.includes('1,100日元(含税)')&&t.includes('2025年10月')));
+   await p.waitForFunction(()=>{const e=document.getElementById('detail-root');return e.scrollHeight-e.clientHeight>200;},{},{timeout:120000});
+   const closeBefore=await p.locator('#close-detail').boundingBox();
+   await p.locator('.gunpla-detail h2').click();pass('clicking inside detail keeps it open',await p.locator('#detail-dialog').isVisible());
+   for(const photo of await p.locator('.photo-grid img').all()){
+    await photo.scrollIntoViewIfNeeded();await photo.evaluate(img=>img.decode());
+   }
+   await p.locator('#detail-root').evaluate(e=>{e.scrollTop=e.scrollHeight;});await settled(p);
+   pass('long photo gallery scrolls inside the detail panel',await p.locator('#detail-root').evaluate(e=>e.scrollTop>200&&e.scrollHeight>e.clientHeight));
+   const closeAfter=await p.locator('#close-detail').boundingBox(),dialogBox=await p.locator('#detail-dialog').boundingBox();
+   pass('close control stays at the visible panel corner after scrolling',closeAfter.y>=dialogBox.y&&closeAfter.y+closeAfter.height<=dialogBox.y+dialogBox.height&&Math.abs(closeAfter.y-closeBefore.y)<2&&Math.abs(closeAfter.x-closeBefore.x)<2);
+   await p.screenshot({path:out+'/gunpla-detail-scrolled-'+profile.name+(local?'-local':'')+'.png'});
+   await p.locator('#close-detail').click();await p.waitForFunction(y=>!document.querySelector('#detail-dialog').open&&Math.abs(scrollY-y)<=3,before.y);
+   pass('close control works at gallery bottom and preserves list position',shape(await snapshot(p))===shape(before)&&!new URL(p.url()).hash);
+   await p.evaluate(()=>GunplaPage.openProduct('3027'));await p.locator('.gunpla-detail h2').waitFor();
+   pass('reopened detail begins at its first photo',await p.locator('#detail-root').evaluate(e=>e.scrollTop===0));
+   await p.locator('#detail-root').evaluate(e=>{e.scrollTop=e.scrollHeight;});
+   if(profile.name==='mobile')await p.touchscreen.tap(2,2);else await p.mouse.click(2,2);
+   await p.waitForFunction(y=>!document.querySelector('#detail-dialog').open&&Math.abs(scrollY-y)<=3,before.y);
+   pass('backdrop click closes detail and preserves filters page records and exact position',shape(await snapshot(p))===shape(before)&&!new URL(p.url()).hash);
    await p.locator('#gunpla-reset').click();await p.waitForFunction(()=>!GunplaPage.state.loading&&GunplaPage.state.query.limit===20);await p.evaluate(()=>scrollTo(0,0));
    pass('layout has no horizontal overflow',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await p.screenshot({path:out+'/gunpla-home-'+profile.name+(local?'-local':'')+'.png',fullPage:profile.name==='desktop'});
    report.profiles.push({name:profile.name,status:'pass'});await c.close();

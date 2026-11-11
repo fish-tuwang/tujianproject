@@ -87,7 +87,7 @@
       $('detail-root').innerHTML=`<article class="gunpla-detail"><span class="gunpla-kicker">GUNPLA MODEL ARCHIVE</span><h2>${escape(item.name)}</h2><div class="gunpla-gallery-hero">${picture(item.gallery[0]||item.cover,item.name,false)}</div><nav class="gunpla-thumbnails" aria-label="模型全部商品图">${item.gallery.map((url,i)=>`<button data-photo="${i}" class="${i===0?'selected':''}" aria-label="商品图 ${i+1}">${picture(url,item.name+' · '+(i+1),false)}</button>`).join('')}</nav><div class="gunpla-facts"><div><span>官方价格 · 人民币</span><b>${escape(item.price_cny_text||'未公布')}</b></div><div><span>日本建议零售价</span><b>${escape(item.price_jpy_text||'未公布')}</b></div><div><span>发售日期</span><b>${escape(item.release_text||'未公布')}</b></div></div><section class="gunpla-detail-photos"><h3>商品图与细节 · ${photos.length} 张</h3><div class="photo-grid">${photos.map((url,i)=>picture(url,item.name+' · 细节 '+(i+1))).join('')}</div></section></article>`;
       const hero=$('detail-root').querySelector('.gunpla-gallery-hero img');
       $('detail-root').querySelectorAll('[data-photo]').forEach(b=>b.onclick=()=>{hero.src=item.gallery[Number(b.dataset.photo)];$('detail-root').querySelectorAll('[data-photo]').forEach(other=>other.classList.toggle('selected',other===b));});
-      zoomable($('detail-root'));imageErrors($('detail-root'));$('detail-dialog').scrollTop=0;
+      zoomable($('detail-root'));imageErrors($('detail-root'));$('detail-root').scrollTop=0;
     }catch(error){if(current===detailSequence&&error.name!=='AbortError')$('detail-root').innerHTML=`<div class="gunpla-detail">${escape(error.message)}</div>`;}
   }
   function closeDetail(updateURL=true){
@@ -106,7 +106,7 @@
   $('gunpla-scale').onchange=()=>setFilters({scale:$('gunpla-scale').value});$('gunpla-page-size').onchange=()=>setFilters({limit:Number($('gunpla-page-size').value)});
   $('gunpla-reset').onclick=()=>{state.query={...defaults};selection();remember(0);load();};$('gunpla-prev').onclick=()=>changePage(state.query.page-1);$('gunpla-next').onclick=()=>changePage(state.query.page+1);
   $('open-series').onclick=()=>$('series-dialog').showModal();$('close-series').onclick=()=>$('series-dialog').close();$('all-series').onclick=()=>{setFilters({series:''});$('series-dialog').close();};
-  $('close-detail').onclick=()=>closeDetail();$('detail-dialog').oncancel=e=>{e.preventDefault();closeDetail();};$('close-event').onclick=()=>$('event-dialog').close();
+  $('close-detail').onclick=()=>closeDetail();$('detail-dialog').onclick=e=>{if(e.target===$('detail-dialog'))closeDetail();};$('detail-dialog').oncancel=e=>{e.preventDefault();closeDetail();};$('close-event').onclick=()=>$('event-dialog').close();
   $('close-image').onclick=closeViewer;$('image-zoom-in').onclick=()=>setImageScale(imageScale+.5);$('image-zoom-out').onclick=()=>setImageScale(imageScale-.5);$('image-reset').onclick=()=>{setImageScale(1);$('image-stage').scrollTo(0,0);};
   addEventListener('hashchange',route);addEventListener('pagehide',()=>remember());addEventListener('resize',()=>{if($('image-viewer').open)setImageScale(imageScale);});
   window.GunplaPage={state,load,setFilters,closeDetail,openProduct};
