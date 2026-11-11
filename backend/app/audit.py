@@ -5,7 +5,7 @@ import logging
 from logging.handlers import WatchedFileHandler
 from pathlib import Path
 
-CHANNELS = {'collection', 'deploy'}
+CHANNELS = {'collection', 'deploy', 'auth'}
 
 
 class EventFormatter(logging.Formatter):

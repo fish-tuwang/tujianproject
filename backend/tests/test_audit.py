@@ -138,7 +138,7 @@ def test_failed_release_restores_environment_and_audits_rollback(tmp_path, monke
     originals = {'.env': 'APP_IMAGE=dual-catalog:0.6.3\nSECRET=do-not-log-this\n', '.env.demo': 'APP_IMAGE=dual-catalog:0.6.3\nSECRET=private-demo\n'}
     for name, content in originals.items():
         (tmp_path / name).write_text(content)
-    for name in ['Dockerfile.release', 'backend/app/audit.py', 'backend/app/repository.py', 'backend/app/sync/service.py', 'backend/app/worker.py', 'deploy/preview-nginx.conf']:
+    for name in ['Dockerfile.release', 'backend/app/audit.py', 'backend/app/repository.py', 'backend/app/sync/service.py', 'backend/app/worker.py', 'deploy/preview-nginx.conf', 'backend/app/auth_store.py', 'backend/app/auth.py', 'backend/app/auth_cli.py']:
         target = tmp_path / 'app' / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text('source')

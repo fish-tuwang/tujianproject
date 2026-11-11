@@ -1,20 +1,21 @@
+const browserAuth=require('./browser-auth.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium,webkit,devices}=require('playwright');
-const base=process.env.PREVIEW_URL||'http://117.72.11.77',local=process.argv.includes('--local'),out='artifacts/acceptance';
+const base=process.env.PREVIEW_URL||'https://117.72.11.77',local=process.argv.includes('--local'),out='artifacts/acceptance';
 const report={status:'fail',checks:[],errors:[],profiles:[]};
 const check=(name,value)=>{assert.ok(value,name);report.checks.push(name);console.log('PASS '+name);};
 const ready=(p,count)=>p.waitForFunction(count=>!state.loading&&!restoringBrowse&&state.items.length===count,count);
 const snapshot=p=>p.evaluate(()=>({ids:state.items.map(i=>i.dex||i.id),query:{...state.query},y:scrollY}));
 const same=(a,b)=>JSON.stringify(a.ids)===JSON.stringify(b.ids)&&JSON.stringify(Object.entries(a.query).sort())===JSON.stringify(Object.entries(b.query).sort());
 async function scrollNext(p,count){await p.evaluate(()=>window.scrollBy(0,-220));await p.locator('#scroll-sentinel').scrollIntoViewIfNeeded();await p.evaluate(()=>window.scrollBy(0,220));await ready(p,count);}
-async function overlay(p){if(local)await p.route('**/preview/**',async r=>{const relative=new URL(r.request().url()).pathname.slice('/preview/'.length)||'index.html';if(['index.html','app.js','style.css','theme.css','pokemon-details.js','backgrounds/tomica-track.svg','backgrounds/pokemon-map.svg'].includes(relative))await r.fulfill({path:path.resolve('backend/preview',relative),contentType:relative.endsWith('.svg')?'image/svg+xml':relative.endsWith('.css')?'text/css':relative.endsWith('.js')?'text/javascript':'text/html'});else await r.continue();});}
+async function overlay(p){if(local)await p.route('**/preview/**',async r=>{const relative=new URL(r.request().url()).pathname.slice('/preview/'.length)||'index.html';if(['index.html','app.js','style.css','theme.css','pokemon-details.js','auth-client.js','backgrounds/tomica-track.svg','backgrounds/pokemon-map.svg'].includes(relative))await r.fulfill({path:path.resolve('backend/preview',relative),contentType:relative.endsWith('.svg')?'image/svg+xml':relative.endsWith('.css')?'text/css':relative.endsWith('.js')?'text/javascript':'text/html'});else await r.continue();});}
 (async()=>{
  const expected={kanto:[1,151],johto:[152,251],hoenn:[252,386],sinnoh:[387,493],unova:[494,649],kalos:[650,721],alola:[722,807],galar:[810,898],hisui:[899,905],paldea:[906,1025],unknown:[808,809]},all=[];
  for(const [key,[first,last]] of Object.entries(expected)){
   let cursor=null,ids=[];
   do{
    const params=new URLSearchParams({region:key,limit:100});if(cursor)params.set('cursor',cursor);
-   const response=await fetch(base+'/api/pokemon?'+params);assert.equal(response.status,200);
+   const response=await fetch(base+'/api/pokemon?'+params,{headers:browserAuth.headers(base+'/api/pokemon')});assert.equal(response.status,200);
    const data=await response.json();assert.equal(data.total,last-first+1);ids.push(...data.items.map(i=>i.dex));cursor=data.next_cursor;
   }while(cursor);
   check('public Wiki group '+key+' has its complete national-number range',JSON.stringify(ids)===JSON.stringify(Array.from({length:last-first+1},(_,i)=>i+first)));all.push(...ids);
@@ -23,7 +24,7 @@ async function overlay(p){if(local)await p.route('**/preview/**',async r=>{const
  for(const profile of [{name:'desktop',engine:chromium,options:{viewport:{width:1440,height:1100}}},{name:'mobile',engine:webkit,options:{...devices['iPhone 13'],deviceScaleFactor:1}}]){
   const b=await profile.engine.launch(profile.engine===chromium?{headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{headless:true});
   try{
-   const c=await b.newContext(profile.options),p=await c.newPage();await overlay(p);p.on('pageerror',e=>report.errors.push(profile.name+': '+e.message));let requests=0;p.on('request',r=>{if(new URL(r.url()).pathname==='/api/pokemon')requests++;});
+   const c=await b.newContext({...profile.options,...browserAuth.contextOptions()}),p=await c.newPage();await overlay(p);p.on('pageerror',e=>report.errors.push(profile.name+': '+e.message));let requests=0;p.on('request',r=>{if(new URL(r.url()).pathname==='/api/pokemon')requests++;});
    const pass=(n,v)=>check(profile.name+' '+n,v);
    await p.goto(base+'/preview/?catalog=pokemon&v=0.9.1',{waitUntil:'domcontentloaded'});await ready(p,12);
    pass('there is no continue-exploring button',await p.locator('#load-more').count()===0);

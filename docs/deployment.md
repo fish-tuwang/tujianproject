@@ -2,7 +2,7 @@
 
 生产使用现有 Ubuntu 24.04 / PostgreSQL 18；代码位于 `/opt/dual-catalog/app`，数据库配置在 `/opt/dual-catalog/.env`（0600）中，永不随包覆盖。应用角色不能建库，迁移只写本项目库。
 
-运行三类进程：API、队列worker、scheduler。scheduler每天北京时间03:00增量、周日04:00全量。生产API绑定127.0.0.1:8092；独立演示API绑定127.0.0.1:8093，仅供隔离验收。浏览器预览由本项目独立nginx容器监听80，反向代理生产API8092，访问 http://117.72.11.77/preview/ 查看真实采集资料。微信正式域名另配。演示使用dual_catalog_demo库，不能拿它证明来源完整性。
+运行三类进程：API、队列worker、scheduler。scheduler每天北京时间03:00增量、周日04:00全量。生产API绑定127.0.0.1:8092；独立演示API绑定127.0.0.1:8093，仅供隔离验收。浏览器预览由本项目独立nginx容器监听80/443，HTTP跳转HTTPS，反向代理生产API8092，访问 https://117.72.11.77/preview/ 登录查看真实采集资料。微信正式域名另配。演示使用dual_catalog_demo库，不能拿它证明来源完整性。
 
 服务器命令从项目路径运行，使用以下Compose参数：
 
@@ -18,11 +18,11 @@ docker compose --project-directory /opt/dual-catalog/app --env-file /opt/dual-ca
 
 真实来源访问按robots与2秒限速执行。单页失败保留旧数据；`worker report`核对运行状态；手动重试使用管理页。全量导入可能较长，limited/partial不得计为完整。
 
-真实HTTPS域名就绪后，创建本项目独立站点反向代理至127.0.0.1:8092，校验nginx配置后重载；当前独立容器dual-catalog-preview-proxy提供HTTP预览，只允许GET/HEAD并禁止管理路径；未更改既有nginx配置。配置微信合法请求与图片域名、真实AppID，执行check_release和真实微信自动化后再发布。
+0.10.0使用可信IP证书提供HTTPS私有入口，登录接口允许POST，其他公开代理路径只允许GET/HEAD并禁止管理路径；未更改既有nginx配置。配置微信合法请求与图片域名、真实AppID，执行check_release和真实微信自动化后再发布。
 
 镜像以10001用户运行，Compose从0600配置注入环境，不将秘密挂载进容器。仅本项目artifacts目录授予10001写权限。禁止输出docker compose config的展开秘密，检查使用`config --quiet`。
 
-生产使用两路worker并按来源互斥；部署镜像dual-catalog:0.9.0。服务器不能下载依赖时，使用已测试的0.1.0基础镜像配合Dockerfile.release打包源码，不修改全局镜像源。
+生产使用两路worker并按来源互斥；部署镜像dual-catalog:0.10.0。服务器不能下载依赖时，使用已测试的0.1.0基础镜像配合Dockerfile.release打包源码，不修改全局镜像源。
 
 0.8.5补齐特注、套装、活动、角色和非卖品的独立款式，纠正混合编码与连续照片/基础车型引用的配对；重复的明确车型分组标题继续保留。API内存上限640MiB，worker及原图预热384MiB，scheduler96MiB；仅调整本项目进程。列表元数据批量读取，Redis之外每个图鉴仅保留一份已解码的修订快照，修订号或600秒过期时替换，分页使用排序副本。完整性核对在独立一次性worker中运行`python -m scripts.audit_tomica_coverage`，不要在API容器追加重型Python核对进程。报告在私有`artifacts/acceptance/tomica-coverage.json`；读run状态、run_items、problems及edition_covers_pending，不把运行中的首次预热或源站失效图片称为全部完成。初次补录与修正记录见同功能目录tomica-completeness-plan.md。
 
@@ -59,3 +59,5 @@ Redis缓存：本项目独立systemd服务dual-catalog-redis，127.0.0.1:6382，
 2026-11-11发布0.9.0：双主题使用theme.css与本地矢量背景，现有图标/原图保留。宝可梦支持region组合筛选与滚动加载，按图鉴保存筛选、进度和位置。旧地区定义为各版本图鉴合并，已由以下0.9.1规则替代；原UI验收见spec/feature_20261111_F001_ui-regions/acceptance.md。
 
 0.9.1按用户新确认的Wiki全国编号分段归类，全国1025种无重复、无遗漏；洗翠899–905与未确认808–809单列。离线分段表在backend/app/pokemon_regions.py，python -m backend.app.pokemon_regions --refresh仅重建该规则，核对新编号后需先更新分段表并重新测试发布；线上不访问外站。地区元数据/列表缓存和筛选游标继续绑定索引版本，无需清空其他Redis图片缓存。本轮不迁移数据库、重新导入资料或修改照片。修正及实际验收见spec/feature_20261111_F001_ui-regions/wiki-region-classification-fix.md。
+
+0.10.0增加私有账户、首次强制改密、单会话替换及HTTPS。管理操作仅服务器CLI；持久鉴权数据库独立于0004图鉴库，无图鉴迁移/重导。发布脚本在实际镜像内执行禁网测试，失败维持503门禁；证书每12小时检查续签，账户与恢复命令见[鉴权运维](auth.md)。身份信息和会话不存Redis，缓存命中也须先鉴权。鉴权启用时浏览器资源统一private,no-store，服务器Redis与磁盘缓存继续有效。

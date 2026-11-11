@@ -2,23 +2,28 @@ const { createApi } = require('../services/api');
 const { createCatalogState } = require('./catalog-state');
 const { getConfig } = require('../config');
 const { prepareExtra, filterMoves } = require('./pokemon-extra');
+const session = require('../services/session');
 const cache = new Map();
+session.subscribe(() => cache.clear());
 function runtimeApi(wxApi) { const version = wxApi.getAccountInfoSync ? wxApi.getAccountInfoSync().miniProgram.envVersion : 'develop'; return createApi(wxApi, getConfig(version).apiBaseUrl); }
 function createListPage(kind, wxApi) {
   return {
     data: { kind, items: [], filters: {}, loading: false, error: '', hasMore: true, brands: ['全部品牌'], years: ['全部年份'], regions: ['全部地区'], regionKeys: [''], regionIndex: 0, types: ['全部属性', '一般', '火', '水', '电', '草', '冰', '格斗', '毒', '地面', '飞行', '超能力', '虫', '岩石', '幽灵', '龙', '恶', '钢', '妖精'], brandIndex: 0, yearIndex: 0, typeIndex: 0 },
     onLoad() {
       this.alive = true;
+      this.sessionGeneration = session.generation();
       this.wxApi = wxApi || wx;
+      this.setData({ authUsername: session.read(this.wxApi)?.username || '' });
       this.api = runtimeApi(this.wxApi);
-      this.state = createCatalogState({ api: this.api, kind, onChange: value => this.setData({ ...value, regionIndex: Math.max(0, this.data.regionKeys.indexOf(value.filters.region || '')), typeIndex: Math.max(0, this.data.types.indexOf(value.filters.type || '全部属性')), items: value.items.map(item => ({ ...item, image_url: this.api.imageUrl(item), numberLabel: kind === 'pokemon' ? '#' + String(item.dex).padStart(4, '0') : 'No. ' + item.number, title: item.name_display || item.name_original || item.name_zh, subtitle: item.name_en || item.brand || '品牌待整理', symbol: (item.types || ['T'])[0], yearLabel: item.release_year || '年份未知' })) }) });
+      this.state = createCatalogState({ api: this.api, kind, onChange: value => { if (this.alive && this.sessionGeneration === session.generation()) this.setData({ ...value, regionIndex: Math.max(0, this.data.regionKeys.indexOf(value.filters.region || '')), typeIndex: Math.max(0, this.data.types.indexOf(value.filters.type || '全部属性')), items: value.items.map(item => ({ ...item, image_url: this.api.imageUrl(item), numberLabel: kind === 'pokemon' ? '#' + String(item.dex).padStart(4, '0') : 'No. ' + item.number, title: item.name_display || item.name_original || item.name_zh, subtitle: item.name_en || item.brand || '品牌待整理', symbol: (item.types || ['T'])[0], yearLabel: item.release_year || '年份未知' })) }); } });
+      this.stopSession = session.subscribe(() => { this.alive = false; this.state.dispose(); this.setData({ items: [], loading: false, error: '' }); });
       if (cache.has(kind)) this.state.restore(cache.get(kind)); else this.state.load(true);
       if (kind === 'tomica') this.api.filters().then(value => this.setData({ brands: ['全部品牌', ...value.brands, '未知品牌'], years: ['全部年份', ...value.years, '未知年份'] })).catch(() => {});
       if (kind === 'pokemon') this.regionsLoaded = this.api.regions().then(value => { if (!this.alive) return; const items = value.items || [], keys = ['', ...items.map(r => r.key)]; this.setData({ regions: ['全部地区', ...items.map(r => r.key === 'unknown' ? r.name : r.name + '地区')], regionKeys: keys, regionIndex: Math.max(0, keys.indexOf(this.state.snapshot().filters.region || '')) }); }).catch(() => {});
     },
     onShow() { if (this.state && this.state.snapshot().scrollTop) this.wxApi.pageScrollTo({ scrollTop: this.state.snapshot().scrollTop, duration: 0 }); },
-    onHide() { if (this.state) cache.set(kind, this.state.snapshot()); },
-    onUnload() { this.alive = false; clearTimeout(this.searchTimer); if (this.state) { cache.set(kind, this.state.snapshot()); this.state.dispose(); } },
+    onHide() { if (this.state && this.alive && this.sessionGeneration === session.generation()) cache.set(kind, this.state.snapshot()); },
+    onUnload() { clearTimeout(this.searchTimer); if (this.state) { if (this.alive && this.sessionGeneration === session.generation()) cache.set(kind, this.state.snapshot()); this.state.dispose(); } this.alive = false; if (this.stopSession) this.stopSession(); },
     onPageScroll(event) { if (this.state) this.state.setScroll(event.scrollTop); },
     onReachBottom() { return this.state.load(); },
     onPullDownRefresh() { return this.state.load(true).finally(() => this.wxApi.stopPullDownRefresh()); },
@@ -27,6 +32,8 @@ function createListPage(kind, wxApi) {
     filterYear(event) { const index = Number(event.detail.value), label = this.data.years[index]; this.setData({ yearIndex: index }); return this.state.setFilters({ ...this.state.snapshot().filters, year: index ? label === '未知年份' ? 'unknown' : label : null }); },
     filterType(event) { const index = Number(event.detail.value); this.setData({ typeIndex: index }); return this.state.setFilters({ ...this.state.snapshot().filters, type: index ? this.data.types[index] : null }); },
     filterRegion(event) { const index = Number(event.detail.value); this.setData({ regionIndex: index }); return this.state.setFilters({ ...this.state.snapshot().filters, region: this.data.regionKeys[index] || null }); },
+    changePassword() { session.loginPage(this.wxApi, true); },
+    async logout() { if (this.data.logoutPending) return; this.setData({ logoutPending: true }); try { await this.api.logout(); session.expire(this.wxApi); } catch (error) { this.setData({ error: error.message }); } finally { if (this.alive) this.setData({ logoutPending: false }); } },
     open(event) { this.wxApi.navigateTo({ url: '/pages/' + kind + '-detail/index?id=' + encodeURIComponent(event.currentTarget.dataset.id) }); },
     retry() { return this.state.load(this.state.snapshot().items.length === 0); },
     imageError(event) { const index = event.currentTarget.dataset.index; const field = 'image_url'; this.setData({ ['items[' + index + '].'+field]: null }); }
@@ -35,15 +42,32 @@ function createListPage(kind, wxApi) {
 function createDetailPage(kind, wxApi) {
   return {
     data: { kind, detail: null, loading: true, error: '', activeForm: 0, selectedForm: null },
-    onLoad(options) { this.wxApi = wxApi || wx; this.api = runtimeApi(this.wxApi); this.id = options.id; return this.load(); },
-    async load() { this.setData({ loading: true, error: '' }); try { const detail = await this.api.detail(kind, this.id); detail.title = detail.name_display || detail.name_original || detail.name_zh; detail.image_url = this.api.imageUrl(detail); detail.variants = (detail.variants || []).map(v => ({ ...v, image_url: this.api.imageUrl(v) })); detail.numberLabel = kind === 'pokemon' ? '#' + String(detail.dex).padStart(4, '0') : 'No. ' + detail.number; if (kind === 'pokemon') this.setData({ extras: prepareExtra(detail.extra, this.api) }); this.baseImage = detail.image_url; this.setData({ detail, activeForm: 0, selectedForm: detail.forms && detail.forms[0] || null }); } catch (error) { this.setData({ error: error.message }); } finally { this.setData({ loading: false }); } },
+    onLoad(options) { this.alive = true; this.sessionGeneration = session.generation(); this.wxApi = wxApi || wx; this.api = runtimeApi(this.wxApi); this.id = options.id; this.stopSession = session.subscribe(() => { this.alive = false; this.detailRequest?.abort(); this.setData({ detail: null, extras: null, loading: false }); }); return this.load(); },
+    onUnload() { this.alive = false; this.detailRequest?.abort(); if (this.stopSession) this.stopSession(); },
+    async load() {
+      this.setData({ loading: true, error: '' }); const generation = this.sessionGeneration;
+      try {
+        this.detailRequest = this.api.detail(kind, this.id); const detail = await this.detailRequest;
+        if (!this.alive || generation !== session.generation()) return;
+        detail.title = detail.name_display || detail.name_original || detail.name_zh; detail.image_url = this.api.imageUrl(detail);
+        detail.variants = (detail.variants || []).map(v => ({ ...v, image_url: this.api.imageUrl(v) }));
+        detail.numberLabel = kind === 'pokemon' ? '#' + String(detail.dex).padStart(4, '0') : 'No. ' + detail.number;
+        if (kind === 'pokemon') this.setData({ extras: prepareExtra(detail.extra, this.api) });
+        this.baseImage = detail.image_url; this.setData({ detail, activeForm: 0, selectedForm: detail.forms && detail.forms[0] || null });
+      } catch (error) { if (this.alive && generation === session.generation()) this.setData({ error: error.message }); }
+      finally { if (this.alive && generation === session.generation()) this.setData({ loading: false }); }
+    },
     chooseForm(event) { const index = Number(event.currentTarget.dataset.index), form = this.data.detail.forms[index]; this.setData({ activeForm: index, selectedForm: form, 'detail.image_url': index ? this.api.imageUrl(form) : this.baseImage || null }); },
     evolve(event) { const target = event.currentTarget.dataset.dex; if (event.currentTarget.dataset.available) this.wxApi.navigateTo({ url: '/pages/pokemon-detail/index?id=' + target }); },
-    previewImage(event) {
+    async previewImage(event) {
       if (kind !== 'tomica' || !this.data.detail) return;
       const detail = this.data.detail, current = event.currentTarget.dataset.url;
       const urls = [...new Set([detail.image_url, ...(detail.variants || []).map(v => v.image_url)].filter(Boolean))];
-      if (urls.includes(current)) this.wxApi.previewImage({ current, urls });
+      if (!urls.includes(current)) return;
+      if (!urls.some(url => /\/(api\/reference-images|preview\/news-assets)\//.test(url))) { this.wxApi.previewImage({ current, urls }); return; }
+      const generation = session.generation();
+      try { const originals = await Promise.all(urls.map(url => this.api.downloadImage(url))); if (this.alive && generation === session.generation()) this.wxApi.previewImage({ current: originals[urls.indexOf(current)], urls: originals }); }
+      catch (error) { if (this.alive && generation === session.generation()) this.setData({ error: error.message }); }
     },
     chooseExtra(event) {
       const key = event.currentTarget.dataset.key, index = Number(event.detail.value), extras = this.data.extras;

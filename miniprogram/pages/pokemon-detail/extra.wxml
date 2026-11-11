@@ -24,6 +24,6 @@
   </view>
   <view class="section"><view class="section-title">异色对比</view>
     <picker wx:if="{{extras.shinyLabels.length}}" range="{{extras.shinyLabels}}" bindchange="chooseExtra" data-key="shiny"><view class="extra-picker">{{extras.shiny.game}} · {{extras.shiny.form}} ▾</view></picker>
-    <view wx:if="{{extras.shiny}}" class="shiny-pair"><view><image src="{{extras.shiny.normal_url}}" mode="aspectFit"/><view>普通</view></view><view><image src="{{extras.shiny.shiny_url}}" mode="aspectFit"/><view>✦ 异色</view></view></view><view wx:else class="muted">源站暂无这项资料</view>
+    <view wx:if="{{extras.shiny}}" class="shiny-pair"><view><private-image src="{{extras.shiny.normal_url}}" mode="aspectFit"/><view>普通</view></view><view><private-image src="{{extras.shiny.shiny_url}}" mode="aspectFit"/><view>✦ 异色</view></view></view><view wx:else class="muted">源站暂无这项资料</view>
   </view>
 </template>

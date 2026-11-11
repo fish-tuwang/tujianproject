@@ -21,6 +21,23 @@ class Settings(BaseSettings):
     artifact_dir: str = 'artifacts/acceptance'
     redis_url: SecretStr = SecretStr('')
     cache_namespace: str = 'dual-catalog:v2'
+    auth_enabled: bool = True
+    auth_store_path: str = 'artifacts/auth/accounts.sqlite3'
+    auth_cookie_secure: bool = True
+    auth_session_seconds: int = 43200
+    auth_service_token: SecretStr = SecretStr('')
+
+    @field_validator('auth_session_seconds')
+    @classmethod
+    def validate_session_seconds(cls, value):
+        if not 60 <= value <= 604800:
+            raise ValueError('session lifetime must be between 60 seconds and 7 days')
+        return value
+
+    @property
+    def auth_path(self):
+        path = Path(self.auth_store_path)
+        return path if path.is_absolute() else ROOT / path
 
     @field_validator('source_interval_seconds')
     @classmethod

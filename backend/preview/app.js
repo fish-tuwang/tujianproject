@@ -86,9 +86,12 @@ function bindImages(root) {
 function typeTags(values) { return (values || []).map(type=>`<span class="type-tag type-${escapeHTML(type)}">${escapeHTML(type)}</span>`).join(''); }
 async function request(path, params = {}, signal) {
   const query = new URLSearchParams(Object.entries(params).filter(([,v])=>v!==null&&v!==undefined&&v!==''));
-  const response = await fetch('/api/' + path + (query.size?'?'+query:''), {signal,priority:'high'});
+  const response = await fetch('/api/' + path + (query.size?'?'+query:''), {signal,priority:'high',credentials:'same-origin'});
   const value = await response.json();
-  if (!response.ok) throw Object.assign(new Error(value.message || '连接暂时中断'), {status:response.status});
+  if (!response.ok) {
+    if(response.status===401||value.code==='PASSWORD_CHANGE_REQUIRED')window.CatalogAuth?.expire(value.code);
+    throw Object.assign(new Error(value.message || '连接暂时中断'), {status:response.status,code:value.code});
+  }
   return value;
 }
 
@@ -352,4 +355,5 @@ $('image-zoom-in').onclick=()=>setImageScale(imageScale+.5);$('image-zoom-out').
 populate($('type'),types.map(v=>[v,v]),'全部属性');window.addEventListener('hashchange',route);
 window.addEventListener('pagehide',()=>rememberCatalogList());
 fetch('/health/ready').then(r=>{$('connection').textContent=r.ok?'图鉴服务已连接':'图鉴正在准备';}).catch(()=>$('connection').textContent='暂时离线');
-browseObserver.observe($('scroll-sentinel'));route();
+browseObserver.observe($('scroll-sentinel'));
+if(window.CatalogAuth)window.CatalogAuth.ready.then(()=>{if(!window.CatalogAuth.expired)route();});else route();

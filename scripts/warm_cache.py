@@ -130,7 +130,10 @@ def warm_once(settings, base):
                   'failed': 0, 'errors': [], 'origins': {}, 'details_total': len(details),
                   'details_ready': 0, 'details_failed': 0}
         publish(report)
-        with httpx.Client(timeout=90) as client:
+        service_token = settings.auth_service_token.get_secret_value()
+        if service_token and urlsplit(base).hostname not in {'127.0.0.1', 'localhost', '::1'}:
+            raise ValueError('internal cache credentials require a loopback API')
+        with httpx.Client(timeout=90, headers={'X-Catalog-Service': service_token} if service_token else {}) as client:
             # Populate complete detail JSON before the slower original-image work.
             for endpoint in details:
                 try:

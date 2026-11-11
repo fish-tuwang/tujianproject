@@ -10,7 +10,7 @@ from backend.app.schemas import SourceCandidate
 
 @pytest.fixture
 def client(session):
-    app = create_app(Settings(_env_file=None, database_url='sqlite://', admin_token='test-admin'))
+    app = create_app(Settings(_env_file=None, database_url='sqlite://', admin_token='test-admin', auth_enabled=False))
     factory = sessionmaker(session.get_bind(), expire_on_commit=False)
     def dependency():
         with factory() as value:
@@ -63,7 +63,7 @@ def test_overrides_effective_and_revision(client,session):
 
 
 def test_admin_disabled():
-    app=create_app(Settings(_env_file=None,database_url='sqlite://',admin_token=''))
+    app=create_app(Settings(_env_file=None,database_url='sqlite://',admin_token='',auth_enabled=False))
     with TestClient(app) as client:
         assert client.get('/api/admin/runs').status_code==503
 

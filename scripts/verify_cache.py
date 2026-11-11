@@ -30,7 +30,7 @@ def main():
         client.delete(cache.key(key))
     metrics = []
     base = 'http://127.0.0.1:8092'
-    with httpx.Client(timeout=60) as http:
+    with httpx.Client(timeout=60, headers={'X-Catalog-Service': settings.auth_service_token.get_secret_value()}) as http:
         payload = http.get(base + '/api/pokemon/1').json()
         endpoints = ['/api/tomica?limit=20&page=1', '/api/tomica?limit=20&page=2', '/api/pokemon?limit=12', '/api/pokemon/1', '/api/tomica/filters', payload['preview_image_url']]
         for endpoint in endpoints:

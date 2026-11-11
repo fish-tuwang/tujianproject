@@ -26,7 +26,7 @@ def main():
         api_key = f'api:tomica:{revision}:list-v4:' + cache.signature(query.model_dump())
         cache.client.delete(cache.key(f'rows:tomica:{revision}'), cache.key(api_key))
         results, bodies = [], []
-        with httpx.Client(timeout=90) as client:
+        with httpx.Client(timeout=90, headers={'X-Catalog-Service': settings.auth_service_token.get_secret_value()}) as client:
             for label in ['cold', 'warm']:
                 start = time.perf_counter()
                 response = client.get('http://127.0.0.1:8092/api/tomica', params={'q': query.q, 'page': 1, 'limit': 21})

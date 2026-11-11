@@ -1,11 +1,12 @@
+const browserAuth=require('./browser-auth.cjs');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 async function main(){
-  const base=process.env.PREVIEW_URL||'http://117.72.11.77',local=process.argv.includes('--local'),output=path.resolve('artifacts/acceptance');
+  const base=process.env.PREVIEW_URL||'https://117.72.11.77',local=process.argv.includes('--local'),output=path.resolve('artifacts/acceptance');
   const report={status:'fail',mode:local?'local frontend with live read-only API':'deployed public frontend',assertions:0,checks:[],errors:[]};
   const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
-  const page=await browser.newPage({viewport:{width:1440,height:1050}});page.on('pageerror',e=>report.errors.push(e.message));
-  if(local)await page.route('**/preview/**',async route=>{const file=new URL(route.request().url()).pathname.split('/').pop()||'index.html';if(['index.html','app.js','pokemon-details.js','style.css'].includes(file))await route.fulfill({path:path.resolve('backend/preview',file),contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html'});else await route.continue();});
+  const page=await browser.newPage({viewport:{width:1440,height:1050},...browserAuth.contextOptions()});page.on('pageerror',e=>report.errors.push(e.message));
+  if(local)await page.route('**/preview/**',async route=>{const file=new URL(route.request().url()).pathname.split('/').pop()||'index.html';if(['index.html','app.js','pokemon-details.js','style.css','auth-client.js'].includes(file))await route.fulfill({path:path.resolve('backend/preview',file),contentType:file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html'});else await route.continue();});
   const check=(name,value)=>{assert.ok(value,name);report.assertions++;report.checks.push(name);console.log('PASS '+name);};
   const centered=async(parent,child)=>page.locator(parent).evaluate((p,selector)=>{const a=p.getBoundingClientRect(),b=p.querySelector(selector).getBoundingClientRect();return Math.abs(a.x+a.width/2-b.x-b.width/2)<.6&&Math.abs(a.y+a.height/2-b.y-b.height/2)<.6;},child);
   const loaded=async selector=>page.waitForFunction(selector=>{const i=document.querySelector(selector);return i&&i.complete&&i.naturalWidth>0;},selector,{timeout:90000});

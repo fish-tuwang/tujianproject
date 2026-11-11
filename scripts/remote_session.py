@@ -21,6 +21,7 @@ def main():
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(PinnedHostKey())
     client.connect(HOST, username='root', password=getpass.getpass('SSH password: '), look_for_keys=False, allow_agent=False, timeout=20)
+    client.get_transport().set_keepalive(20)
     print('CONNECTED; send JSON commands', flush=True)
     try:
         for line in sys.stdin:

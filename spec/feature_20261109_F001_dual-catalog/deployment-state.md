@@ -56,3 +56,5 @@
 2026-11-11发布0.9.1：按用户新确认的Wiki全国编号分段替代跨版本合并地区；1025种各归一类，新增未确认808–809、洗翠899–905单列，页面显示范围和数量。新索引版本3813cf3475e7eb97b575fc66644fab9cede98eab97c5042f454558bb5c17e6f2，11分类首批Redis全部命中。发布operation_id=f0d1ddb0e47d4e6d8e1d959dfeb9b2e5，正式/演示0004健康、原插件不变、无迁移/导入，API及预热重启0次/OOM=false；Linux完整152项、Node20项、公网61项及历史29/27项分别通过。详见../feature_20261111_F001_ui-regions/wiki-region-classification-fix.md。
 
 2026-11-11发布0.9.2：移除多美卡车型详情的可点击来源入口，小程序同页不显示来源URL，更新时间及后台来源字段保留。发布operation_id=b8ebaec129b1476192b40bbbc0a59689，双API0004健康、原插件不变、无迁移/导入，API及预热重启0次/OOM=false；公网专项8项及图片/搜索27项、状态恢复29项分别通过。详见tomica-source-link-removal.md。
+
+2026-11-11发布0.10.0：私有账户peyro-gogogo、新登录撤销旧会话、首次改密及无注册入口上线；图鉴API、原图、月刊和私有脚本均先鉴权。可信IP HTTPS及每12小时续签已启用，HTTP跳转HTTPS，失败发布维持503门禁。独立SQLite认证库持久化，Redis与0004图鉴库不变，无迁移/导入；operation_id=a9e667eb60194fe0a54b0be24a6685b0，镜像sha256:f7801d96cf91aeb211632d52b06fafda899d337d835d6989ca32a21316e94e8b，六进程重启0/OOM=false、原插件不变。Linux实际镜像173项、Node28项、公网认证34项、历史27/29/61项及最终运维18项通过；一次并行手机位置失败与后续复核边界如实记录于../feature_20261111_F002_private-auth/acceptance.md。最终临时凭证已重置、测试会话撤销，服务器明文副本删除。

@@ -77,12 +77,17 @@ def main():
         return health()
 
     old = {env: (ROOT / env).read_text() for env, _ in PROJECTS}
+    private_mode = (ROOT / 'tls/gates').is_dir() or any('AUTH_ENABLED=true' in content for content in old.values())
     previous = {env: next((line.split('=', 1)[1] for line in value.splitlines() if line.startswith('APP_IMAGE=')), 'unknown') for env, value in old.items()}
     before = plugins()
-    paths = ['Dockerfile.release', 'backend/app/audit.py', 'backend/app/repository.py', 'backend/app/sync/service.py', 'backend/app/worker.py', 'deploy/preview-nginx.conf']
+    paths = ['Dockerfile.release', 'backend/app/audit.py', 'backend/app/repository.py', 'backend/app/sync/service.py', 'backend/app/worker.py', 'deploy/preview-nginx.conf', 'backend/app/auth_store.py', 'backend/app/auth.py', 'backend/app/auth_cli.py']
     hashes = {name: hashlib.sha256((ROOT / 'app' / name).read_bytes()).hexdigest() for name in paths}
     emit('deployment_started', previous_images=previous, reason=args.reason, source_sha256=hashes)
     try:
+        if private_mode:
+            from scripts.prepare_auth import set_gate
+            set_gate('closed')
+            emit('private_gate_closed')
         stage('stop_cache_warmer', compose('.env', 'dual-catalog') + ['stop', 'cache-warmer'])
         build_log = ROOT / ('build-' + args.image.split(':')[1] + '.log')
         with build_log.open('w') as output:
@@ -91,6 +96,8 @@ def main():
         label = stage('check_image', ['docker', 'image', 'inspect', '--format', '{{index .Config.Labels "org.opencontainers.image.version"}}', args.image], capture_output=True, text=True).stdout.strip()
         if label != args.image.split(':')[1]:
             raise RuntimeError('image version mismatch')
+        if private_mode:
+            stage('test_private_image', ['docker', 'run', '--rm', '--network', 'none', '--memory', '384m', '--pids-limit', '128', '-e', 'PYTHONDONTWRITEBYTECODE=1', '--entrypoint', 'python', args.image, '-m', 'pytest', '-q', '-p', 'no:cacheprovider'])
         for env, _ in PROJECTS:
             path = ROOT / env
             path.write_text('\n'.join('APP_IMAGE=' + args.image if line.startswith('APP_IMAGE=') else line for line in old[env].splitlines()) + '\n')
@@ -100,6 +107,9 @@ def main():
         stage('start_cache_warmer', compose('.env', 'dual-catalog') + ['up', '-d', 'cache-warmer'])
         if before != plugins():
             raise RuntimeError('unrelated plugin container changed')
+        if private_mode:
+            set_gate('open')
+            emit('private_gate_opened')
         emit('deployment_finished', health=ready, plugins_unchanged=True, database_migration=False, data_import=False)
         report = {'status': 'pass', 'image': args.image, 'operation_id': context['operation_id'], 'health': ready, 'plugins_unchanged': True, 'database_migration': False, 'data_import': False}
         (ROOT / 'data/artifacts/acceptance/logging-deployment.json').write_text(json.dumps(report, indent=2))

@@ -1,7 +1,8 @@
+const browserAuth=require('./browser-auth.cjs');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {chromium,webkit,devices}=require('playwright');
 (async()=>{
- const local=process.argv.includes('--local'),base=process.env.PREVIEW_URL||'http://117.72.11.77',output=path.resolve('artifacts/acceptance');
+ const local=process.argv.includes('--local'),base=process.env.PREVIEW_URL||'https://117.72.11.77',output=path.resolve('artifacts/acceptance');
  const report={status:'fail',mode:local?'local frontend with live read-only API':'public',assertions:0,checks:[],errors:[],profiles:[]};
  const check=(name,ok)=>{assert.ok(ok,name);report.assertions++;report.checks.push(name);console.log('PASS '+name);};
  const snap=async p=>{await settle(p);return p.evaluate(()=>({kind:state.kind,query:{...state.query},page:state.page,pageSize:state.kind==='tomica'?state.pageSize:null,ids:state.items.map(i=>i.dex||i.id),scrollY}));};
@@ -10,11 +11,11 @@ const {chromium,webkit,devices}=require('playwright');
  const scrollNextBatch=async(p,count)=>{await p.waitForFunction(()=>!restoringBrowse);await p.evaluate(()=>window.scrollBy(0,-200));await p.locator('#scroll-sentinel').scrollIntoViewIfNeeded();await p.evaluate(()=>window.scrollBy(0,200));await ready(p,'pokemon',count);};
  const position=async(p,top)=>{try{await p.waitForFunction(top=>Math.abs(scrollY-top)<=3,top,{timeout:10000});}catch(e){console.error(JSON.stringify(await p.evaluate(top=>({expected:top,actual:scrollY,saved:readCatalogList(state.kind),height:document.documentElement.scrollHeight,viewport:innerHeight,restoring:restoringBrowse,news:document.getElementById('news-sidebar').getBoundingClientRect().height}),top)));throw e;}};
  const settle=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
- const overlay=async p=>{if(local)await p.route('**/preview/**',async route=>{const name=new URL(route.request().url()).pathname.split('/').pop()||'index.html';if(['app.js','style.css','theme.css','index.html','pokemon-details.js'].includes(name))await route.fulfill({path:path.resolve('backend/preview',name),contentType:name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});else await route.continue();});};
+ const overlay=async p=>{if(local)await p.route('**/preview/**',async route=>{const name=new URL(route.request().url()).pathname.split('/').pop()||'index.html';if(['app.js','style.css','theme.css','index.html','pokemon-details.js','auth-client.js'].includes(name))await route.fulfill({path:path.resolve('backend/preview',name),contentType:name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':'text/html'});else await route.continue();});};
  for(const profile of [{name:'desktop',engine:chromium,options:{viewport:{width:1440,height:1000}}},{name:'webkit-mobile',engine:webkit,options:devices['iPhone 14 Pro Max']}].filter(p=>!process.argv.includes('--mobile')||p.name==='webkit-mobile')){
   const b=await profile.engine.launch(profile.engine===chromium?{headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{headless:true});
   try{
-   const context=await b.newContext(profile.options),p=await context.newPage();await overlay(p);p.on('pageerror',e=>report.errors.push(profile.name+': '+e.message));
+   const context=await b.newContext({...profile.options,...browserAuth.contextOptions()}),p=await context.newPage();await overlay(p);p.on('pageerror',e=>report.errors.push(profile.name+': '+e.message));
    const tap=locator=>profile.options.hasTouch?locator.tap():locator.click();
    await p.goto(base+'/preview/?catalog=tomica&v=0.6.3',{waitUntil:'domcontentloaded'});await ready(p,'tomica');
    await p.locator('#year').selectOption('2025');await p.waitForFunction(()=>!state.loading&&state.query.year==='2025');await p.locator('.catalog-card').nth(15).scrollIntoViewIfNeeded();let before=await snap(p);

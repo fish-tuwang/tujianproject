@@ -1,0 +1,1 @@
+.login-card{padding:36rpx;background:white;border-radius:32rpx;border:1rpx solid #e4ebf5}.login-card .heading{font-size:46rpx}.login-error{font-size:24rpx;color:#bb755c;min-height:42rpx;margin:18rpx 0}.login-footer{font-size:20rpx;text-align:center;color:#94a5b5;margin-top:34rpx}.logout-button{background:transparent;color:#6a88a0;font-size:24rpx;margin-top:16rpx}

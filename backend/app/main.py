@@ -71,6 +71,8 @@ def create_app(settings):
 
     app.mount('/admin', StaticFiles(directory=ROOT / 'backend/admin', html=True, check_dir=False), name='admin')
     app.mount('/preview', StaticFiles(directory=ROOT / 'backend/preview', html=True, check_dir=False), name='preview')
+    from .auth import install_auth
+    install_auth(app, settings)
     return app
 
 

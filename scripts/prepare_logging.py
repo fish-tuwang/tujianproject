@@ -86,7 +86,8 @@ def rotation():
     collection = str(LOGS / 'collection.jsonl') + ' {\n' + common + '    create 0640\n}\n'
     deploy = str(LOGS / 'deploy.jsonl') + ' {\n' + common.replace('maxsize 20M', 'maxsize 5M').replace('rotate 14', 'rotate 30') + '    create 0600 root root\n}\n'
     config = ROOT / 'logrotate.conf'
-    config.write_text(access + collection + deploy)
+    auth = str(LOGS / 'auth.jsonl') + ' {\n' + common.replace('maxsize 20M', 'maxsize 5M').replace('rotate 14', 'rotate 30') + '    create 0600\n}\n'
+    config.write_text(access + collection + deploy + auth)
     config.chmod(0o600)
     units = Path('/etc/systemd/system')
     (units / 'dual-catalog-logrotate.service').write_text('[Unit]\nDescription=Rotate dual catalog private logs\n[Service]\nType=oneshot\nExecStart=/usr/sbin/logrotate --state /opt/dual-catalog/logrotate.status /opt/dual-catalog/logrotate.conf\n')
@@ -100,11 +101,11 @@ def main():
     LOGS.mkdir(mode=0o751, parents=True, exist_ok=True)
     os.chown(LOGS, 10001, 10001)
     LOGS.chmod(0o751)
-    for name in ['access', 'collection', 'deploy']:
+    for name in ['access', 'collection', 'deploy', 'auth']:
         path = LOGS / (name + '.jsonl')
         path.touch(exist_ok=True)
-        path.chmod(0o600 if name == 'deploy' else 0o640)
-        os.chown(path, 10001 if name == 'collection' else 0, 10001 if name == 'collection' else 0)
+        path.chmod(0o600 if name in {'deploy', 'auth'} else 0o640)
+        os.chown(path, 10001 if name in {'collection', 'auth'} else 0, 10001 if name in {'collection', 'auth'} else 0)
     configure_audit(LOGS, channels={'deploy'})
     actor = {'actor': getpass.getuser(), 'actor_ip': (os.environ.get('SSH_CONNECTION', '').split() or [None])[0]}
     audit('logging_setup_started', channel='deploy', **actor)

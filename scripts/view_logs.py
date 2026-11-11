@@ -31,7 +31,7 @@ def records(directory, kind):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('kind', choices=['access', 'collection', 'deploy'])
+    parser.add_argument('kind', choices=['access', 'collection', 'deploy', 'auth'])
     parser.add_argument('--directory', type=Path, default=Path('/opt/dual-catalog/data/artifacts/logs'))
     parser.add_argument('--since', type=parse_time, help='ISO时间；省略时区按北京时间')
     parser.add_argument('--ip')
