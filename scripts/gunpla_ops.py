@@ -70,10 +70,11 @@ def account_fingerprints(root, image):
 
 def install_timer(root, units=Path('/etc/systemd/system')):
     service = '[Unit]\nDescription=Synchronize private Gunpla models\nAfter=network-online.target docker.service\n[Service]\nType=oneshot\nEnvironmentFile=' + str(root / '.env') + '\nExecStart=/usr/bin/docker run --rm --name dual-catalog-gunpla-sync --network host --memory 384m --pids-limit 128 --user 10001:10001 --env-file ' + str(root / '.env') + ' -v ' + str(artifact_path(root, '.env')) + ':/app/artifacts --entrypoint python ${APP_IMAGE} -m scripts.sync_gunpla --mode incremental --directory /app/artifacts/gunpla-source\nTimeoutStartSec=10800\nTimeoutStopSec=60\nExecStopPost=-/usr/bin/docker stop dual-catalog-gunpla-sync\n'
-    timer = '[Unit]\nDescription=Check official Gunpla models daily\n[Timer]\nOnCalendar=*-*-* 03:30:00 Asia/Shanghai\nPersistent=true\n[Install]\nWantedBy=timers.target\n'
+    timer = '[Unit]\nDescription=Check official Gunpla models weekly\n[Timer]\nOnCalendar=Sun *-*-* 03:30:00 Asia/Shanghai\nPersistent=true\n[Install]\nWantedBy=timers.target\n'
     for name, text in [('dual-catalog-gunpla-sync.service', service), ('dual-catalog-gunpla-sync.timer', timer)]:
         path = units / name; path.write_text(text); path.chmod(0o644)
     subprocess.run(['systemd-analyze', 'verify', str(units / 'dual-catalog-gunpla-sync.service'), str(units / 'dual-catalog-gunpla-sync.timer')], check=True, capture_output=True)
-    subprocess.run(['systemd-analyze', 'calendar', '*-*-* 03:30:00 Asia/Shanghai'], check=True, capture_output=True)
+    subprocess.run(['systemd-analyze', 'calendar', 'Sun *-*-* 03:30:00 Asia/Shanghai'], check=True, capture_output=True)
     subprocess.run(['systemctl', 'daemon-reload'], check=True)
     subprocess.run(['systemctl', 'enable', '--now', 'dual-catalog-gunpla-sync.timer'], check=True)
+    subprocess.run(['systemctl', 'restart', 'dual-catalog-gunpla-sync.timer'], check=True)

@@ -241,8 +241,9 @@ def schedule_suite(settings,checks):
     from apscheduler.schedulers.background import BackgroundScheduler
     with isolated_database(settings) as (engine,factory):
         current=datetime(2026,11,9,2,tzinfo=ZoneInfo('Asia/Shanghai'))
-        checks.check('daily trigger is 03:00 Beijing',triggers()['daily'].get_next_fire_time(None,current).hour==3)
-        checks.check('weekly trigger is Sunday 04:00 Beijing',triggers()['weekly'].get_next_fire_time(None,current).hour==4)
+        configured=triggers();first=configured['tomica'].get_next_fire_time(None,current)
+        checks.check('Tomica trigger is every 48 hours at 03:00 Beijing',first.hour==3 and configured['tomica'].get_next_fire_time(first,first)-first==timedelta(days=2))
+        checks.check('Pokemon and legacy daily or weekly triggers are disabled',set(configured)=={'tomica'})
         for mode in ['incremental','full']:
             event=threading.Event();scheduler=BackgroundScheduler(timezone='Asia/Shanghai')
             def trigger():enqueue_scheduled(factory,settings,'tomica',mode);event.set()

@@ -102,12 +102,12 @@ def test_export_outside_project_or_without_products_is_rejected(project):
         gunpla_ops.backup_and_freeze(project, 'unused', source)
 
 
-def test_daily_timer_uses_current_image_and_only_owns_its_sync_container(project, tmp_path, monkeypatch):
+def test_weekly_timer_uses_current_image_and_only_owns_its_sync_container(project, tmp_path, monkeypatch):
     units = tmp_path / 'units'; units.mkdir()
     monkeypatch.setattr(gunpla_ops.subprocess, 'run', lambda *a, **k: None)
     gunpla_ops.install_timer(project, units)
     service = (units / 'dual-catalog-gunpla-sync.service').read_text()
     timer = (units / 'dual-catalog-gunpla-sync.timer').read_text()
     assert '${APP_IMAGE}' in service and '--mode incremental' in service
-    assert '03:30:00 Asia/Shanghai' in timer and 'Persistent=true' in timer
+    assert 'OnCalendar=Sun *-*-* 03:30:00 Asia/Shanghai' in timer and 'Persistent=true' in timer
     assert 'fish-search' not in service and 'qq-summary-bot' not in service

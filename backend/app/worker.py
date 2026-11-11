@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 from alembic import command
 from alembic.config import Config
 from apscheduler.schedulers.blocking import BlockingScheduler
-from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy import create_engine, select
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
@@ -58,14 +58,15 @@ def enqueue_scheduled(factory, settings, source, mode):
 
 
 def triggers():
-    return {'daily': CronTrigger(hour=3, minute=0, timezone='Asia/Shanghai'), 'weekly': CronTrigger(day_of_week='sun', hour=4, minute=0, timezone='Asia/Shanghai')}
+    # Keep a fixed 48-hour phase across restarts and month boundaries.
+    anchor = datetime(2026, 1, 1, 3, tzinfo=ZoneInfo('Asia/Shanghai'))
+    return {'tomica': IntervalTrigger(days=2, start_date=anchor, timezone='Asia/Shanghai')}
 
 
 def build_scheduler(factory, settings):
     scheduler = BlockingScheduler(timezone='Asia/Shanghai', job_defaults={'coalesce': True, 'max_instances': 1, 'misfire_grace_time': 3600})
-    for source in ['tomica', 'pokemon']:
-        for name, trigger in triggers().items():
-            scheduler.add_job(enqueue_scheduled, trigger, args=[factory, settings, source, 'full' if name == 'weekly' else 'incremental'], id=f'{source}-{name}', replace_existing=True)
+    for source, trigger in triggers().items():
+        scheduler.add_job(enqueue_scheduled, trigger, args=[factory, settings, source, 'incremental'], id=f'{source}-incremental', replace_existing=True)
     return scheduler
 
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import pytest
@@ -9,7 +9,7 @@ from backend.app.models import SourcePage, SyncRun, SyncItem, TomicaModel, Sourc
 from backend.app.repository import CatalogError
 from backend.app.sources.base import FetchResult
 from backend.app.sync.service import SyncService
-from backend.app.worker import enqueue_scheduled, triggers
+from backend.app.worker import build_scheduler, enqueue_scheduled, triggers
 
 class Lease:
     connection = None
@@ -89,10 +89,23 @@ def test_failure_preserves_old_data(session):
     assert session.scalar(select(SyncItem)).next_retry_at is not None
 
 
-def test_timezone_trigger():
-    date = datetime(2026, 11, 9, 2, tzinfo=ZoneInfo('Asia/Shanghai'))
-    assert triggers()['daily'].get_next_fire_time(None, date).hour == 3
-    assert triggers()['weekly'].get_next_fire_time(None, date).weekday() == 6
+@pytest.mark.parametrize('date', [datetime(2026, 11, 11, 21), datetime(2026, 1, 30, 22), datetime(2026, 12, 30, 22)])
+def test_tomica_keeps_exact_two_day_phase_across_months_and_restarts(date):
+    date = date.replace(tzinfo=ZoneInfo('Asia/Shanghai'))
+    configured = triggers()
+    assert set(configured) == {'tomica'}
+    first = configured['tomica'].get_next_fire_time(None, date)
+    second = configured['tomica'].get_next_fire_time(first, first)
+    assert first.hour == second.hour == 3 and first.minute == second.minute == 0
+    assert second - first == timedelta(days=2)
+    assert triggers()['tomica'].get_next_fire_time(None, first + timedelta(minutes=1)) == second
+
+
+def test_scheduler_only_enqueues_tomica_incremental_without_daily_weekly_or_pokemon_jobs():
+    scheduler = build_scheduler(None, Settings(_env_file=None))
+    jobs = scheduler.get_jobs()
+    assert len(jobs) == 1 and jobs[0].id == 'tomica-incremental'
+    assert jobs[0].args[2:] == ('tomica', 'incremental')
 
 
 def test_model_cover_follows_source_order_not_random_uuid(session):

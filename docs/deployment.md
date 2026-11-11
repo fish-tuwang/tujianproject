@@ -2,7 +2,7 @@
 
 生产使用现有 Ubuntu 24.04 / PostgreSQL 18；代码位于 `/opt/dual-catalog/app`，数据库配置在 `/opt/dual-catalog/.env`（0600）中，永不随包覆盖。应用角色不能建库，迁移只写本项目库。
 
-运行三类进程：API、队列worker、scheduler。scheduler每天北京时间03:00增量、周日04:00全量。生产API绑定127.0.0.1:8092；独立演示API绑定127.0.0.1:8093，仅供隔离验收。浏览器预览由本项目独立nginx容器监听80/443，HTTP跳转HTTPS，反向代理生产API8092，访问 https://117.72.11.77/preview/ 登录查看真实采集资料。微信正式域名另配。演示使用dual_catalog_demo库，不能拿它证明来源完整性。
+运行三类进程：API、队列worker、scheduler。scheduler仅为多美卡按固定48小时间隔、北京时间03:00安排增量检查，不再安排每日或每周全量任务，也不再定时抓取宝可梦。高达由独立timer每周日北京时间03:30增量检查。生产API绑定127.0.0.1:8092；独立演示API绑定127.0.0.1:8093，仅供隔离验收。浏览器预览由本项目独立nginx容器监听80/443，HTTP跳转HTTPS，反向代理生产API8092，访问 https://117.72.11.77/preview/ 登录查看真实采集资料。微信正式域名另配。演示使用dual_catalog_demo库，不能拿它证明来源完整性。
 
 服务器命令从项目路径运行，使用以下Compose参数：
 
@@ -68,11 +68,13 @@ Redis缓存：本项目独立systemd服务dual-catalog-redis，127.0.0.1:6382，
 升级命令（仅本项目，显式迁移模式）：
 
 ```sh
-python3 /opt/dual-catalog/app/scripts/deploy_release.py --image dual-catalog:0.11.1 --reason 'Gunpla model catalog with complete product galleries' --migrate --import-gunpla /opt/dual-catalog/data/artifacts/gunpla-source/catalog.json
+python3 /opt/dual-catalog/app/scripts/deploy_release.py --image dual-catalog:0.11.2 --reason 'Gunpla model catalog with complete product galleries' --migrate --import-gunpla /opt/dual-catalog/data/artifacts/gunpla-source/catalog.json
 ```
 
 发布器先对实际镜像禁网测试，停本项目写入并在backups/gunpla-时间目录冻结采集快照、备份两套PostgreSQL和SQLite鉴权库，随后两库升级0005、仅生产导入模型。已有账号指纹须一致。迁移失败保留maintenance关闭与备份，不自动回退0004镜像或降库；按日志修复后用0005镜像继续恢复，再运行prepare_auth.py gate --mode open检查后开放。
 
-每日上海03:30由dual-catalog-gunpla-sync.timer启动增量采集，镜像取当前APP_IMAGE。每来源串行2秒，HTML检查点与文件锁避免重复全量，7天重核详情，单项失败保留旧记录。覆盖报告在data/artifacts/gunpla-source/catalog.json，status=running/partial不代表完整。原始HTML仅私有目录保存。
+每周日上海03:30由dual-catalog-gunpla-sync.timer启动增量采集，镜像取当前APP_IMAGE。每来源串行2秒，HTML检查点与文件锁避免重复全量，7天重核详情，单项失败保留旧记录。覆盖报告在data/artifacts/gunpla-source/catalog.json，status=running/partial不代表完整。原始HTML仅私有目录保存。
 
 发布只等待最多180秒的首屏封面、规格图标与样例图库预热；完整封面/图库由已有cache-warmer在后台继续。磁盘缓存30天、Redis热点24小时，不清空旧图片。通过systemctl list-timers dual-catalog-gunpla-sync.timer及docker logs --tail 2 dual-catalog-cache-warmer-1核对真实进度。公网入口/preview/gunpla.html沿用私有登录与可信HTTPS；微信正式发布仍待AppID和域名。
+
+0.11.2采集频率：多美卡以2026-01-01 03:00为固定相位每48小时执行，跨月及重启均不重置间隔，2026-11-11部署时核对下次为2026-11-13 03:00（北京时间）。高达改为每周日03:30，当次核对下次为2026-11-15 03:30；systemd timer通过install_timer写入并重启生效，未来重装不会恢复为每日。宝可梦自动任务停用；当前无待执行/运行任务及待重试项。手动管理命令、历史资料与图片缓存预热保留。服务器独立执行，不依赖用户电脑或Codex后台在线。
