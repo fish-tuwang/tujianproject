@@ -2,6 +2,8 @@
 
 Tomica 多美卡与宝可梦全国图鉴：微信原生四页、可点击浏览器预览、FastAPI查询与管理、PostgreSQL、独立采集和定时队列。
 
+宝可梦地区按Wiki全国编号分段展示，每种只属于一个分类；洗翠和未确认单列，全国1025种均保留。支持地区、属性、名称联合查询和滚动加载。规则与验收见[地区分类修正](spec/feature_20261111_F001_ui-regions/wiki-region-classification-fix.md)。
+
 ## 开发
 
 在项目根创建Python虚拟环境，安装requirements.lock；`npm ci`安装客户端验证依赖。复制.env.example为本地.env并调整本地配置。

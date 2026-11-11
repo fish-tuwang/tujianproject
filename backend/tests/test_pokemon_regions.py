@@ -18,15 +18,22 @@ def seed_regions(session):
     return repo
 
 
-def test_regional_members_overlap_and_include_current_version_expansions():
+def test_wiki_regions_partition_the_full_national_catalog_without_overlap():
     data = region_metadata()
-    assert len(data['items']) == 10
-    assert data['definition'] == '同地区各版本图鉴合并收录'
-    assert 25 in region_dexes('kanto') & region_dexes('paldea')
-    assert 809 in region_dexes('kanto')  # Let's Go addition, not generation ranges.
-    assert 1000 not in region_dexes('kanto') and 1000 in region_dexes('kalos')
+    assert len(data['items']) == 11
+    assert data['definition'] == '按 Wiki 全国图鉴编号分段归类'
+    all_dexes = [dex for r in data['items'] for dex in region_dexes(r['key'])]
+    assert len(all_dexes) == len(set(all_dexes)) == 1025
+    assert sorted(all_dexes) == list(range(1, 1026))
+    assert 25 in region_dexes('kanto') and 25 not in region_dexes('paldea')
+    assert region_dexes('unknown') == {808, 809}
+    assert 809 not in region_dexes('kanto') | region_dexes('alola')
+    assert region_dexes('hisui') == set(range(899, 906))
+    assert 899 not in region_dexes('galar')
+    assert len(region_dexes('kalos')) == 72 and 1000 not in region_dexes('kalos')
     assert 1000 in region_dexes('paldea')
-    assert {'lumiose-city', 'hyperspace'} <= {p['name'] for p in next(r for r in data['items'] if r['key'] == 'kalos')['pokedexes']}
+    assert next(r for r in data['items'] if r['key'] == 'johto')['national_range'] == [152, 251]
+    assert all(r['source_url'].startswith('https://wiki.52poke.com/') for r in data['items'])
     assert all('dexes' not in r and r['species_count'] > 0 for r in data['items'])
     data['items'][0]['name'] = 'changed'
     assert region_metadata()['items'][0]['name'] == '关都'
@@ -40,21 +47,13 @@ def test_region_query_normalizes_and_rejects_unknown():
         PokemonQuery(region='somewhere')
 
 
-def test_index_builder_uses_national_species_not_regional_entry_numbers(tmp_path, monkeypatch):
-    from types import SimpleNamespace
+def test_index_builder_is_offline_and_ignores_collection_time_in_cache_version():
     from backend.app import pokemon_regions as module
-    # Isolate downloaded fixture writes; the builder still consumes source-shaped JSON.
-    monkeypatch.setattr(module, '__file__', str(tmp_path / 'backend' / 'app' / 'pokemon_regions.py'))
-    calls = []
-    def get(url):
-        calls.append(url)
-        value = {'pokedexes': [{'name': 'test', 'url': module.BASE + 'pokedex/2/'}]} if '/region/' in url else {'pokemon_entries': [{'entry_number': 1, 'pokemon_species': {'url': module.BASE + 'pokemon-species/25/'}}, {'entry_number': 2, 'pokemon_species': {'url': module.BASE + 'pokemon-species/25/'}}], 'version_groups': []}
-        return SimpleNamespace(raise_for_status=lambda: None, json=lambda: value)
-    a = module.build_region_index(SimpleNamespace(get=get), 'date-one')
-    b = module.build_region_index(SimpleNamespace(get=get), 'date-two')
-    assert all(r['dexes'] == [25] for r in a['regions'])
+    a = module.build_region_index('date-one')
+    b = module.build_region_index('date-two')
+    assert next(r for r in a['regions'] if r['key'] == 'kanto')['dexes'] == list(range(1, 152))
     assert a['index_version'] == b['index_version']
-    assert calls.count(module.BASE + 'pokedex/2/') == 2  # Once per complete build.
+    assert a['schema_version'] == 2
 
 
 def test_region_cursor_invalidates_when_the_offline_index_changes(session, monkeypatch):
@@ -70,8 +69,11 @@ def test_region_attribute_and_search_intersect_without_mutating_snapshot(session
     repo = seed_regions(session)
     before = repo.catalog_rows('pokemon')
     assert [i['dex'] for i in repo.list_pokemon(PokemonQuery(region='kanto'))['items']] == [1, 25, 54, 133]
-    result = repo.list_pokemon(PokemonQuery(region='paldea', type='电', q='皮卡'))
+    result = repo.list_pokemon(PokemonQuery(region='kanto', type='电', q='皮卡'))
     assert result['total'] == 1 and result['items'][0]['dex'] == 25
+    assert repo.list_pokemon(PokemonQuery(region='paldea', q='皮卡'))['total'] == 0
+    assert repo.list_pokemon(PokemonQuery(region='kalos', q='赛富豪'))['total'] == 0
+    assert repo.list_pokemon(PokemonQuery(region='paldea', type='钢', q='赛富豪'))['items'][0]['dex'] == 1000
     assert repo.list_pokemon(PokemonQuery(region='kanto', q='#1000'))['total'] == 0
     assert repo.catalog_rows('pokemon') == before
 
@@ -96,7 +98,7 @@ def test_regional_api_metadata_route_validation_and_cache(client, session):
     seed_regions(session)
     client.app.state.cache = CatalogCache(client=MemoryRedis())
     meta = client.get('/api/pokemon/regions')
-    assert meta.status_code == 200 and len(meta.json()['items']) == 10
+    assert meta.status_code == 200 and len(meta.json()['items']) == 11
     assert client.get('/api/pokemon?region=invalid').status_code == 422
     first = client.get('/api/pokemon?region=kanto&type=电')
     assert first.status_code == 200 and first.json()['total'] == 1

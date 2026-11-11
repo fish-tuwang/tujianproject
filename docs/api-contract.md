@@ -9,6 +9,8 @@
 
 错误均为code/message，参数错误422，不存在404。健康GET `/health/live`及`/health/ready`（数据库和迁移head）。公共接口不请求来源网站。
 
+`GET /api/pokemon/regions`返回definition/index_version/national_source_url/items；items含key/name/national_range/species_count/source_url。0.9.1起region按Wiki全国编号分段分类，支持kanto/johto/hoenn/sinnoh/unova/kalos/alola/galar/hisui/paldea/unknown；每个全国编号只属于一个分类，unknown为808–809，hisui为899–905。列表region与type/q取交集，total为真实筛选总数，仍按全国编号升序。地区缓存与游标绑定离线索引内容版本，旧索引地区游标返回400 INVALID_CURSOR；region为空继续兼容原未筛选游标。
+
 适配器：SourceCandidate(kind,source_key,fields,evidence)；ParsedPage(source,url,discovered_urls,candidates,issues,content_hash)。仓储Session由调用方持有并提交；发布仅upsert不删除，身份缺失不自动合并。
 
 CLI：python -m backend.app.worker init-db/seed-demo --confirm-demo/work/schedule/probe/report/sync --source tomica|pokemon --mode incremental|full [--limit N]。限量报告complete=false。任务状态queued/running/succeeded/partial/limited/failed；SyncService enqueue_run与retry_run只flush，调用方提交；周full对queued提升，对running记录followup。报告不输出连接秘密。

@@ -25,7 +25,7 @@ function readCatalogList(kind) {
     for(const key of keys)if(typeof saved.query[key]==='string'&&saved.query[key].length<=100)query[key]=saved.query[key];
     if(query.year&&!/^(unknown|[1-9][0-9]{0,3})$/.test(query.year))delete query.year;
     if(query.type&&!types.includes(query.type))delete query.type;
-    if(query.region&&!['kanto','johto','hoenn','sinnoh','unova','kalos','alola','galar','hisui','paldea'].includes(query.region))delete query.region;
+    if(query.region&&!['kanto','johto','hoenn','sinnoh','unova','kalos','alola','galar','hisui','paldea','unknown'].includes(query.region))delete query.region;
     return {query,page:Number.isInteger(saved.page)&&saved.page>0?saved.page:1,pageSize:[20,40,60,100].includes(saved.pageSize)?saved.pageSize:20,visibleCount:Number.isInteger(saved.visibleCount)&&saved.visibleCount>0?saved.visibleCount:12,scrollY:Number.isFinite(saved.scrollY)&&saved.scrollY>=0?saved.scrollY:0};
   } catch(_){return null;}
 }
@@ -102,7 +102,7 @@ function renderCards() {
   $('cards').querySelectorAll('.catalog-card').forEach(card=>card.onclick=()=>{const item=state.items[Number(card.dataset.index)];detailReturnY=window.scrollY;rememberCatalogList();location.hash=state.kind+'/'+(state.kind==='tomica'?item.id:item.dex);});
   bindImages($('cards'));
   const region=regions.find(r=>r.key===state.query.region);
-  $('result-caption').textContent = state.kind==='tomica' ? `微缩车库 · 共 ${state.total} 款车型 · 第 ${state.page} / ${state.totalPages} 页` : `${region?region.name+'地区图鉴':'全国图鉴'} · 已呈现 ${state.items.length} / ${state.total} 位宝可梦`;
+  $('result-caption').textContent = state.kind==='tomica' ? `微缩车库 · 共 ${state.total} 款车型 · 第 ${state.page} / ${state.totalPages} 页` : `${region?(region.key==='unknown'?'未确认分类':region.name+'地区图鉴'):'全国图鉴'} · 已呈现 ${state.items.length} / ${state.total} 位宝可梦`;
   renderPagination();
 }
 
@@ -182,7 +182,9 @@ window.addEventListener('scroll',()=>{
   if(downward){awaitScroll=false;autoArmed=true;requestAnimationFrame(loadOnScroll);}
 },{passive:true});
 function renderRegions() {
-  populate($('region'),regions.map(r=>[r.key,r.name+'地区']),'全部地区');$('region').value=state.query.region||'';
+  populate($('region'),regions.map(r=>[r.key,r.key==='unknown'?r.name:r.name+'地区']),'全部地区');$('region').value=state.query.region||'';
+  const selected=regions.find(r=>r.key===state.query.region);
+  $('region-note').textContent=selected?`全国编号 #${String(selected.national_range[0]).padStart(4,'0')}–#${String(selected.national_range[1]).padStart(4,'0')} · ${selected.species_count} 种`:'按 Wiki 全国编号分段归类，每种宝可梦只归属一个分类。';
   $('region-tabs').replaceChildren();
   for(const region of [{key:'',name:'全国'},...regions]){
     const button=document.createElement('button');button.textContent=region.name;button.className='region-tab';button.dataset.region=region.key;

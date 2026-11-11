@@ -56,4 +56,6 @@ Redis缓存：本项目独立systemd服务dual-catalog-redis，127.0.0.1:6382，
 0.7.1只更新月份索引：每月单列完整年月新品标题；同月多文章仍归一个入口，原图、详情及返回保留。月刊测试15项、本地/公网月刊33项、公网恢复29项通过。公众号自动采集仍待本次域名授权和账号归属确认，未启用任何新采集进程；当前月份内容仍来自用户提供材料。
 
 
-2026-11-11发布0.9.0：双主题使用theme.css与本地矢量背景，现有图标/原图保留。宝可梦支持region白名单组合筛选与滚动哨兵加载，页面按图鉴保存地区、属性、搜索、已加载进度和位置；详情/恢复时暂停自动追加。接口GET /api/pokemon/regions提供离线索引定义与来源，列表total是实际筛选结果数。region空值兼容旧游标，选定地区的游标和API缓存绑定索引版本。地区集合来自PokéAPI各地区关联图鉴的合并（含扩展），不是首次登场世代。更新索引在开发工作区运行python -m backend.app.pokemon_regions --refresh后重新测试发布；线上请求不访问PokéAPI。本轮不迁移数据库、修改旧车型或更换图片。具体命令和验收见spec/feature_20261111_F001_ui-regions/acceptance.md。
+2026-11-11发布0.9.0：双主题使用theme.css与本地矢量背景，现有图标/原图保留。宝可梦支持region组合筛选与滚动加载，按图鉴保存筛选、进度和位置。旧地区定义为各版本图鉴合并，已由以下0.9.1规则替代；原UI验收见spec/feature_20261111_F001_ui-regions/acceptance.md。
+
+0.9.1按用户新确认的Wiki全国编号分段归类，全国1025种无重复、无遗漏；洗翠899–905与未确认808–809单列。离线分段表在backend/app/pokemon_regions.py，python -m backend.app.pokemon_regions --refresh仅重建该规则，核对新编号后需先更新分段表并重新测试发布；线上不访问外站。地区元数据/列表缓存和筛选游标继续绑定索引版本，无需清空其他Redis图片缓存。本轮不迁移数据库、重新导入资料或修改照片。修正及实际验收见spec/feature_20261111_F001_ui-regions/wiki-region-classification-fix.md。
