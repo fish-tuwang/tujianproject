@@ -10,7 +10,7 @@ Tomica 多美卡、宝可梦全国图鉴与高达模型图鉴：微信原生页�
 
 ## 开发
 
-在项目根创建Python虚拟环境，安装requirements.lock；`npm ci`安装客户端验证依赖。复制.env.example为本地.env并调整本地配置。
+使用Python 3.11及以上版本在项目根创建虚拟环境，安装requirements.lock；生产镜像使用Python 3.12。`npm ci`安装客户端验证依赖。复制.env.example为本地.env并调整本地配置。
 
 ```powershell
 & '.venv/Scripts/python.exe' -m pytest backend/tests -q

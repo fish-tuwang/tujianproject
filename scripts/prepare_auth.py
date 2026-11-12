@@ -17,7 +17,7 @@ from backend.app.audit import audit, configure_audit
 ROOT = Path('/opt/dual-catalog')
 PROXY = 'dual-catalog-preview-proxy'
 IP = '117.72.11.77'
-IMAGE = 'dual-catalog:0.11.3'
+IMAGE = 'dual-catalog:0.11.4'
 
 
 def run(command, **kwargs):

@@ -28,13 +28,16 @@ def create_app(settings):
     from .cache import CatalogCache
     app.state.cache = CatalogCache(settings.redis_url.get_secret_value(), settings.cache_namespace)
     app.state.image_limiter = anyio.CapacityLimiter(3)
+    app.state.preview_limiter = anyio.CapacityLimiter(1)
     from .api import router as api_router
     from .admin import router as admin_router
     from .news import router as news_router
     from .gunpla import router as gunpla_router
+    from .gunpla_images import router as gunpla_images_router
     app.include_router(api_router)
     app.include_router(news_router)
     app.include_router(gunpla_router)
+    app.include_router(gunpla_images_router)
     app.include_router(admin_router)
 
     @app.exception_handler(CatalogError)

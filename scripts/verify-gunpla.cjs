@@ -32,6 +32,7 @@ const shape=v=>JSON.stringify({query:v.query,ids:v.ids});
    // Mobile lazy images start below the tall grade selector; expose each tested cover.
    for(let index=0;index<5;index++)await p.locator('.gunpla-card-image img').nth(index).scrollIntoViewIfNeeded();
    await p.waitForFunction(()=>[...document.querySelectorAll('.gunpla-card-image img')].slice(0,5).every(i=>i.complete&&i.naturalWidth>0),{},{timeout:120000});
+   pass('first five covers use small high-priority display images',await p.locator('.gunpla-card-image img').evaluateAll(images=>images.slice(0,5).every(i=>i.src.includes('/display?width=480')&&i.loading==='eager'&&i.getAttribute('fetchpriority')==='high'&&Math.max(i.naturalWidth,i.naturalHeight)<=480)));
    if(!local&&profile.name==='desktop'){
     const anonymous=await browser.newContext(),url=await p.locator('.gunpla-card-image img').first().evaluate(i=>i.src);
     pass('a cached Gunpla cover still requires authentication',(await anonymous.request.get(url,{headers:{'If-None-Match':'"cached"'}})).status()===401);
@@ -56,9 +57,11 @@ const shape=v=>JSON.stringify({query:v.query,ids:v.ids});
    await p.locator('#gunpla-next').click();await p.waitForFunction(()=>!GunplaPage.state.loading&&GunplaPage.state.query.page===2);await p.locator('.gunpla-card').nth(20).scrollIntoViewIfNeeded();await settled(p);const before=await snapshot(p);
    await p.evaluate(()=>GunplaPage.openProduct('3425'));await p.locator('.gunpla-detail h2').waitFor();
    pass('official four-photo product retains every gallery original and real missing CNY price',await p.locator('.gunpla-thumbnails button').count()===4&&await p.locator('.gunpla-facts').textContent().then(t=>t.includes('未公布')&&t.includes('1,760日元(含税)')&&t.includes('2026年8月')));
+   pass('detail thumbnails use 160-pixel display images and keep original identities',await p.locator('.gunpla-thumbnails img').evaluateAll(images=>images.every(i=>i.src.includes('/display?width=160')&&i.loading==='lazy'&&/^\/api\/reference-images\/[\w-]+$/.test(i.dataset.original))));
    pass('detail has no source or unrelated content links',await p.locator('#detail-root a').count()===0&&!/来源|适合年龄/.test(await p.locator('#detail-root').textContent()));
    await p.locator('[data-photo="1"]').click();await p.waitForFunction(()=>{const i=document.querySelector('.gunpla-gallery-hero img');return i.complete&&i.naturalWidth>0;},{},{timeout:120000});
-   const original=await p.locator('.gunpla-gallery-hero img').evaluate(img=>img.src);await p.locator('.gunpla-gallery-hero img').click();
+   const original=await p.evaluate(()=>new URL(GunplaPage.state.detail.gallery[1],location.origin).href);
+   pass('selected display stays paired with its original API image',await p.locator('.gunpla-gallery-hero img').evaluate((img,url)=>new URL(img.dataset.original,location.origin).href===url&&img.src.includes('/display?width=960'),original));await p.locator('.gunpla-gallery-hero img').click();
    pass('selected angle opens its corresponding full original',await p.locator('#image-viewer').isVisible()&&await p.locator('#enlarged-image').getAttribute('src')===original);
    await p.locator('#image-zoom-in').click();await p.locator('#image-zoom-in').click();pass('viewer zoom controls work',await p.locator('#image-scale').textContent()==='200%');await p.keyboard.press('Escape');
    pass('viewer escape keeps product detail open',!await p.locator('#image-viewer').isVisible()&&await p.locator('#detail-dialog').isVisible());

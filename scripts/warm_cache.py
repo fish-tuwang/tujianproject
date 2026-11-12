@@ -17,6 +17,7 @@ from backend.app.cache import CatalogCache
 from backend.app.config import Settings
 from backend.app.models import GunplaEntry, ImageAsset
 from backend.app.reference_images import image_type, read_reference, reference_path
+from backend.app.gunpla_images import display_preview, PREVIEW_WIDTHS
 from backend.app.repository import CatalogRepository
 
 
@@ -65,6 +66,9 @@ def warm_group(group, client, base, directory, cache):
         data = response.content
         image_type(data)
         origin = response.headers.get('x-catalog-cache', 'api')
+    if urlsplit(group['url']).hostname == 'staticcdn.bandaihobbysite.cn':
+        for width in PREVIEW_WIDTHS:
+            display_preview(data, width, directory.parent / 'gunpla-previews')
     for asset_id in group['ids']:
         target = reference_path(asset_id, group['url'], directory)
         if read_reference(asset_id, group['url'], directory) is None:

@@ -68,6 +68,31 @@ def test_warmer_does_not_cache_html(tmp_path):
     assert not list(tmp_path.iterdir()) and cache.get('image:id-a') is None
 
 
+def test_bandai_warmer_prepares_all_display_sizes_without_changing_original(tmp_path):
+    from io import BytesIO
+    from PIL import Image
+    output = BytesIO()
+    Image.new('RGB', (1200, 600), 'red').save(output, format='JPEG')
+    data = output.getvalue()
+    group = {'ids': ['bandai-fixture'], 'url': 'https://staticcdn.bandaihobbysite.cn/www/uploads/fixture.jpg'}
+    directory = tmp_path / 'reference-images'; directory.mkdir()
+    calls = []
+    def respond(request):
+        calls.append(request)
+        return httpx.Response(200, content=data, headers={'content-type': 'image/jpeg'})
+    cache = CatalogCache(client=MemoryRedis())
+    with httpx.Client(transport=httpx.MockTransport(respond)) as client:
+        for _ in range(2):
+            warm_group(group, client, 'http://127.0.0.1:8092', directory, cache)
+    assert len(calls) == 1
+    assert read_reference('bandai-fixture', group['url'], tmp_path / 'reference-images') == data
+    sizes = set()
+    for path in (tmp_path / 'gunpla-previews').glob('*.webp'):
+        with Image.open(path) as image:
+            sizes.add(image.size)
+    assert sizes == {(160, 80), (480, 240), (960, 480)}
+
+
 def test_disk_originals_survive_a_day_and_refresh_after_thirty(tmp_path):
     url = 'http://tomica.minibird.jp/t-tomica/a.gif'
     path = reference_path('id-a', url, tmp_path)
