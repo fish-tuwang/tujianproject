@@ -1,0 +1,46 @@
+name: dual-catalog-qq
+services:
+  bridge:
+    image: dual-catalog-qq:0.1.1
+    container_name: dual-catalog-qq-bridge
+    build:
+      context: .
+      dockerfile: Dockerfile.qq-bot
+    network_mode: host
+    env_file: ["/opt/dual-catalog/.env.qq-bot"]
+    restart: unless-stopped
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp:size=16m"]
+    volumes:
+      - /opt/dual-catalog/qq/state:/app/qq-state
+      - /opt/dual-catalog/data/artifacts/logs:/app/qq-logs
+    mem_limit: 128m
+    pids_limit: 64
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8096/health/live',timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "3"}
+  account:
+    image: ${QQ_NAPCAT_IMAGE:?QQ_NAPCAT_IMAGE must be pinned to a verified digest}
+    container_name: dual-catalog-qq-account
+    network_mode: host
+    environment:
+      ACCOUNT: ${QQ_ACCOUNT:-}
+      NAPCAT_UID: "10002"
+      NAPCAT_GID: "10002"
+    volumes:
+      - /opt/dual-catalog/qq/account:/app/.config/QQ
+      - /opt/dual-catalog/qq/config:/app/napcat/config
+    restart: unless-stopped
+    mem_limit: 512m
+    pids_limit: 256
+    ulimits:
+      core: {soft: 0, hard: 0}
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "3"}

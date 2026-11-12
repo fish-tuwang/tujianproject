@@ -28,3 +28,7 @@
 服务器业务项目现只剩图鉴，运行中的7个业务容器均属于图鉴；旧的已停止图鉴代理容器仍属本项目。清理前后图鉴容器ID及两套真实账号非会话指纹相同，三类图鉴及高达展示图实际读取成功，两套API为ready/0005_gunpla，公网登录页和健康检查200，匿名访问按原规则返回401/303。图鉴所需PostgreSQL、独立Redis、Docker、证书、SSH及服务器管理设施继续保留，没有重启图鉴容器。
 
 本轮额外释放约6.2GiB，完成时可用约31.6GiB。清理回执和验证结果位于服务器 `data/artifacts/acceptance/retired-apps-removal.json`、`catalog-after-retired-apps-removal.json`；操作事件写入图鉴 `deploy.jsonl`。仅保留清理工具与操作元数据，没有保留已删除项目源码或业务数据备份。发布器实际检查结果为无剩余独立旧项目容器，后续图鉴发布可继续执行。
+
+## 2026-11-12：图鉴QQ接入组件
+
+用户随后要求沿用原QQ账号接入图鉴，明确账号949494401及其已加入的全部QQ群。新增的 `dual-catalog-qq-bridge` 和 `dual-catalog-qq-account` 属于图鉴项目，代码和专用登录状态在 `/opt/dual-catalog` 内；没有恢复鱼鱼找鸡、QQ总结或其他旧业务。原有7个图鉴容器未重建。接入与扫码状态详见 `docs/qq-catalog.md`、对应实施计划及服务器 `qq/deployment.json`。
