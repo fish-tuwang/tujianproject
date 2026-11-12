@@ -24,7 +24,8 @@ def compose(env, project):
 
 
 def plugins():
-    return {name: subprocess.run(['docker', 'inspect', '--format', '{{.Id}}', name], capture_output=True, text=True, check=True).stdout.strip() for name in ['fish-search', 'qq-summary-bot', 'nginx']}
+    existing = set(subprocess.run(['docker', 'ps', '-a', '--format', '{{.Names}}'], capture_output=True, text=True, check=True).stdout.splitlines())
+    return {name: subprocess.run(['docker', 'inspect', '--format', '{{.Id}}', name], capture_output=True, text=True, check=True).stdout.strip() for name in ['fish-search', 'qq-summary-bot', 'nginx'] if name in existing}
 
 
 def health():
