@@ -14,6 +14,6 @@ COPY scripts/prepare_auth.py scripts/renew_tls.py /app/scripts/
 COPY scripts/sync_gunpla.py scripts/gunpla_ops.py /app/scripts/
 COPY miniprogram /app/miniprogram
 COPY pyproject.toml package.json package-lock.json /app/
-LABEL org.opencontainers.image.version="0.11.4"
+LABEL org.opencontainers.image.version="0.11.5"
 USER 10001:10001
 CMD ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8092"]
