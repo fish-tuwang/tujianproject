@@ -1,5 +1,7 @@
 # 部署与运行
 
+2026-11-18 公网路由更新：京东 Nginx 作为 HTTPS 入口，默认通过 `127.0.0.1:18092` 的 SSH 反向隧道转发至家中 Mac mini。所有 `atlas_backend` Cookie 值均使用 Mac，历史 `/mac-mini` 和 `/cloud-server` 入口继续兼容，但不再切换后端。Mac 与隧道须持续在线；不自动回退到京东旧数据库。线上配置与 `deploy/preview-nginx.conf` 保持同步。下文 8092 及本机数据库说明为原京东应用部署记录，旧实例与数据本次未删除。
+
 生产使用现有 Ubuntu 24.04 / PostgreSQL 18；代码位于 `/opt/dual-catalog/app`，数据库配置在 `/opt/dual-catalog/.env`（0600）中，永不随包覆盖。应用角色不能建库，迁移只写本项目库。
 
 运行三类进程：API、队列worker、scheduler。scheduler仅为多美卡按固定48小时间隔、北京时间03:00安排增量检查，不再安排每日或每周全量任务，也不再定时抓取宝可梦。高达由独立timer每周日北京时间03:30增量检查。生产API绑定127.0.0.1:8092；独立演示API绑定127.0.0.1:8093，仅供隔离验收。浏览器预览由本项目独立nginx容器监听80/443，HTTP跳转HTTPS，反向代理生产API8092，访问 https://117.72.11.77/preview/ 登录查看真实采集资料。微信正式域名另配。演示使用dual_catalog_demo库，不能拿它证明来源完整性。

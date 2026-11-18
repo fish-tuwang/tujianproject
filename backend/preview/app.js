@@ -13,6 +13,7 @@ let newsIndexSequence = 0;
 let imageScale = 1;
 let detailReturnY = null;
 let regions = [];
+let tomicaYears = [];
 let restoringBrowse = false, autoArmed = true, autoBlocked = false, awaitScroll = false, autoScrollY = 0;
 const tomicaListKey = 'dual-catalog:tomica-list:v1';
 const listKeys = {tomica:tomicaListKey,pokemon:'dual-catalog:pokemon-list:v1'};
@@ -184,6 +185,14 @@ window.addEventListener('scroll',()=>{
   if(restoringBrowse||$('detail-dialog').open||state.kind!=='pokemon')return;
   if(downward){awaitScroll=false;autoArmed=true;requestAnimationFrame(loadOnScroll);}
 },{passive:true});
+function renderYears() {
+  $('year-tabs').replaceChildren();
+  for(const [value,label] of [['','全部年份'],...tomicaYears]){
+    const button=document.createElement('button');button.type='button';button.className='region-tab';button.textContent=label;button.dataset.year=value;
+    button.setAttribute('aria-pressed',String((state.query.year||'')===value));
+    button.onclick=()=>{state.query.year=value;renderYears();load(true);};$('year-tabs').append(button);
+  }
+}
 function renderRegions() {
   populate($('region'),regions.map(r=>[r.key,r.key==='unknown'?r.name:r.name+'地区']),'全部地区');$('region').value=state.query.region||'';
   const selected=regions.find(r=>r.key===state.query.region);
@@ -248,7 +257,7 @@ async function openNews(month, productId) {
 async function selectKind(kind, restored=null) {
   clearTimeout(searchTimer);
   restoringBrowse=true;awaitScroll=Boolean(restored);autoArmed=!restored;autoBlocked=false;
-  state.kind=kind;state.query=restored?{...restored.query}:{};state.page=restored&&kind==='tomica'?restored.page:1;if(restored&&kind==='tomica')state.pageSize=restored.pageSize;state.total=0;state.totalPages=1;$('search').value=state.query.q||'';$('brand').value='';$('year').value='';$('type').value=state.query.type||'';
+  state.kind=kind;state.query=restored?{...restored.query}:{};state.page=restored&&kind==='tomica'?restored.page:1;if(restored&&kind==='tomica')state.pageSize=restored.pageSize;state.total=0;state.totalPages=1;$('search').value=state.query.q||'';$('brand').value='';$('type').value=state.query.type||'';
   document.body.dataset.catalog = kind;
   newsIndexSequence++;$('news-sidebar').hidden=kind!=='tomica';
   const newsPromise=kind==='tomica'?loadNewsIndex():null;
@@ -259,9 +268,9 @@ async function selectKind(kind, restored=null) {
   $('description').textContent=kind==='tomica'?'从一辆小车开始，发现微缩世界里的无限可能。':'从 #0001 出发，记录宝可梦世界里的每一份惊喜。';
   $('feature-label').textContent=kind==='tomica'?'TOMICA / 微缩收藏档案':'POKÉDEX / 宝可梦探索手册';$('feature-title').innerHTML=kind==='tomica'?'属于你的<br>车库小时光。':'下一次相遇，<br>就从这里开始。';$('feature-subtitle').textContent=kind==='tomica'?'穿过年份，找到那一辆心动的小车。':'循着图鉴编号，认识每一位特别的伙伴。';
   $('feature-art').replaceChildren();$('catalog-title').innerHTML=(kind==='tomica'?'探索多美卡':'探索宝可梦')+'<span class="title-mark">✦</span>';$('catalog-description').textContent=kind==='tomica'?'沿着年份与品牌，寻找你的下一份喜欢。':'每一个编号背后，都藏着一个独特的故事。';
-  $('search').placeholder=kind==='tomica'?'搜索车型、品牌或编号':'搜索名称或全国编号';$('sort-note').textContent=kind==='tomica'?'年份顺序 ↑':'全国编号 ↑';$('brand-wrap').classList.toggle('hidden',kind!=='tomica');$('year-wrap').classList.toggle('hidden',kind!=='tomica');$('type-wrap').classList.toggle('hidden',kind!=='pokemon');
+  $('search').placeholder=kind==='tomica'?'搜索车型、品牌或编号':'搜索名称或全国编号';$('sort-note').textContent=kind==='tomica'?'年份顺序 ↑':'全国编号 ↑';$('brand-wrap').classList.toggle('hidden',kind!=='tomica');$('type-wrap').classList.toggle('hidden',kind!=='pokemon');
   $('brand-wrap').hidden = kind !== 'tomica';
-  $('year-wrap').hidden = kind !== 'tomica';
+  $('year-panel').hidden = kind !== 'tomica';
   $('type-wrap').hidden = kind !== 'pokemon';
   $('region-panel').hidden=kind!=='pokemon';$('region-wrap').hidden=kind!=='pokemon';
   document.body.classList.remove('catalog-loading');
@@ -270,7 +279,7 @@ async function selectKind(kind, restored=null) {
   if(kind==='pokemon'){
     try{const metadata=await request('pokemon/regions');if(state.kind===kind){regions=metadata.items;renderRegions();}}catch(_){if(state.kind===kind)$('region-note').textContent='地区索引暂时无法加载，请刷新重试。';}
   }
-  if(kind==='tomica'){try{const filters=await request('tomica/filters');if(state.kind===kind){populate($('brand'),[...filters.brands.map(v=>[v,v]),...(filters.unknown_brand?[['unknown','未知品牌']]:[])],'全部品牌');populate($('year'),[...filters.years.map(v=>[String(v),v+' 年']),...(filters.unknown_year?[['unknown','未知年份']]:[])],'全部年份');$('brand').value=state.query.brand||'';$('year').value=state.query.year||'';}}catch(_){}}
+  if(kind==='tomica'){try{const filters=await request('tomica/filters');if(state.kind===kind){populate($('brand'),[...filters.brands.map(v=>[v,v]),...(filters.unknown_brand?[['unknown','未知品牌']]:[])],'全部品牌');tomicaYears=[...filters.years.map(v=>[String(v),v+' 年']),...(filters.unknown_year?[['unknown','未知年份']]:[])];renderYears();$('brand').value=state.query.brand||'';}}catch(_){}}
   await promise;
   if(restored&&newsPromise)await newsPromise;
   if(state.kind!==kind||(restored&&state.sequence!==selectionSequence))return false;
@@ -341,7 +350,7 @@ async function route(){
 }
 document.querySelectorAll('[data-kind]').forEach(button=>button.onclick=()=>{if(state.kind===button.dataset.kind&&!$('detail-dialog').open)return;location.hash=button.dataset.kind;});
 $('search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.query.q=$('search').value.trim();load(true);},280);};
-for(const field of ['brand','year','type'])$(field).onchange=()=>{state.query[field]=$(field).value;load(true);};
+for(const field of ['brand','type'])$(field).onchange=()=>{state.query[field]=$(field).value;load(true);};
 $('region').onchange=()=>{state.query.region=$('region').value;renderRegions();load(true);};
 $('previous-page').onclick=()=>changePage(state.page-1);$('next-page').onclick=()=>changePage(state.page+1);$('page-jump').onsubmit=event=>{event.preventDefault();changePage(Math.trunc(Number($('page-jump-input').value)));};
 $('page-size').onchange=()=>{const size=Number($('page-size').value);if(state.kind!=='tomica'||![20,40,60,100].includes(size))return;state.pageSize=size;load(true);};
