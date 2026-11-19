@@ -32,9 +32,17 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  await page.reload();await ready();assert.equal(await page.locator('[data-year="1971"]').getAttribute('aria-pressed'),'true');
  await page.locator('.catalog-card').first().click();await page.locator('#detail-dialog').waitFor({state:'visible'});await page.locator('#close-detail').click();assert.equal(await page.evaluate(()=>state.query.year),'1971');
  console.log('PASS refresh and detail return preserve selected year');
+ const aligned=()=>page.locator('#year-tabs').evaluate(nav=>{
+  const boxes=[...nav.children].map(b=>({width:b.getBoundingClientRect().width,top:b.offsetTop,left:b.offsetLeft}));
+  const rows=[...new Set(boxes.map(b=>b.top))];
+  return boxes.every(b=>Math.abs(b.width-boxes[0].width)<1)&&rows.every(top=>Math.abs(boxes.find(b=>b.top===top).left-boxes[0].left)<1);
+ });
+ assert(await aligned());console.log('PASS desktop years have equal widths and aligned columns');
+
  await page.locator('#year-panel').screenshot({path:'artifacts/acceptance/tomica-year-index-desktop.png'});
  await page.setViewportSize({width:390,height:844});await page.locator('#year-panel').scrollIntoViewIfNeeded();
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ assert(await aligned());console.log('PASS mobile year columns align without overflow');
  await page.locator('#year-panel').screenshot({path:'artifacts/acceptance/tomica-year-index-mobile.png'});
  await page.locator('[data-year=""]').click();await page.waitForFunction(()=>!state.loading&&!state.query.year);
  await page.locator('[data-kind="pokemon"]').click();await page.waitForFunction(()=>!state.loading&&state.kind==='pokemon');assert.equal(await page.locator('#year-panel').isVisible(),false);
