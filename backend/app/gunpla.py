@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from .api import get_session, public_cached
 from .config import ROOT
 from .models import GunplaEntry, ImageAsset, now
+from .gunpla_classification import classification, product_series, work_rows, excluded_product
 from .repository import CatalogError, CatalogRepository
 from .sources.gunpla import EXCLUDED_BRANDS, SALE_TYPES, image_url, is_model_product
 
@@ -41,7 +42,7 @@ def series_years():
 def series_groups(rows):
     grouped = {}
     for row in rows:
-        year = series_years().get(row.source_key, {}).get('year')
+        year = series_years().get(row.source_key, classification()[0]['series'].get(row.source_key, {})).get('year')
         key = str(year // 10 * 10) if year else 'other'
         grouped.setdefault(key, []).append({'id': row.source_key, 'name': row.name, 'year': year, 'preview_image_url': preview(row.data.get('logo_image_id'))})
     return [{'id': key, 'name': key + '年代' if key != 'other' else '其他企划 / 年代未确认', 'items': sorted(grouped[key], key=lambda r: (r['year'] or 9999, int(r['id'])))} for key in sorted(grouped)]
@@ -153,18 +154,20 @@ class GunplaRepository:
         def load():
             rows = []
             for row in self.session.scalars(select(GunplaEntry).where(GunplaEntry.kind == 'product')):
+                if excluded_product(row.source_key, row.name):
+                    continue
                 data = row.data
-                fields = ['brand_ids', 'series_ids', 'sale_types', 'scale', 'release_text', 'release_sort', 'release_precision', 'price_cny_text', 'price_jpy_text']
-                rows.append({'id': row.source_key, 'name': row.name, **{key: data.get(key) for key in fields}, 'preview_image_url': preview(data.get('cover_image_id'))})
+                fields = ['brand_ids', 'sale_types', 'scale', 'release_text', 'release_sort', 'release_precision', 'price_cny_text', 'price_jpy_text']
+                rows.append({'id': row.source_key, 'name': row.name, **{key: data.get(key) for key in fields}, 'series_ids': product_series(row.source_key, row.name, data.get('series_ids')), 'preview_image_url': preview(data.get('cover_image_id'))})
             return rows
         revision = CatalogRepository(self.session).get_revision('gunpla')
-        return self.cache.snapshot('gunpla', revision, load, ttl=600) if self.cache else load()
+        return self.cache.snapshot('gunpla', str(revision) + ':' + classification()[1], load, ttl=600) if self.cache else load()
 
     def filters(self):
         records = list(self.session.scalars(select(GunplaEntry).where(GunplaEntry.kind.in_(['brand', 'series'])).order_by(GunplaEntry.source_key)))
         records.sort(key=lambda r: (r.data.get('order', 9999), r.source_key))
         brands = [{'id': r.source_key, 'name': r.name, 'preview_image_url': preview(r.data.get('logo_image_id'))} for r in records if r.kind == 'brand']
-        return {'brands': brands, 'scales': sorted({r['scale'] for r in self.summary_rows() if r['scale']}), 'sale_types': [{'id': key, 'name': name} for key, name in SALE_TYPES.items()], 'series_groups': series_groups([r for r in records if r.kind == 'series'])}
+        return {'brands': brands, 'scales': sorted({r['scale'] for r in self.summary_rows() if r['scale']}), 'sale_types': [{'id': key, 'name': name} for key, name in SALE_TYPES.items()], 'series_groups': series_groups(work_rows([r for r in records if r.kind == 'series'], {key for row in self.summary_rows() for key in row['series_ids']}))}
 
     def list_products(self, query):
         rows = self.summary_rows()
@@ -205,7 +208,7 @@ class GunplaRepository:
 
 
 def cached(request, session, view, params, loader, ttl=600):
-    return public_cached(request, session, 'gunpla', view, params, lambda repo: loader(GunplaRepository(repo.session, repo.cache)), '模型尚未收录', ttl)
+    return public_cached(request, session, 'gunpla', view + ':' + classification()[1], params, lambda repo: loader(GunplaRepository(repo.session, repo.cache)), '模型尚未收录', ttl)
 
 
 @router.get('')

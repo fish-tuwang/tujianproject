@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 from .base import SourceParseError
+from ..gunpla_classification import excluded_product
 from .http import normalize_url
 
 BASE = 'https://bandaihobbysite.cn'
@@ -119,6 +120,7 @@ def parse_listing(url, body):
     parts = urlsplit(url)
     grade = re.search(r'/brand/cate/(\d+)', parts.path)
     context = parse_qs(parts.query).get('tag', [None])[0]
+    series = re.search(r'/series/cate/(\d+)', parts.path)
     root = soup(body).select_one('main')
     if root is None:
         raise SourceParseError('listing main section missing')
@@ -133,7 +135,7 @@ def parse_listing(url, body):
             badges = unique([*badges, context])
         release = re.sub(r'发售$', '', text(anchor.select_one('.p-card_date'))).strip() or None
         sort, precision = parse_date(release)
-        items.append({'official_id': match[1], 'name': title, 'brand_ids': [grade[1]] if grade else [], 'sale_types': badges, 'cover_url': image(anchor.select_one('.p-card__img img')), 'source_url': BASE + anchor['href'], 'release_text': release, 'release_sort': sort, 'release_precision': precision, **prices(anchor)})
+        items.append({'official_id': match[1], 'name': title, 'brand_ids': [grade[1]] if grade else [], 'series_ids': [series[1]] if series else [], 'sale_types': badges, 'cover_url': image(anchor.select_one('.p-card__img img')), 'source_url': BASE + anchor['href'], 'release_text': release, 'release_sort': sort, 'release_precision': precision, **prices(anchor)})
     pages = {1}
     for anchor in root.select('a[href]'):
         target = urlsplit(urljoin(url, anchor['href']))
@@ -171,7 +173,7 @@ def parse_product(url, body, listing):
         if match:
             (brands if match[1] == 'brand' else series).append(match[2])
     data['brand_ids'] = unique([*data.get('brand_ids', []), *brands])
-    data['series_ids'] = unique(series)
+    data['series_ids'] = unique([*data.get('series_ids', []), *series])
     name = text(root.select_one('h1'))
     verified = VERIFIED_SALE_TYPES.get(key)
     if not data.get('sale_types') and verified and verified['name'] == name:
@@ -188,6 +190,9 @@ def parse_product(url, body, listing):
 
 def is_model_product(product, allowed_series_ids):
     data, name = product['data'], product['name']
+    excluded = excluded_product(data.get('official_id', product.get('source_key', '')), name)
+    if excluded:
+        return False, excluded
     if set(data.get('brand_ids', [])) & EXCLUDED_BRANDS:
         return False, 'accessory_brand'
     if str(data.get('official_id', product.get('source_key', ''))) in VERIFIED_ACCESSORIES:

@@ -1,0 +1,1622 @@
+{
+  "verified_at": "2026-11-19",
+  "series": {
+    "156": {
+      "name": "机动战士高达RG XARX-ZERO",
+      "year": 2027,
+      "evidence_url": "https://gundam-official.com/series/xarx-zero",
+      "date_basis": "official_first_animation"
+    },
+    "157": {
+      "name": "机动战士高达SEED FREEDOM ZERO",
+      "year": 2027,
+      "evidence_url": "https://gundam-official.com/series/seed-freedom-zero",
+      "date_basis": "official_first_animation"
+    },
+    "137": {
+      "name": "机动战士Gundam GQuuuuuuX",
+      "year": 2025,
+      "evidence_url": "https://gundam-official.com/series/gquuuuuux-beginning",
+      "date_basis": "official_first_animation"
+    },
+    "135": {
+      "name": "高达模型君",
+      "year": 2021,
+      "evidence_url": "https://www.bandaispirits.co.jp/press/2021/210818.php",
+      "date_basis": "first_short_pv"
+    },
+    "98": {
+      "name": "机动战士高达SEED FREEDOM",
+      "year": 2024,
+      "evidence_url": "https://gundam-official.com/series/seed-freedom",
+      "date_basis": "official_first_animation"
+    },
+    "93": {
+      "name": "高达创战元宇宙",
+      "year": 2023,
+      "evidence_url": "https://gundam-official.com/series/build-metaverse",
+      "date_basis": "official_first_animation"
+    },
+    "67": {
+      "name": "机动战士高达 水星的魔女",
+      "year": 2022,
+      "evidence_url": "https://gundam-official.com/series/witch-from-mercury",
+      "date_basis": "official_first_animation"
+    },
+    "77": {
+      "name": "机动战士高达 库库鲁斯·多安的小岛",
+      "year": 2022,
+      "evidence_url": "https://gundam-official.com/series/cucuruz-doans-island",
+      "date_basis": "official_first_animation"
+    },
+    "19": {
+      "name": "机动战士高达 闪光的哈萨维",
+      "year": 2021,
+      "evidence_url": "https://gundam-official.com/series/hathaway-i",
+      "date_basis": "official_first_animation"
+    },
+    "20": {
+      "name": "SD高达世界 群英集",
+      "year": 2021,
+      "evidence_url": "https://gundam-official.com/series/sd-gundam-world-heros",
+      "date_basis": "official_first_animation"
+    },
+    "146": {
+      "name": "机动新世纪高达X",
+      "year": 1996,
+      "evidence_url": "https://gundam-official.com/series/x",
+      "date_basis": "official_first_animation"
+    },
+    "21": {
+      "name": "高达破坏者 对战记录",
+      "year": 2021,
+      "evidence_url": "https://gundam-official.com/series/breaker-battlogue",
+      "date_basis": "official_first_animation"
+    },
+    "23": {
+      "name": "机动战士高达00",
+      "year": 2007,
+      "evidence_url": "https://gundam-official.com/series/00",
+      "date_basis": "official_first_animation"
+    },
+    "24": {
+      "name": "机动战士高达 铁血的奥尔芬斯",
+      "year": 2015,
+      "evidence_url": "https://gundam-official.com/series/orphans-1st",
+      "date_basis": "official_first_animation"
+    },
+    "25": {
+      "name": "机动战士高达独角兽（UC）",
+      "year": 2010,
+      "evidence_url": "https://gundam-official.com/series/unicorn",
+      "date_basis": "official_first_animation"
+    },
+    "91": {
+      "name": "机动战士MOON高达",
+      "year": 2017,
+      "evidence_url": "https://www.kadokawa.co.jp/topics/269/",
+      "date_basis": "manga_serialization"
+    },
+    "26": {
+      "name": "机动战士高达SEED",
+      "year": 2002,
+      "evidence_url": "https://gundam-official.com/series/seed",
+      "date_basis": "official_first_animation"
+    },
+    "28": {
+      "name": "新机动战记高达W",
+      "year": 1995,
+      "evidence_url": "https://gundam-official.com/series/wing",
+      "date_basis": "official_first_animation"
+    },
+    "92": {
+      "name": "机动战士高达AGE",
+      "year": 2011,
+      "evidence_url": "https://gundam-official.com/series/age",
+      "date_basis": "official_first_animation"
+    },
+    "74": {
+      "name": "机动战士高达 雷霆宙域",
+      "year": 2015,
+      "evidence_url": "https://gundam-official.com/series/thunderbolt",
+      "date_basis": "official_first_animation"
+    },
+    "22": {
+      "name": "SD三国创杰传",
+      "year": 2019,
+      "evidence_url": "https://hk.gundam-official.com/news/i/news/video-music/news_video-music_20190719_0022",
+      "date_basis": "first_overseas_release"
+    },
+    "27": {
+      "name": "机动战士高达SEED DESTINY",
+      "year": 2004,
+      "evidence_url": "https://gundam-official.com/series/seed-destiny",
+      "date_basis": "official_first_animation"
+    },
+    "29": {
+      "name": "机动战士高达",
+      "year": 1979,
+      "evidence_url": "https://gundam-official.com/series/mobile-suit-gundam",
+      "date_basis": "official_first_animation"
+    },
+    "30": {
+      "name": "机动战士高达 逆袭的夏亚",
+      "year": 1988,
+      "evidence_url": "https://gundam-official.com/series/chars-counterattack",
+      "date_basis": "official_first_animation"
+    },
+    "31": {
+      "name": "高达创形者 再起",
+      "year": 2019,
+      "evidence_url": "https://gundam-official.com/series/build-divers-rerise",
+      "date_basis": "official_first_animation"
+    },
+    "32": {
+      "name": "高达创形者",
+      "year": 2018,
+      "evidence_url": "https://gundam-official.com/series/build-divers",
+      "date_basis": "official_first_animation"
+    },
+    "33": {
+      "name": "机动战士高达 THE ORIGIN",
+      "year": 2015,
+      "evidence_url": "https://gundam-official.com/series/origin",
+      "date_basis": "official_first_animation"
+    },
+    "34": {
+      "name": "高达创战者",
+      "year": 2013,
+      "evidence_url": "https://gundam-official.com/series/build-fighters",
+      "date_basis": "official_first_animation"
+    },
+    "35": {
+      "name": "机动武斗传G高达",
+      "year": 1994,
+      "evidence_url": "https://gundam-official.com/series/g",
+      "date_basis": "official_first_animation"
+    },
+    "36": {
+      "name": "机动战士V高达",
+      "year": 1993,
+      "evidence_url": "https://gundam-official.com/series/v",
+      "date_basis": "official_first_animation"
+    },
+    "37": {
+      "name": "机动战士高达NT",
+      "year": 2018,
+      "evidence_url": "https://gundam-official.com/series/narrative",
+      "date_basis": "official_first_animation"
+    },
+    "73": {
+      "name": "机动战士Z高达",
+      "year": 1985,
+      "evidence_url": "https://gundam-official.com/series/z",
+      "date_basis": "official_first_animation"
+    },
+    "90": {
+      "name": "机动战士高达外传 MISSING LINK",
+      "year": 2014,
+      "evidence_url": "https://hk.gundam-official.com/news/i/news/games/news_games_20140529_33447p",
+      "date_basis": "game_release"
+    },
+    "89": {
+      "name": "机动战士高达 高达前哨战",
+      "year": 1987,
+      "evidence_url": "https://manual.bandai-hobby.net/pdf/636.pdf",
+      "date_basis": "model_story_serialization"
+    },
+    "119": {
+      "name": "机动战士高达ZZ",
+      "year": 1986,
+      "evidence_url": "https://gundam-official.com/series/zz",
+      "date_basis": "official_first_animation"
+    },
+    "116": {
+      "name": "机动战士高达0080 口袋中的战争",
+      "year": 1989,
+      "evidence_url": "https://gundam-official.com/series/0080-war-in-the-pocket",
+      "date_basis": "official_first_animation"
+    },
+    "108": {
+      "name": "高达Reconguista in G",
+      "year": 2014,
+      "evidence_url": "https://gundam-official.com/series/reconguista-in-g",
+      "date_basis": "official_first_animation"
+    },
+    "104": {
+      "name": "机动战士海盗高达",
+      "year": null,
+      "evidence_url": null
+    },
+    "103": {
+      "name": "机动战士高达F91",
+      "year": 1991,
+      "evidence_url": "https://gundam-official.com/series/f91",
+      "date_basis": "official_first_animation"
+    },
+    "900001": {
+      "name": "机动战士高达0083 星尘的回忆",
+      "year": 1991,
+      "evidence_url": "https://gundam-official.com/series/0083",
+      "date_basis": "official_first_animation"
+    },
+    "900002": {
+      "name": "机动战士高达 第08MS小队",
+      "year": 1996,
+      "evidence_url": "https://gundam-official.com/series/08th-ms-team",
+      "date_basis": "official_first_animation"
+    },
+    "900003": {
+      "name": "∀高达／Turn A 高达",
+      "year": 1999,
+      "evidence_url": "https://gundam-official.com/series/turn-a",
+      "date_basis": "official_first_animation"
+    },
+    "900004": {
+      "name": "新机动战记高达W 无尽的华尔兹",
+      "year": 1997,
+      "evidence_url": "https://gundam-official.com/series/wing-endless-waltz",
+      "date_basis": "official_first_animation"
+    },
+    "900005": {
+      "name": "机动战士高达SEED C.E.73 观星者",
+      "year": 2006,
+      "evidence_url": "https://gundam-official.com/series/seed-stargazer",
+      "date_basis": "official_first_animation"
+    },
+    "900006": {
+      "name": "机动战士高达 MS IGLOO",
+      "year": 2004,
+      "evidence_url": "https://gundam-official.com/series/ms-igloo-the-hidden-one-year-war",
+      "date_basis": "official_first_animation"
+    },
+    "900007": {
+      "name": "机动战士高达 暮光的阿克西斯",
+      "year": 2017,
+      "evidence_url": "https://gundam-official.com/series/twilight-axis",
+      "date_basis": "official_first_animation"
+    },
+    "900009": {
+      "name": "机动战士高达SEED ASTRAY",
+      "year": 2002,
+      "evidence_url": "https://www.sunrise-inc.co.jp/work/news.php?id=13",
+      "date_basis": "verified_original_project"
+    },
+    "900010": {
+      "name": "SD高达 G世纪",
+      "year": null,
+      "evidence_url": null,
+      "date_basis": "unconfirmed"
+    },
+    "900011": {
+      "name": "ADVANCE OF Z／A.O.Z RE-BOOT",
+      "year": null,
+      "evidence_url": null,
+      "date_basis": "unconfirmed"
+    },
+    "900012": {
+      "name": "机动战士高达 复仇的安魂曲",
+      "year": 2024,
+      "evidence_url": "https://gundam-official.com/series/requiem-for-vengeance",
+      "date_basis": "official_first_animation"
+    },
+    "900013": {
+      "name": "高达创战者 TRY",
+      "year": 2014,
+      "evidence_url": "https://gundam-official.com/series/build-fighters-try",
+      "date_basis": "official_first_animation"
+    },
+    "900016": {
+      "name": "机动战士高达 MSV",
+      "year": 1983,
+      "evidence_url": "https://manual.bandai-hobby.net/pdf/559.pdf",
+      "date_basis": "verified_original_project"
+    },
+    "900017": {
+      "name": "机动战士高达外传 THE BLUE DESTINY",
+      "year": 1996,
+      "evidence_url": "https://tamashiiweb.com/topics/detail/t_kokkaku_156.html",
+      "date_basis": "verified_original_project"
+    },
+    "900019": {
+      "name": "高达 异轨征途",
+      "year": null,
+      "evidence_url": null,
+      "date_basis": "unconfirmed"
+    },
+    "999999": {
+      "name": "跨界／其他企划／作品待核对",
+      "year": null,
+      "evidence_url": null,
+      "date_basis": "unconfirmed"
+    },
+    "900020": {
+      "name": "SD高达 战国传／武者系列",
+      "year": null,
+      "evidence_url": "https://bandai-hobby.net/site/SD/",
+      "date_basis": "unconfirmed"
+    },
+    "900021": {
+      "name": "SD高达外传／骑士系列",
+      "year": 1990,
+      "evidence_url": "https://gundam-official.com/series/sd-gundam-gaiden",
+      "date_basis": "official_first_publication"
+    },
+    "900022": {
+      "name": "高达汇战／GUNDAM ASSEMBLE",
+      "year": null,
+      "evidence_url": "https://bandaihobbysite.cn/index/index/brand/cate/148",
+      "date_basis": "unconfirmed"
+    },
+    "900023": {
+      "name": "联名合作企划",
+      "year": null,
+      "evidence_url": null,
+      "date_basis": "unconfirmed"
+    },
+    "900024": {
+      "name": "SD高达三国传 Brave Battle Warriors",
+      "year": 2010,
+      "evidence_url": "https://gundam-official.com/series/sd-gundam-sangokuden",
+      "date_basis": "official_first_publication"
+    },
+    "900025": {
+      "name": "逆袭的夏亚 贝尔托蒂嘉的子嗣",
+      "year": 1988,
+      "evidence_url": "https://prtimes.jp/a/?c=7006&f=d7006-2072-pdf-0.pdf&r=2072",
+      "date_basis": "official_first_publication"
+    },
+    "900031": {
+      "name": "机动战士高达F90",
+      "year": 1990,
+      "evidence_url": "https://www.bandaispirits.co.jp/products/search/detail.php?grp_id=5325&prd_id=4902425310404000",
+      "date_basis": "official_first_publication"
+    }
+  },
+  "products": {
+    "2372": {
+      "name": "MG 1/100 FAZZ Ver.Ka",
+      "series_ids": [
+        "89"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2372"
+      ]
+    },
+    "2194": {
+      "name": "MG 1/100 Ex-S高达/S高达",
+      "series_ids": [
+        "89"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2194"
+      ]
+    },
+    "3525": {
+      "name": "MG 1/100 PLAN303E 深度强袭",
+      "series_ids": [
+        "89"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3525"
+      ]
+    },
+    "3351": {
+      "name": "MG 1/100 海盗高达X-1 Ver.Ka",
+      "series_ids": [
+        "104"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3351"
+      ]
+    },
+    "3468": {
+      "name": "MG 1/100 海盗高达X1全装备型",
+      "series_ids": [
+        "104"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3468"
+      ]
+    },
+    "2915": {
+      "name": "BB战士 机动战士高达0083 星尘的回忆套装",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2915"
+      ]
+    },
+    "1208": {
+      "name": "RE/100 高达试作4号机 加贝拉",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1208"
+      ]
+    },
+    "840": {
+      "name": "RG 1/144 RX-78GP01Fb高达试作1号机全方位推进型",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/840"
+      ]
+    },
+    "839": {
+      "name": "RG 1/144 RX-78GP01 高达试作1号机 玉帘",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/839"
+      ]
+    },
+    "3464": {
+      "name": "MG 1/100 高达GP03S(雄蕊)",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3464"
+      ]
+    },
+    "3534": {
+      "name": "MG 1/100 RGM-79N 吉姆特装型",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3534"
+      ]
+    },
+    "3463": {
+      "name": "MG 1/100 高达GP02A",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3463"
+      ]
+    },
+    "3462": {
+      "name": "MG 1/100 高达GP01Fb",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3462"
+      ]
+    },
+    "3461": {
+      "name": "MG 1/100 高达RX-78GP01",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3461"
+      ]
+    },
+    "841": {
+      "name": "HGUC 1/144 加贝拉·迪特拉",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/841"
+      ]
+    },
+    "3458": {
+      "name": "HGUC 1/144 MS-06F-2 扎古II(联邦军式样)",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3458"
+      ]
+    },
+    "3456": {
+      "name": "HGUC 1/144 MS-06F-2 扎古II(吉翁军式样)",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3456"
+      ]
+    },
+    "3450": {
+      "name": "HGUC 1/144 高达GP02A 酸浆果",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3450"
+      ]
+    },
+    "3329": {
+      "name": "HGUC 1/144 高达 GP-01Fb",
+      "series_ids": [
+        "900001"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3329"
+      ]
+    },
+    "3558": {
+      "name": "RG 1/144 陆战型高达",
+      "series_ids": [
+        "900002"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3558"
+      ]
+    },
+    "2205": {
+      "name": "SD高达 CROSS SILHOUETTE 陆战型高达",
+      "series_ids": [
+        "900002"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2205"
+      ]
+    },
+    "3338": {
+      "name": "MG 1/100 铁球（第08MS小队版）",
+      "series_ids": [
+        "900002"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3338"
+      ]
+    },
+    "3014": {
+      "name": "MG 1/100 RGM-79(G) 吉姆（陆战型）",
+      "series_ids": [
+        "900002"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3014"
+      ]
+    },
+    "3309": {
+      "name": "MG 1/100 MS-07B3 老虎特装型",
+      "series_ids": [
+        "900002"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3309"
+      ]
+    },
+    "481": {
+      "name": "HGUC 1/144高达基地限定 飞行老虎 21世纪拟真配色",
+      "series_ids": [
+        "900002"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/481"
+      ]
+    },
+    "1976": {
+      "name": "HGUC 1/144 陆战型高达",
+      "series_ids": [
+        "900002"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1976"
+      ]
+    },
+    "1727": {
+      "name": "HGUC 1/144 陆战型吉姆",
+      "series_ids": [
+        "900002"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1727"
+      ]
+    },
+    "795": {
+      "name": "HGUC 1/144 高达Ez8",
+      "series_ids": [
+        "900002"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/795"
+      ]
+    },
+    "3013": {
+      "name": "HGUC 1/144 老虎特装型",
+      "series_ids": [
+        "900002"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3013"
+      ]
+    },
+    "3527": {
+      "name": "MG 1/100 Concept-X 6-1-2 Turn-X",
+      "series_ids": [
+        "900003"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3527"
+      ]
+    },
+    "3353": {
+      "name": "MG 1/100 WD-M01 Turn-A高达",
+      "series_ids": [
+        "900003"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3353"
+      ]
+    },
+    "993": {
+      "name": "HGCC 1/144 ∀高达",
+      "series_ids": [
+        "900003"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/993"
+      ]
+    },
+    "1769": {
+      "name": "SD EX-STANDARD 012 地狱死神高达EW版",
+      "series_ids": [
+        "900004"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1769"
+      ]
+    },
+    "3236": {
+      "name": "HG 1/144 沙漠高达改 EW",
+      "series_ids": [
+        "900004"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3236"
+      ]
+    },
+    "3097": {
+      "name": "MG 1/100 XXXG-01SR 沙漠高达EW",
+      "series_ids": [
+        "900004"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3097"
+      ]
+    },
+    "3096": {
+      "name": "MG 1/100 艾比安高达EW",
+      "series_ids": [
+        "900004"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3096"
+      ]
+    },
+    "2740": {
+      "name": "BB战士 C.E.73 -观星者- 套装",
+      "series_ids": [
+        "900005"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2740"
+      ]
+    },
+    "3434": {
+      "name": "HG 1/144 观星者高达",
+      "series_ids": [
+        "900005"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3434"
+      ]
+    },
+    "3433": {
+      "name": "HG 1/144 漆黑强袭高达",
+      "series_ids": [
+        "900005"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3433"
+      ]
+    },
+    "3079": {
+      "name": "HGUC 1/144 兹达",
+      "series_ids": [
+        "900006"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3079"
+      ]
+    },
+    "1810": {
+      "name": "HG 1/144 高达AN-01 崔斯坦",
+      "series_ids": [
+        "900007"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1810"
+      ]
+    },
+    "2125": {
+      "name": "HI-RESOLUTION MODEL 1/100 异端高达 红色机",
+      "series_ids": [
+        "900009"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2125"
+      ]
+    },
+    "863": {
+      "name": "HG 1/144 异端高达金色机·天蜜娜",
+      "series_ids": [
+        "900009"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/863"
+      ]
+    },
+    "261": {
+      "name": "SD高达 CROSS SILHOUETTE 旋风高达",
+      "series_ids": [
+        "900010"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/261"
+      ]
+    },
+    "2444": {
+      "name": "SD高达 CROSS SILHOUETTE 菲尼克斯高达",
+      "series_ids": [
+        "900010"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2444"
+      ]
+    },
+    "2199": {
+      "name": "SD高达 CROSS SILHOUETTE 西斯奎德（提坦斯配色）",
+      "series_ids": [
+        "900010"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2199"
+      ]
+    },
+    "2198": {
+      "name": "SD高达 CROSS SILHOUETTE 西斯奎德",
+      "series_ids": [
+        "900010"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2198"
+      ]
+    },
+    "3260": {
+      "name": "HG 1/144 重生狼(A.O.Z RE-BOOT版)",
+      "series_ids": [
+        "900011"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3260"
+      ]
+    },
+    "2992": {
+      "name": "HG 1/100 高扎古特装型(A.O.Z RE-BOOT版)",
+      "series_ids": [
+        "900011"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2992"
+      ]
+    },
+    "2896": {
+      "name": "HG 高达TR-6 巴扎姆2 RE-ZEON俘获机",
+      "series_ids": [
+        "900011"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2896"
+      ]
+    },
+    "2865": {
+      "name": "HG 加普兰TR-5[赫瑞欧] 提坦斯式样",
+      "series_ids": [
+        "900011"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2865"
+      ]
+    },
+    "2864": {
+      "name": "HG 加普兰TR-5[赫瑞欧] 巨臂组件装备",
+      "series_ids": [
+        "900011"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2864"
+      ]
+    },
+    "2713": {
+      "name": "HG 1/144 扎古Ⅱ F型 索拉里机（复仇的安魂曲）",
+      "series_ids": [
+        "900012"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2713"
+      ]
+    },
+    "2712": {
+      "name": "HG 1/144 高达EX（复仇的安魂曲）",
+      "series_ids": [
+        "900012"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2712"
+      ]
+    },
+    "1770": {
+      "name": "SD EX-STANDARD 011 TRY燃炎高达",
+      "series_ids": [
+        "900013"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1770"
+      ]
+    },
+    "3528": {
+      "name": "MG 1/100 MS-06R-1A 松永真专用扎古 Ver.2.0",
+      "series_ids": [
+        "900016"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3528"
+      ]
+    },
+    "3526": {
+      "name": "MG 1/100 MS-06R-2 强尼·莱汀专用扎古 Ver.2.0",
+      "series_ids": [
+        "900016"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3526"
+      ]
+    },
+    "3344": {
+      "name": "MG 1/100 格鲁古古加农",
+      "series_ids": [
+        "900016"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3344"
+      ]
+    },
+    "904": {
+      "name": "HGUC 1/144 MS06R2 强尼·莱丁专用扎古",
+      "series_ids": [
+        "900016"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/904"
+      ]
+    },
+    "787": {
+      "name": "HGUC 1/144 MS06R1A 松永真专用扎古",
+      "series_ids": [
+        "900016"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/787"
+      ]
+    },
+    "778": {
+      "name": "HGUC 1/144 MS-06R-1A 黑色三连星扎古",
+      "series_ids": [
+        "900016"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/778"
+      ]
+    },
+    "3451": {
+      "name": "HGUC 1/144 扎古I 黑色三连星式样",
+      "series_ids": [
+        "900016"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3451"
+      ]
+    },
+    "3253": {
+      "name": "HG 1/144 夏亚专用高机动型扎古II",
+      "series_ids": [
+        "900016"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3253"
+      ]
+    },
+    "2823": {
+      "name": "MG 1/100 高达基地限定 RX-78-3 G-3 高达 Ver.3.0",
+      "series_ids": [
+        "900016"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2823"
+      ]
+    },
+    "1915": {
+      "name": "HGUC 1/144 蓝色命运2号机“EXAM”",
+      "series_ids": [
+        "900017"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1915"
+      ]
+    },
+    "3598": {
+      "name": "HG 1/144 保巴拉姆",
+      "series_ids": [
+        "900019"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3598"
+      ]
+    },
+    "3597": {
+      "name": "HG 1/144 凯利斯",
+      "series_ids": [
+        "900019"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3597"
+      ]
+    },
+    "3594": {
+      "name": "HG 1/144 螺旋高达",
+      "series_ids": [
+        "900019"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3594"
+      ]
+    },
+    "2081": {
+      "name": "SD高达 CROSS SILHOUETTE 凯列班高达",
+      "series_ids": [
+        "67"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2081"
+      ]
+    },
+    "2077": {
+      "name": "MG 1/100 新安州·原石（NT Ver.）Ver.Ka",
+      "series_ids": [
+        "37"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2077"
+      ]
+    },
+    "2059": {
+      "name": "MG 1/100 NT高达 C装备 Ver.Ka",
+      "series_ids": [
+        "37"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2059"
+      ]
+    },
+    "2517": {
+      "name": "SD高达 EX STANDARD 沙扎比",
+      "series_ids": [
+        "30"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2517"
+      ]
+    },
+    "3268": {
+      "name": "RG 1/144 雪崩突进型能天使高达",
+      "series_ids": [
+        "23"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3268"
+      ]
+    },
+    "3269": {
+      "name": "HG 1/144 黑色审判女神高达",
+      "series_ids": [
+        "23"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3269"
+      ]
+    },
+    "3478": {
+      "name": "MG 1/100 00强化模组",
+      "series_ids": [
+        "23"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3478"
+      ]
+    },
+    "1768": {
+      "name": "SD EX-STANDARD 015 独角兽高达2号机 报丧女妖・命运女神（毁灭模式）",
+      "series_ids": [
+        "25"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1768"
+      ]
+    },
+    "1189": {
+      "name": "MG 1/100 高达DX",
+      "series_ids": [
+        "146"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1189"
+      ]
+    },
+    "955": {
+      "name": "MG 1/100 GX9900 高达X",
+      "series_ids": [
+        "146"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/955"
+      ]
+    },
+    "1059": {
+      "name": "HGAW 1/144 空中霸王高达",
+      "series_ids": [
+        "146"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1059"
+      ]
+    },
+    "875": {
+      "name": "HGAW 1/144 高达Double X",
+      "series_ids": [
+        "146"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/875"
+      ]
+    },
+    "3058": {
+      "name": "HGAW 1/144 高达X",
+      "series_ids": [
+        "146"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3058"
+      ]
+    },
+    "3529": {
+      "name": "MG 1/100 RX-75 钢坦克",
+      "series_ids": [
+        "29"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3529"
+      ]
+    },
+    "3535": {
+      "name": "MG 1/100 量产型格鲁古古 Ver.2.0",
+      "series_ids": [
+        "29"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3535"
+      ]
+    },
+    "3530": {
+      "name": "MG 1/100 扎古布雷型",
+      "series_ids": [
+        "900016"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3530"
+      ]
+    },
+    "3100": {
+      "name": "MG 1/100 战蟹",
+      "series_ids": [
+        "29"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3100"
+      ]
+    },
+    "3011": {
+      "name": "HGUC 1/144 MSM-07 魔蟹（夏亚专用）",
+      "series_ids": [
+        "29"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3011"
+      ]
+    },
+    "3361": {
+      "name": "MG 1/100 巨剑型脉冲高达",
+      "series_ids": [
+        "27"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3361"
+      ]
+    },
+    "2728": {
+      "name": "BB战士 ZGMF扎古系列套装",
+      "series_ids": [
+        "27"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2728"
+      ]
+    },
+    "2147": {
+      "name": "HGBD 1/144 高达AGE-II 马格南 SVver",
+      "series_ids": [
+        "32"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2147"
+      ]
+    },
+    "2100": {
+      "name": "HGUC 1/144 月高达",
+      "series_ids": [
+        "91"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2100"
+      ]
+    },
+    "594": {
+      "name": "HG 1/144 吉姆（肩部加农装备/导弹舱装备）",
+      "series_ids": [
+        "33"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/594"
+      ]
+    },
+    "497": {
+      "name": "高达基地限定 BB飞驱鸟大将军 [透明版]",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/497"
+      ]
+    },
+    "3252": {
+      "name": "MG 武者高达Mk-II 徳川家康 南蛮胴具足Ver.",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3252"
+      ]
+    },
+    "1898": {
+      "name": "LEGENDBB 武者顽驮无真恶叁",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1898"
+      ]
+    },
+    "1795": {
+      "name": "BB战士 No.403 LEGEND BB 真驱叁大将军",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1795"
+      ]
+    },
+    "1150": {
+      "name": "BB战士397 LEGENDBB 武者飞驱鸟",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1150"
+      ]
+    },
+    "1097": {
+      "name": "BB战士395 LEGEND BB 二代目顽驮无大将军",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1097"
+      ]
+    },
+    "796": {
+      "name": "BB战士381 LEGEND BB 杀驱头（暗将军）",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/796"
+      ]
+    },
+    "768": {
+      "name": "BB战士377 LEGEND BB武者号斗丸",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/768"
+      ]
+    },
+    "715": {
+      "name": "BB战士373 LEGEND BB 武者顽驮无",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/715"
+      ]
+    },
+    "3627": {
+      "name": "BB战士 172豪剑顽驮无 辉罗钢极彩Ver.",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3627"
+      ]
+    },
+    "3626": {
+      "name": "BB战士 167 辉神大将军狮龙凤 辉罗钢极彩Ver.",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3626"
+      ]
+    },
+    "3625": {
+      "name": "BB战士 166 新凤顽驮无",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3625"
+      ]
+    },
+    "3624": {
+      "name": "BB战士 113 风车的百世和冒失扎古莱路",
+      "series_ids": [
+        "900020"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3624"
+      ]
+    },
+    "1424": {
+      "name": "BB战士 No.400 LEGENDBB 骑士超越之龙",
+      "series_ids": [
+        "900021"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1424"
+      ]
+    },
+    "1275": {
+      "name": "BB战士399 LEGEND BB VERSAL骑士高达",
+      "series_ids": [
+        "900021"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1275"
+      ]
+    },
+    "1046": {
+      "name": "BB战士393 LEGENDBB 全装甲骑士高达",
+      "series_ids": [
+        "900021"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1046"
+      ]
+    },
+    "894": {
+      "name": "BB战士385 LEGEND BB独角兽骑士高达",
+      "series_ids": [
+        "900021"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/894"
+      ]
+    },
+    "774": {
+      "name": "BB战士 378 LEGEND BB 魔龙剑士零式高达",
+      "series_ids": [
+        "900021"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/774"
+      ]
+    },
+    "673": {
+      "name": "BB战士370 LEGEND BB 骑士高达",
+      "series_ids": [
+        "900021"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/673"
+      ]
+    },
+    "3415": {
+      "name": "高达汇战 豪华套装 02 [DX02]",
+      "series_ids": [
+        "900022"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3415"
+      ]
+    },
+    "3414": {
+      "name": "高达汇战 扩展补充包 05 [EX05]",
+      "series_ids": [
+        "900022"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3414"
+      ]
+    },
+    "3413": {
+      "name": "高达汇战 扩展补充包 04 [EX04]",
+      "series_ids": [
+        "900022"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3413"
+      ]
+    },
+    "3412": {
+      "name": "高达汇战 扩展补充包 03 [EX03]",
+      "series_ids": [
+        "900022"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3412"
+      ]
+    },
+    "3408": {
+      "name": "高达汇战 豪华套装 01 [DX01]",
+      "series_ids": [
+        "900022"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3408"
+      ]
+    },
+    "3411": {
+      "name": "高达汇战 涂装补充包 01 [PA01]",
+      "series_ids": [
+        "900022"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3411"
+      ]
+    },
+    "3410": {
+      "name": "高达汇战 扩展补充包 02 [EX02]",
+      "series_ids": [
+        "900022"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3410"
+      ]
+    },
+    "3409": {
+      "name": "高达汇战 扩展补充包 01 [EX01]",
+      "series_ids": [
+        "900022"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3409"
+      ]
+    },
+    "3407": {
+      "name": "高达汇战 起始套装 01 [ST01]",
+      "series_ids": [
+        "900022"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3407"
+      ]
+    },
+    "3277": {
+      "name": "RG 1/144 MS-06S 扎古II [初音未来Ver.]",
+      "series_ids": [
+        "900023"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3277"
+      ]
+    },
+    "2513": {
+      "name": "Hello Kitty/ 扎古Ⅱ [SD GUNDAM CROSS SILHOUETTE]",
+      "series_ids": [
+        "900023"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2513"
+      ]
+    },
+    "2512": {
+      "name": "Hello Kitty/夏亚专用扎古Ⅱ[SD GUNDAM CROSS SILHOUETTE]",
+      "series_ids": [
+        "900023"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2512"
+      ]
+    },
+    "2984": {
+      "name": "MG 1/100 量产型璃子专用扎古",
+      "series_ids": [
+        "900023"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2984"
+      ]
+    },
+    "822": {
+      "name": "BB战士383 LEGEND BB 强袭刘备高达",
+      "series_ids": [
+        "900024"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/822"
+      ]
+    },
+    "1088": {
+      "name": "RE/100 1/100 MSN04Ⅱ夜莺",
+      "series_ids": [
+        "900025"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/1088"
+      ]
+    },
+    "2024": {
+      "name": "SDCS 夜莺",
+      "series_ids": [
+        "900025"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2024"
+      ]
+    },
+    "3267": {
+      "name": "MG 1/100 吉姆 DOMINANCE",
+      "series_ids": [
+        "900017"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3267"
+      ]
+    },
+    "157": {
+      "name": "MG 1/100 高达基地限定 高达F90 （彩色透明版）",
+      "series_ids": [
+        "900031"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/157"
+      ]
+    },
+    "2625": {
+      "name": "RG 1/144 飞翼高达",
+      "series_ids": [
+        "28"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2625"
+      ]
+    },
+    "2026": {
+      "name": "SDCS RX-78-2 高达&CS骨架套装",
+      "series_ids": [
+        "29"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/2026"
+      ]
+    },
+    "155": {
+      "name": "MG 1/100 高达基地限定 高达AGE-1 换装系统套装(彩色透明版)",
+      "series_ids": [
+        "92"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/155"
+      ]
+    },
+    "145": {
+      "name": "MG 1/100 高达基地限定 异端高达红色机 飞行背包（电镀骨架/彩色透明外甲）",
+      "series_ids": [
+        "900009"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/145"
+      ]
+    },
+    "3063": {
+      "name": "HGUC 1/144 高达NT-1",
+      "series_ids": [
+        "116"
+      ],
+      "evidence_urls": [
+        "https://bandaihobbysite.cn/index/index/detail/id/3063"
+      ]
+    }
+  },
+  "excluded_products": {
+    "2318": {
+      "name": "SD CROSS SILHOUETTE GaoGaiGar",
+      "evidence_url": "https://bandaihobbysite.cn/index/index/detail/id/2318",
+      "reason": "non_gundam_work"
+    },
+    "2390": {
+      "name": "HG 1/20 光武·改(神崎堇座机)",
+      "evidence_url": "https://bandaihobbysite.cn/index/index/detail/id/2390",
+      "reason": "non_gundam_work"
+    },
+    "2371": {
+      "name": "HG 苍流丸",
+      "evidence_url": "https://bandaihobbysite.cn/index/index/detail/id/2371",
+      "reason": "non_gundam_work"
+    },
+    "2365": {
+      "name": "HG 1/20 光武·改（大神一郎座机）",
+      "evidence_url": "https://bandaihobbysite.cn/index/index/detail/id/2365",
+      "reason": "non_gundam_work"
+    },
+    "2364": {
+      "name": "HG 1/20 光武·改（真宫寺樱座机）",
+      "evidence_url": "https://bandaihobbysite.cn/index/index/detail/id/2364",
+      "reason": "non_gundam_work"
+    },
+    "2159": {
+      "name": "HG 复仇流浪者（最终决战样式）",
+      "evidence_url": "https://bandaihobbysite.cn/index/index/detail/id/2159",
+      "reason": "non_gundam_work"
+    },
+    "2118": {
+      "name": "HG 1/60 烈焰魔剑 Ver.IV",
+      "evidence_url": "https://bandaihobbysite.cn/index/index/detail/id/2118",
+      "reason": "non_gundam_work"
+    },
+    "471": {
+      "name": "高达基地限定 MG 1/100 MS整备架",
+      "evidence_url": "https://bandaihobbysite.cn/index/index/detail/id/471",
+      "reason": "standalone_accessory"
+    },
+    "506": {
+      "name": "高达基地限定 MG1/100 发射台支架",
+      "evidence_url": "https://bandaihobbysite.cn/index/index/detail/id/506",
+      "reason": "standalone_accessory"
+    }
+  }
+}

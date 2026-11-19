@@ -190,7 +190,8 @@
     "date_basis": "game_release"
   },
   "104": {
-    "year": null,
-    "evidence_url": null
+    "year": 1994,
+    "evidence_url": "https://www.kadokawa.co.jp/topics/5630",
+    "date_basis": "manga_serialization"
   }
 }

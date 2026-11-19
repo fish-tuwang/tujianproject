@@ -108,8 +108,8 @@ class GunplaCrawler:
             key = item['official_id']
             old = self.listings.get(key)
             if old:
-                for field in ['brand_ids', 'sale_types']:
-                    old[field] = unique([*old[field], *item[field]])
+                for field in ['brand_ids', 'series_ids', 'sale_types']:
+                    old[field] = unique([*old.get(field, []), *item.get(field, [])])
             else:
                 self.listings[key] = item
         self.checkpoint()
@@ -142,10 +142,19 @@ class GunplaCrawler:
                             self.failure('listing', base + '?' + urlencode(sorted(query.items())), error)
                 except Exception as error:
                     self.failure('listing', url, error)
+        # Work listings are independent evidence when a detail omits its work link.
+        for work in [entry for entry in self.entries if entry['kind'] == 'series']:
+            base = BASE + '/index/index/series/cate/' + work['source_key']
+            try:
+                pages = self.collect_listing(base)
+                for page in range(2, (min(pages, 1) if self.limit else pages) + 1):
+                    self.collect_listing(base + '?' + urlencode({'page': page}))
+            except Exception as error:
+                self.failure('series_listing', base, error)
         # Round-robin grades puts a representative of every official grade first.
         groups = defaultdict(list)
         for item in self.listings.values():
-            groups[item['brand_ids'][0]].append(item)
+            groups[item['brand_ids'][0] if item['brand_ids'] else 'unclassified'].append(item)
         ordered = [items[index] for index in range(max((len(g) for g in groups.values()), default=0)) for items in groups.values() if index < len(items)]
         for listing in ordered:
             key, url = listing['official_id'], listing['source_url']
