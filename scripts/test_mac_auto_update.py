@@ -54,6 +54,8 @@ class UpdateTests(unittest.TestCase):
             if args[1] == 'inspect':
                 return json.dumps([{'Image': 'sha256:old', 'Config': {'Image': 'little-atlas-mac-api'}}]).encode()
             if args[1] == 'exec':
+                if failure == 'verify':
+                    raise RuntimeError('simulated container hash mismatch')
                 import hashlib
                 return hashlib.sha256((self.root / 'backend/preview/app.js').read_bytes()).hexdigest().encode()
             return b''
@@ -83,11 +85,40 @@ class UpdateTests(unittest.TestCase):
     def test_conflict_keeps_custom_source(self):
         source = self.root / 'backend/preview/app.js'
         source.write_text('Mac custom code\n')
-        with self.assertRaises(subprocess.CalledProcessError):
+        with self.assertRaisesRegex(RuntimeError, 'Unresolved source conflict'):
             self.execute()
         self.assertEqual(source.read_text(), 'Mac custom code\n')
         self.assertEqual(self.commands, [])
         self.assertFalse((self.state / 'revision').exists())
+
+
+    def test_non_overlapping_mac_changes_merge_and_survive_next_update(self):
+        source = self.root / 'backend/preview/app.js'
+        upstream_source = self.upstream / 'backend/preview/app.js'
+        baseline = 'const year = 2008;\n' + ''.join('// context '+str(i)+'\n' for i in range(12))
+        upstream_source.write_text(baseline)
+        self.git('commit', '-am', 'multiline base')
+        self.baseline = self.git('rev-parse', 'HEAD')
+        upstream_source.write_text(baseline.replace('2008', '2026'))
+        self.git('commit', '-am', 'upstream year')
+        self.target = self.git('rev-parse', 'HEAD')
+        source.write_text(baseline + '// Mac customization\n')
+        self.execute()
+        self.assertIn('const year = 2026;', source.read_text())
+        self.assertIn('// Mac customization', source.read_text())
+        self.commands.clear()
+        self.execute()
+        self.assertEqual(self.commands, [])
+
+    def test_unrecognized_overlapping_changes_leave_all_files_untouched(self):
+        (self.upstream / 'backend/extra.py').write_text('new = True\n')
+        self.git('add', '.');self.git('commit', '-m', 'new file alongside conflict')
+        source = self.root / 'backend/preview/app.js'
+        source.write_text('local incompatible change\n')
+        with self.assertRaisesRegex(RuntimeError, 'Unresolved source conflict'):
+            self.execute()
+        self.assertFalse((self.root / 'backend/extra.py').exists())
+        self.assertEqual(source.read_text(), 'local incompatible change\n')
 
     def test_build_failure_restores_source_without_restarting(self):
         with self.assertRaises(RuntimeError):
@@ -104,6 +135,13 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(sum(c[0] == 'up' for c in self.commands), 2)
         self.assertFalse((self.state / 'revision').exists())
 
+    def test_backend_verification_failure_rolls_back_even_after_readiness_passes(self):
+        with self.assertRaisesRegex(RuntimeError, 'container hash mismatch'):
+            self.execute('verify')
+        self.assertEqual((self.root / 'backend/preview/app.js').read_text(), 'const year = 2008;\n')
+        self.assertEqual(sum(c[0] == 'up' for c in self.commands), 2)
+        self.assertFalse((self.state / 'revision').exists())
+
     def test_migration_blocks_deployment(self):
         directory = self.upstream / 'backend/migrations'
         directory.mkdir()
@@ -113,6 +151,65 @@ class UpdateTests(unittest.TestCase):
             self.execute()
         self.assertEqual(self.commands, [])
         self.assertEqual((self.root / 'backend/preview/app.js').read_text(), 'const year = 2008;\n')
+
+
+class MacCustomizationTests(unittest.TestCase):
+    def test_structural_repair_preserves_mac_methods_and_summary_fields(self):
+        source = b"""from pathlib import Path
+
+def series_groups(rows):
+    for row in rows:
+        year = series_years().get(row.source_key, {}).get('year')
+    return rows
+
+def cached(request, session, view, params, loader):
+    return public_cached(request, session, 'gunpla', view, params, loader)
+
+class GunplaRepository:
+    def summary_rows(self):
+        def load():
+            rows = []
+            for row in self.session.rows:
+                data = row.data
+                fields = ['series_ids', 'dalong_flag']
+                rows.append({'id': row.source_key, **{k: data.get(k) for k in fields}})
+            return rows
+        revision = 1
+        return self.cache.snapshot('gunpla', revision, load)
+
+    def filters(self):
+        return {'series_groups': series_groups(self.session.works), 'mac_extra': True}
+
+    def product(self, key):
+        # Private Mac Dalong implementation must not be replaced.
+        return {'dalong_materials': ['private-local-extension']}
+"""
+        result = updater.repair_gunpla(source)
+        compile(result, 'merged.py', 'exec')
+        self.assertIn(b"'dalong_flag'", result)
+        self.assertIn(b"'mac_extra': True", result)
+        self.assertIn(b"# Private Mac Dalong implementation must not be replaced.", result)
+        self.assertIn(b"'dalong_materials': ['private-local-extension']", result)
+        self.assertIn(b'product_series(row.source_key, row.name', result)
+        self.assertIn(b'excluded_product(row.source_key, row.name)', result)
+        self.assertIn(b'work_rows(self.session.works', result)
+        self.assertIn(b"view + ':' + classification()[1]", result)
+
+    def test_known_theme_conflict_preserves_custom_styles(self):
+        import hashlib
+        name='backend/preview/theme.css'
+        base=b'.year-panel{color:black}\n'
+        local=b'.year-panel{color:purple;border-radius:18px}\n'
+        remote=b'.year-panel{color:black;display:grid}\n'
+        pair=tuple(hashlib.sha256(v).hexdigest() for v in [base,remote])
+        with patch.dict(updater.KNOWN_CONFLICTS,{name:pair}):
+            result=updater.merge_file(name,base,local,remote)
+        self.assertIn(b'color:purple;border-radius:18px',result)
+        self.assertIn(b'#year-tabs{display:grid',result)
+
+    def test_unknown_python_release_does_not_use_structural_repair(self):
+        with self.assertRaisesRegex(RuntimeError,'Unresolved source conflict'):
+            updater.merge_file('backend/app/gunpla.py',b'old=1\n',b'custom=1\n',b'new=1\n')
 
 
 if __name__ == '__main__':
