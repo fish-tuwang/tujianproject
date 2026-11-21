@@ -1,0 +1,90 @@
+{
+  "license": {
+    "name": "CC BY-NC-SA 4.0",
+    "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "note": "角色二次设计依 CC BY-NC-SA 4.0；单张作品的相关权利归各自创作者。"
+  },
+  "entries": [
+    {
+      "id": "1",
+      "file": "deepseek-bao-bi-jujue.png",
+      "description": "deepseek娘抱臂皱眉：这需求太离谱，本模型拒绝接单",
+      "tags": [
+        "无语",
+        "拒绝",
+        "工作"
+      ],
+      "source": "https://fisharchive.cc/media/deepseek-bao-bi-jujue.png",
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+    },
+    {
+      "id": "4",
+      "file": "deepseek-bao-xigua.png",
+      "description": "deepseek娘抱着半个西瓜笑开花，算力终于能降温了",
+      "tags": [
+        "开心",
+        "吃饭"
+      ],
+      "source": "https://fisharchive.cc/media/deepseek-bao-xigua.png",
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+    },
+    {
+      "id": "5",
+      "file": "deepseek-baozhe-saozhou.jpg",
+      "description": "鲸鱼娘抱紧扫帚斜眼发呆，清洁KPI已读不回。",
+      "tags": [
+        "无语",
+        "敷衍",
+        "工作"
+      ],
+      "source": "https://fisharchive.cc/media/deepseek-baozhe-saozhou.jpg",
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+    },
+    {
+      "id": "8",
+      "file": "deepseek-biye-ciallo.webp",
+      "description": "鲸鱼娘眨眼比耶露出鲸鱼尾，Ciallo一声甜度超标",
+      "tags": [
+        "开心",
+        "卖萌",
+        "打招呼"
+      ],
+      "source": "https://fisharchive.cc/media/deepseek-biye-ciallo.webp",
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+    },
+    {
+      "id": "9",
+      "file": "deepseek-bu-lai.png",
+      "description": "鲸鱼娘眯眼翘嘴说“不赖”，这验收口气比老板还稳",
+      "tags": [
+        "得意"
+      ],
+      "source": "https://fisharchive.cc/media/deepseek-bu-lai.png",
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+    },
+    {
+      "id": "14",
+      "file": "deepseek-chazhuyao.png",
+      "description": "蓝色大肥鱼叉腰鼓脸坐地，班味一上来谁都别想哄。",
+      "tags": [
+        "无语",
+        "搞笑"
+      ],
+      "source": "https://fisharchive.cc/media/deepseek-chazhuyao.png",
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+    },
+    {
+      "id": "16",
+      "file": "deepseek-da-ku.jpg",
+      "description": "鲸鱼娘趴着哭成两道瀑布，委屈直接满功率输出",
+      "tags": [
+        "委屈",
+        "卖萌",
+        "难过"
+      ],
+      "source": "https://fisharchive.cc/media/deepseek-da-ku.jpg",
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+    }
+  ],
+  "watermark_review": "2026-11-21: selected originals visually inspected; no added or visible source watermarks."
+}
