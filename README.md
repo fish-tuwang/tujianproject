@@ -8,6 +8,10 @@ Tomica 多美卡、宝可梦全国图鉴与高达模型图鉴：微信原生页�
 
 当前站点采用私有登录，仅服务器命令可创建账户；新登录撤销旧会话，首次登录须修改临时密码。登录、账号管理与证书续签见[鉴权说明](docs/auth.md)。
 
+## 公司修改与 Mac 自动发布
+
+开始任务先读 [AGENTS.md](AGENTS.md) 和 [Mac 部署与发布流程](docs/mac-deployment-and-release.md)。图鉴与普通 QQ 机器人运行在家庭 Mac mini，公司修改后提交并推送 `main`，Mac 每 5 分钟检查更新。普通 QQ 聊天机器人入口是 [qqbot/](qqbot/README.md)；QQ 官方 DeepSeek harness 机器人属于独立项目。
+
 ## 开发
 
 使用Python 3.11及以上版本在项目根创建虚拟环境，安装requirements.lock；生产镜像使用Python 3.12。`npm ci`安装客户端验证依赖。复制.env.example为本地.env并调整本地配置。
