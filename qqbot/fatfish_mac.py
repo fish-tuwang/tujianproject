@@ -168,10 +168,13 @@ def run_panel():
     panel.napcat_up = lambda: qq_status()['state'] == 'ok'
     panel.qq_running = lambda: True
     panel.bot_procs = lambda: []
+    panel.ws_clients = lambda: False
     def service(action):
         target = 'gui/' + str(os.getuid()) + '/com.little-atlas.fatfish'
-        command = ['launchctl','kickstart','-k',target] if action in {'start','restart'} else ['launchctl','kill','SIGTERM',target]
+        command = ['launchctl','kickstart','-k',target] if action in {'start','restart'} else ['launchctl','bootout',target]
         result = subprocess.run(command, capture_output=True)
+        if result.returncode and action in {'start','restart'}:
+            result = subprocess.run(['launchctl','bootstrap','gui/'+str(os.getuid()),str(Path.home()/'Library/LaunchAgents/com.little-atlas.fatfish.plist')],capture_output=True)
         return result.returncode == 0, 'Mac 聊天服务已处理，QQ 登录保持不变'
     panel.start_bot = lambda: service('start')
     panel.start_all = panel.start_bot
@@ -182,6 +185,8 @@ def run_panel():
             action = body.get('action')
             if action in {'start','start_all','restart','force_restart'}:
                 ok, message = service('restart');return {'ok':ok,'msg':message}
+            if action == 'stop':
+                ok, message = service('stop');return {'ok':ok,'msg':message}
             return {'ok':False,'error':'为保留在线服务，请使用重启聊天机器人'}
         return original(self, url, body)
     panel.H.route = route

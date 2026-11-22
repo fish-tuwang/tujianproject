@@ -65,7 +65,8 @@ def check(root=ROOT):
         # Each release owns its dependencies: rolling back code also restores its venv.
         run([str(root/'venv/bin/python'),'-m','venv',str(release/'venv')], timeout=60)
         python = release/'venv/bin/python'
-        run([str(release/'venv/bin/pip'),'install','-q','--cert',str(root/'system-ca.pem'),'-r',str(release/'requirements.txt')], timeout=180)
+        run([str(release/'venv/bin/pip'),'install','-q','--cert',str(root/'system-ca.pem'),'-r',str(release/'requirements.txt'),
+             'python-pptx','imageio-ffmpeg','yt-dlp'], timeout=180)
         for name in ['config.json','persona.md','data','stickers']:
             target = release/'bot'/name
             if target.exists():
