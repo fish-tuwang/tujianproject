@@ -11,12 +11,13 @@ from urllib.parse import urlsplit
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import httpx
-from pydantic import SecretStr, field_validator
+from pydantic import SecretStr, field_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .audit import audit, configure_audit
 from .qq_chat import ChatReplies
 from .qq_images import ChatImages
+from .engagement import EngagementStore, activity_target, batches, segment_key
 
 
 class QQSettings(BaseSettings):
@@ -30,6 +31,9 @@ class QQSettings(BaseSettings):
     account_api: str = 'http://127.0.0.1:3002'
     state_path: str = '/app/qq-state/bot.sqlite3'
     log_dir: str = '/app/qq-logs'
+    idle_enabled: bool = False
+    idle_minutes: int = Field(default=30, ge=15, le=1440)
+    idle_daily_limit: int = Field(default=3, ge=1, le=3)
 
     @field_validator('account')
     @classmethod
@@ -70,12 +74,13 @@ class QQSettings(BaseSettings):
         return value
 
 
-class BotStore:
+class BotStore(EngagementStore):
     def __init__(self, path):
         self.path = Path(path)
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         with self.connect() as db:
             db.executescript('PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS seen (group_id TEXT,user_id TEXT,message_id TEXT,at REAL,PRIMARY KEY(group_id,message_id)); CREATE TABLE IF NOT EXISTS pending (group_id TEXT,user_id TEXT,message_id TEXT,text TEXT,at REAL,PRIMARY KEY(group_id,message_id)); CREATE TABLE IF NOT EXISTS context (group_id TEXT,user_id TEXT,data TEXT,expires REAL,PRIMARY KEY(group_id,user_id));')
+        self.setup_engagement()
         self.path.chmod(0o600)
 
     def connect(self):
@@ -158,22 +163,27 @@ def create_app(settings, *, llm_transport=None, account_transport=None):
                     while True:
                         group, user, message, query = await queue.get()
                         try:
+                            idle=user=='__idle__'
+                            if idle and not store.idle_allowed(group,minutes=settings.idle_minutes,limit=settings.idle_daily_limit):continue
                             try:
-                                segments = await replies.reply(group, user, query)
+                                segments = await replies.reply(group, user, query,idle=idle)
                             except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
                                 audit('qq_chat_query_failed', error=type(error).__name__, group_id=group, user_id=user)
                                 raise ValueError('model generation failed') from error
-                            text = [s for s in segments if s.get('type') != 'image']
-                            images = [s for s in segments if s.get('type') == 'image']
-                            batches = [[{'type': 'reply', 'data': {'id': message}}, *text]]
-                            batches.extend([[image] for image in images])
-                            for batch in batches:
+                            if idle and not store.idle_allowed(group,minutes=settings.idle_minutes,limit=settings.idle_daily_limit):continue
+                            outbound=batches(segments,message)
+                            idle_recorded=False
+                            for batch in outbound:
                                 payload = {'group_id': int(group), 'message': batch}
                                 response = await account.post('/send_group_msg', json=payload)
                                 response.raise_for_status()
                                 body = response.json()
                                 if body.get('status') != 'ok' or body.get('retcode') != 0 or not (body.get('data') or {}).get('message_id'):
                                     raise ValueError('QQ did not acknowledge the reply')
+                                if idle and not idle_recorded:
+                                    store.record_idle(group,' '.join(r.get('data',{}).get('text','') for r in segments));idle_recorded=True
+                                for segment in batch:
+                                    if segment.get('type')=='image':store.record_image(group,segment_key(segment))
                                 status.update(last_reply_at=time.time(), last_error=None)
                                 audit('qq_chat_reply_sent', group_id=group, user_id=user, request_message_id=message, reply_message_id=body['data']['message_id'], content_type='image' if batch[0]['type'] == 'image' else 'text')
                         except (httpx.HTTPError, ValueError, TypeError) as error:
@@ -182,20 +192,35 @@ def create_app(settings, *, llm_transport=None, account_transport=None):
                         finally:
                             queue.task_done()
 
+                async def idle_loop():
+                    while True:
+                        await asyncio.sleep(60)
+                        if not settings.idle_enabled or queue.full():continue
+                        try:
+                            info=(await account.post('/get_login_info',json={})).json()
+                            if info.get('status')!='ok' or str((info.get('data') or {}).get('user_id'))!=settings.account:continue
+                            for group in store.idle_candidates(minutes=settings.idle_minutes,limit=settings.idle_daily_limit):
+                                if queue.full():break
+                                if settings.allowed_groups!='*' and group not in [v.strip() for v in settings.allowed_groups.split(',')]:continue
+                                if store.claim_idle(group,minutes=settings.idle_minutes,limit=settings.idle_daily_limit):queue.put_nowait((group,'__idle__','','现在群里很安静，允许自然地冒泡一次。'))
+                        except (httpx.HTTPError,ValueError,sqlite3.Error) as error:
+                            audit('qq_idle_check_failed',error=type(error).__name__)
+
                 task = asyncio.create_task(worker())
+                idle_task = asyncio.create_task(idle_loop())
                 try:
                     yield
                 finally:
-                    task.cancel()
-                    with suppress(asyncio.CancelledError):
-                        await task
+                    task.cancel();idle_task.cancel()
+                    with suppress(asyncio.CancelledError):await task
+                    with suppress(asyncio.CancelledError):await idle_task
 
     app = FastAPI(title='QQ千问聊天桥接', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.queue = queue
 
     @app.get('/health/live')
     async def live():
-        return {'status': 'ok', 'account_configured': bool(settings.account), 'groups_enabled': bool(settings.allowed_groups), **status}
+        return {'status': 'ok', 'account_configured': bool(settings.account), 'groups_enabled': bool(settings.allowed_groups), 'idle_enabled':settings.idle_enabled, **status}
 
     @app.get('/health/ready')
     async def ready():
@@ -222,6 +247,8 @@ def create_app(settings, *, llm_transport=None, account_transport=None):
             return JSONResponse({'ok': False}, status_code=403)
         try:
             event = json.loads(data)
+            activity=activity_target(event,settings)
+            if activity:store.note_activity(*activity)
             query = group_query(event, settings) if isinstance(event, dict) else None
         except (ValueError, TypeError, AttributeError):
             return JSONResponse({'ok': False}, status_code=400)

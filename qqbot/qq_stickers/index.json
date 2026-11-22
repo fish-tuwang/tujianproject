@@ -15,7 +15,8 @@
         "工作"
       ],
       "source": "https://fisharchive.cc/media/deepseek-bao-bi-jujue.png",
-      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery",
+      "family": "refusal"
     },
     {
       "id": "4",
@@ -84,7 +85,46 @@
       ],
       "source": "https://fisharchive.cc/media/deepseek-da-ku.jpg",
       "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+    },
+    {
+      "id": "sleep-bao-jing-shui-jiao",
+      "file": "deepseek-bao-jing-shui-jiao.png",
+      "description": "大肥鱼抱紧小鲸呼呼大睡，深度思考先潜水离线。",
+      "tags": [
+        "睡觉",
+        "休息",
+        "轻松拒绝"
+      ],
+      "family": "sleep",
+      "source": "https://fisharchive.cc/media/deepseek-bao-jing-shui-jiao.png",
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+    },
+    {
+      "id": "sleep-baozhe-jingyu-shuijiao",
+      "file": "deepseek-baozhe-jingyu-shuijiao.webp",
+      "description": "鲸鱼娘抱着鲸鱼枕头睡得香，今日KPI是长大。",
+      "tags": [
+        "睡觉",
+        "休息",
+        "轻松拒绝"
+      ],
+      "family": "sleep",
+      "source": "https://fisharchive.cc/media/deepseek-baozhe-jingyu-shuijiao.webp",
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
+    },
+    {
+      "id": "sleep-pa-zhe-shui-jiao",
+      "file": "deepseek-pa-zhe-shui-jiao.webp",
+      "description": "deepseek娘趴平冒着Z字，深度思考这次真睡到断线。",
+      "tags": [
+        "睡觉",
+        "休息",
+        "轻松拒绝"
+      ],
+      "family": "sleep",
+      "source": "https://fisharchive.cc/media/deepseek-pa-zhe-shui-jiao.webp",
+      "credit": "蓝色大肥鱼档案馆 · https://fisharchive.cc/gallery"
     }
   ],
-  "watermark_review": "2026-11-21: selected originals visually inspected; no added or visible source watermarks."
+  "watermark_review": "Original source credits retained; no added watermark. New sleep variants visually checked on 2026-11-23."
 }

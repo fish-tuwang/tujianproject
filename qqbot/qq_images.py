@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 
 import httpx
 from PIL import Image
+from .engagement import picture_key
 
 
 def image_segment(data):
@@ -25,11 +26,21 @@ class ChatImages:
         self.api, self.downloads, self.model = api, downloads, model
         self.root = root or Path(__file__).with_name('qq_stickers')
         self.entries = {x['id']: x for x in json.loads((self.root / 'index.json').read_text(encoding='utf-8'))['entries']}
+        self.keys={key:picture_key((self.root / entry['file']).read_bytes()) for key,entry in self.entries.items()}
         self.catalog = [{'id': x['id'], 'description': x['description'], 'tags': x['tags']} for x in self.entries.values()]
 
-    async def select(self, decision):
+    async def select(self, decision, excluded=()):
         entry = self.entries.get(str(decision.get('sticker_id', '')))
         if entry:
+            key=str(decision.get('sticker_id'))
+            if self.keys[key] in excluded:
+                family=entry.get('family')
+                choices=[r for i,r in self.entries.items() if family and r.get('family')==family and self.keys[i] not in excluded]
+                if not choices:
+                    choices=[r for i,r in self.entries.items() if family and r.get('family')==family and self.keys[i] not in excluded[:1]]
+                    choices.sort(key=lambda r:excluded.index(self.keys[r['id']]) if self.keys[r['id']] in excluded else 999,reverse=True)
+                if not choices:return None
+                entry=choices[0]
             return image_segment((self.root / entry['file']).read_bytes())
         prompt = decision.get('image_prompt')
         if not isinstance(prompt, str) or not prompt.strip():

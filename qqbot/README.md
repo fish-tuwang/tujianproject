@@ -14,3 +14,13 @@
 自动更新器：`scripts/mac_qq_auto_update.py`。启动项：`com.little-atlas.qq-updater`。安装完成后无需在公司或 Mac 上反复执行安装命令。失败时保留旧服务或回滚旧桥接镜像，详细日志位于 `~/Library/Application Support/LittleAtlasQQ/updater.log`。
 
 验证更新器：`.venv/bin/python -m pytest tests/test_mac_qq_update.py -q`。更新器使用固定、已验证的运行依赖镜像，GitHub 修改构建配置不会自动执行。
+
+## 冷场冒泡与表情（2026-11-23）
+
+`QQ_IDLE_ENABLED=true` 开启冷场冒泡，`QQ_IDLE_MINUTES=30`、`QQ_IDLE_DAILY_LIMIT=3`。仅对已授权且过去24小时有人 @ 过机器人的群生效；群里无人发言30分钟才考虑冒泡，北京时间22:00—09:00不主动说话。两次主动冒泡至少间隔2小时，同一段无人回应的冷场只发一次。队列执行前及模型生成后都会重查群活动，已有人说话就取消，不补发夜间积压。
+
+文字、图文、纯表情为三种回复模式。纯表情不附带空引用或额外文字。图片按解码后的画面指纹记录每群发送历史，优先避开最近3张；同类图库不足时至少不重复上一张，不靠字幕去重。历史与每日额度存在本机 SQLite，更新/重启后保留。模型每次得到真实北京时间，夜间被 @ 仍可正常回复。
+
+实现参考仅用于设计比较，未运行第三方机器人：
+- https://github.com/Vegra85/fatfish-bot ：冷场试探、排队、表情词典的说明。
+- https://docs.maibot.chat/manual/configuration/bot-config ：按群/时段调节参与频率及模型选表情。
