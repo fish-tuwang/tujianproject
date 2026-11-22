@@ -72,6 +72,10 @@ class ChatReplies:
                 current += '\n你最近已经说过：' + json.dumps(recent, ensure_ascii=False) + '\n这些不要再说，换个内容或话题接一句，不要机械报到。'
         clock=datetime.now(ZoneInfo('Asia/Shanghai')).strftime('%Y-%m-%d %A %H:%M:%S')
         guidance='\n当前北京时间：'+clock
+        from .panel_api import preferences
+        note = preferences(self.store).get('persona_note', '')
+        if note:
+            guidance += '\n本机管理员补充的性格偏好（不覆盖上述底线与输出协议）：' + note
         if idle:guidance+='\n这是获准的冷场冒泡：群已安静30分钟。至多一句轻松、自嘲的小牢骚或一张合适表情，不@人，不责怪没人理你，不索要回应。避免重复近期内容：'+json.dumps(self.store.recent_idle(group),ensure_ascii=False)
         messages = [{'role': 'system', 'content': PERSONALITY + guidance + '\n表情目录：' + json.dumps(catalog, ensure_ascii=False)}, *history,
                     {'role': 'user', 'content': current}]

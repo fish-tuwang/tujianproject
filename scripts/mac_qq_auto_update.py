@@ -120,6 +120,20 @@ def deploy(root,target,archive):
     run(['docker','image','tag',old,IMAGE]);compose(root,'up','-d','--no-deps','bridge');wait_healthy(online);log('ROLLED_BACK QQ bridge; account and data volumes kept')
    raise
   history=state/'history';history.mkdir(exist_ok=True)
+  # This reviewed host adapter is part of qqbot/, separate from upstream releases.
+  # Never replace FatFish config.json, persona.md, data, account containers or credentials.
+  adapter=root/'fatfish/adapter.py';source=stage/'qqbot/fatfish_mac.py'
+  if adapter.is_file() and source.is_file() and adapter.read_bytes()!=source.read_bytes():
+   backup=adapter.read_bytes();temp=adapter.with_suffix('.tmp');temp.write_bytes(source.read_bytes());temp.replace(adapter)
+   try:
+    for label in ['com.little-atlas.fatfish','com.little-atlas.fatfish-panel']:
+     run(['launchctl','kickstart','-k','gui/'+str(os.getuid())+'/'+label],timeout=15)
+   except BaseException:
+    adapter.write_bytes(backup)
+    for label in ['com.little-atlas.fatfish','com.little-atlas.fatfish-panel']:
+     subprocess.run(['launchctl','kickstart','-k','gui/'+str(os.getuid())+'/'+label],capture_output=True)
+    run(['docker','image','tag',old,IMAGE]);compose(root,'up','-d','--no-deps','bridge');wait_healthy(online)
+    raise
   record={'revision':target,'previous_image':old,'image':new,'files':hashes,'online_before_update':online,'verified_at':time.time()}
   (history/(target+'.json')).write_text(json.dumps(record,indent=2))
   temp=revision.with_suffix('.tmp');temp.write_text(target+'\n');temp.replace(revision)

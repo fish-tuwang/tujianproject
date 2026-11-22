@@ -1,5 +1,7 @@
 # 项目协作与发布约定
 
+2026-11-23 最新：用户已授权部署完整 FatFish 公开框架。普通 QQ 当前还需先读 [FatFish Mac 部署说明](docs/fatfish-mac.md)：`qqbot/fatfish_mac.py` 是宿主适配入口，`qqbot/qq_bot.py` 在 QQ_ENGINE=fatfish 下仅作原账号认证网关。官方 QQ 仍为独立 harness 插件，`official_qq/` 为本次新增的无凭据工具/提示词模板，不是 NapCat 服务。不要将下文旧 Qwen worker 的入口及提示词生效方式误套到当前 FatFish 实例。
+
 开始修改前阅读 [部署与发布说明](docs/mac-deployment-and-release.md)；修改普通 QQ 机器人还需阅读 [qqbot/README.md](qqbot/README.md)。本文是本仓库长期约定，用户最新明确指令优先。
 
 ## 项目与部署位置

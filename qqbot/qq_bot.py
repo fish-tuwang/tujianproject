@@ -18,11 +18,14 @@ from .audit import audit, configure_audit
 from .qq_chat import ChatReplies
 from .qq_images import ChatImages
 from .engagement import EngagementStore, activity_target, batches, segment_key
+from .panel_api import install_panel_api, preferences
+from .fatfish_gateway import install_gateway
 
 
 class QQSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='QQ_', env_file=None, extra='ignore')
     account: str = ''
+    engine: str = 'qwen'
     allowed_groups: str = ''
     onebot_token: SecretStr
     llm_key: SecretStr
@@ -195,7 +198,7 @@ def create_app(settings, *, llm_transport=None, account_transport=None):
                 async def idle_loop():
                     while True:
                         await asyncio.sleep(60)
-                        if not settings.idle_enabled or queue.full():continue
+                        if settings.engine == "fatfish" or not settings.idle_enabled or queue.full():continue
                         try:
                             info=(await account.post('/get_login_info',json={})).json()
                             if info.get('status')!='ok' or str((info.get('data') or {}).get('user_id'))!=settings.account:continue
@@ -217,10 +220,15 @@ def create_app(settings, *, llm_transport=None, account_transport=None):
 
     app = FastAPI(title='QQ千问聊天桥接', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.queue = queue
+    for key, value in preferences(store).items():
+        if key in {'idle_enabled', 'idle_minutes', 'idle_daily_limit'}:
+            setattr(settings, key, value)
+    install_panel_api(app, settings, store, status)
+    install_gateway(app, settings, store, status)
 
     @app.get('/health/live')
     async def live():
-        return {'status': 'ok', 'account_configured': bool(settings.account), 'groups_enabled': bool(settings.allowed_groups), 'idle_enabled':settings.idle_enabled, **status}
+        return {'status': 'ok', 'engine': settings.engine, 'fatfish_connected': time.time()-app.state.fatfish_poll_at < 60 if settings.engine=='fatfish' else None, 'account_configured': bool(settings.account), 'groups_enabled': bool(settings.allowed_groups), 'idle_enabled':settings.idle_enabled, **status}
 
     @app.get('/health/ready')
     async def ready():
@@ -249,6 +257,12 @@ def create_app(settings, *, llm_transport=None, account_transport=None):
             event = json.loads(data)
             activity=activity_target(event,settings)
             if activity:store.note_activity(*activity)
+            if settings.engine == 'fatfish':
+                if activity and not app.state.fatfish_events.full():
+                    app.state.fatfish_events.put_nowait(event)
+                    status['last_received_at'] = time.time()
+                    return {'ok': True, 'accepted': True, 'engine': 'fatfish'}
+                return {'ok': True, 'accepted': False, 'engine': 'fatfish'}
             query = group_query(event, settings) if isinstance(event, dict) else None
         except (ValueError, TypeError, AttributeError):
             return JSONResponse({'ok': False}, status_code=400)

@@ -2,6 +2,8 @@
 
 更新日期：2026-11-23。仓库 `fish-tuwang/tujianproject`，正式分支 `main`。公司 Codex 负责修改、检查和推送；家庭 Mac mini 负责运行和自动拉取。
 
+**最新部署变更：** 普通 QQ 已按用户要求采用完整 FatFish 公开框架与原版控制台，Qwen 模型和原 NapCat 登录保留。新增独立上游更新任务；当前架构、实际生效的人设位置与官方 harness 插件变更，优先参见 [fatfish-mac.md](fatfish-mac.md)。本文后续旧 Qwen worker 描述用于原部署和回滚，不代表 FatFish 接管后的消息处理入口。
+
 ## 三个系统的区分
 
 | 系统 | 本仓库代码 | 运行方式 |
