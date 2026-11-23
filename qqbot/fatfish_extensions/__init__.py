@@ -3,7 +3,7 @@ import importlib
 from pathlib import Path
 import sys
 
-from . import common,memory,mood,soul,relation,usage
+from . import common,memory,mood,soul,relation,usage,music_search
 
 VERSION='1.0.0'
 
@@ -21,4 +21,5 @@ def install(bot_directory):
                 setattr(target,key,value)
         target.STUB=False
     usage.install(bot_directory)
+    music_search.install()
     return VERSION

@@ -27,4 +27,8 @@ def enhance_sticker_ui(html):
       } else toast(r.error || "没改成", true);
     } catch (error) { toast("没改成，请稍后重试", true); }
     finally { delete el.dataset.pending; }'''
-    return html.replace(old, new)
+    html=html.replace(old,new)
+    html=html.replace('const st = s => s.ok === true ?', 'const st = (s,ready=false) => s.ok === true ?')
+    html=html.replace("'<span class=\"badge good\">能用</span>' : s.ok === false ? '<span class=\"badge bad\">用不了</span>'", "'<span class=\"badge good\">'+(ready?'已就绪':'本次通过')+'</span>' : s.ok === false ? '<span class=\"badge bad\">'+(ready?'暂不可用':'本次未通过')+'</span>'")
+    html=html.replace(": st(x)}<span class=\"muted\">", ": st(x,true)}<span class=\"muted\">")
+    return html
