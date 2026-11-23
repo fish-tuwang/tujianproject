@@ -12,7 +12,9 @@ PREFIX='/qq-panel'
 def remote_html(text):
     # The upstream app uses root-relative API/image links. Keep every request inside
     # this authenticated namespace, including JavaScript string/template literals.
-    text=re.sub(r'''(["'`])/(?!/)''',lambda match:match.group(1)+PREFIX+'/',text)
+    paths=r'''(["'`])/(?=api/|local-core(?:["'`?#])|sticker(?:thumb)?(?:["'`?/#])|qrcode(?:["'`?])|avatar(?:["'`?])|songclip(?:["'`?])|judge_eval(?:["'`?])|fuimg(?:["'`?])|voicefile(?:["'`?])|index\.html|#)'''
+    text=re.sub(paths,lambda match:match.group(1)+PREFIX+'/',text)
+    text=re.sub(r'''(href|src|action)=(['"])/\2''',lambda match:match.group(1)+'='+match.group(2)+PREFIX+'/'+match.group(2),text)
     text=text.replace('只有这台电脑能打开','通过图鉴账号异地只读查看')
     banner='<div style="padding:12px 20px;background:#e2f2f8;color:#12222b;border-bottom:1px solid #c4d5dc">异地只读查看 · 已通过图鉴账号登录；修改与管理请在 Mac 本机面板操作。</div>'
     readonly='''<script>(()=>{let pending=false;function disable(){pending=false;for(const b of document.querySelectorAll('main button,button[data-action]')){if(/^(启动机器人|重启机器人|停止机器人|强制重启|开火力|从现在重新算|回到平常|恢复平静|保存|添加|移入归档|删除|现在整理|关掉夜猫子|打开夜猫子|发送|代发|钉住|取消钉住|找回|现在忘)/.test(b.textContent.trim())){b.disabled=true;b.title='异地只读；请在Mac本机管理';}}}new MutationObserver(()=>{if(!pending){pending=true;requestAnimationFrame(disable);}}).observe(document.body,{childList:true,subtree:true});disable();})();</script>'''
