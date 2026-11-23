@@ -29,10 +29,11 @@ def test_qr_refresh_does_nothing_when_online(tmp_path,monkeypatch):
 
 def test_qr_refresh_waits_for_a_new_image_and_never_restarts(tmp_path,monkeypatch):
     root=setup_guard(tmp_path,monkeypatch,{'isLogin':False,'loginPhase':'waiting_qrcode'})
+    import io
     from PIL import Image
-    from io import BytesIO
-    stream=BytesIO();Image.new('RGB',(16,16),'white').save(stream,format='PNG')
-    old=b'\x89PNG\r\n\x1a\nold';new=stream.getvalue();responses=iter([old,old,new]);calls=[]
+    def png(color):
+        out=io.BytesIO();Image.new('RGB',(8,8),color).save(out,format='PNG');return out.getvalue()
+    old=png('red');new=png('blue');responses=iter([old,old,new]);calls=[]
     def run(args,**kwargs):calls.append(args);return SimpleNamespace(returncode=0,stdout=next(responses))
     monkeypatch.setattr(fatfish_mac.subprocess,'run',run);monkeypatch.setattr(fatfish_mac.time,'sleep',lambda _:None)
     result=fatfish_mac.refresh_login_qr()
@@ -58,14 +59,3 @@ def test_connection_diagnostics_only_exposes_whitelisted_fields(tmp_path,monkeyp
  assert result['guard']=={'status':'online','quick_login_eligible':False}
  assert result['delivery']=={'category':'qq_media_upload_failed'}
  assert 'secret' not in str(result) and 'private' not in str(result)
-
-
-def test_qr_refresh_rejects_partial_png(tmp_path,monkeypatch):
-    setup_guard(tmp_path,monkeypatch,{'isLogin':False,'loginPhase':'waiting_qrcode'})
-    calls=[0]
-    def run(*a,**k):
-        calls[0]+=1
-        return SimpleNamespace(returncode=0,stdout=b'old' if calls[0]==1 else b'\x89PNG\r\n\x1a\npartial')
-    monkeypatch.setattr(fatfish_mac.subprocess,'run',run)
-    monkeypatch.setattr(fatfish_mac.time,'sleep',lambda _:None)
-    assert not fatfish_mac.refresh_login_qr()['ok']

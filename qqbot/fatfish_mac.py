@@ -58,7 +58,7 @@ def qq_status(account):
         guard=json.loads((ROOT.parent/'guard-state.json').read_text())
         if (0<=checked-float(guard.get('checked_at',0))<=90
             and guard.get('status')=='login_required' and guard.get('requires_login')):
-            return {**base,'state':'scan','category':'login_required',
+            return {**base,'state':'scan','category':'login_required','qr_t':int(checked//30),
                     'reason':'QQ守护器已确认需要手机登录，请扫码确认；未循环重登'}
     except (OSError,ValueError,TypeError):pass
     try:
@@ -250,6 +250,20 @@ def load_module(name):
     return importlib.import_module(name)
 
 
+def current_login_qr():
+    """Read the running client's QR, rather than an expired host-side copy."""
+    p=subprocess.run(['docker','exec','little-atlas-mac-qq-account-1','cat','/app/napcat/cache/qrcode.png'],capture_output=True,timeout=5)
+    data=p.stdout if p.returncode==0 else b''
+    if not data.startswith(b'\x89PNG\r\n\x1a\n') or len(data)>2*1024*1024:
+        raise ValueError('qr_image_unavailable')
+    from PIL import Image
+    try:
+        with Image.open(io.BytesIO(data)) as image:image.verify()
+    except (OSError,ValueError):
+        raise ValueError('qr_image_invalid') from None
+    return data
+
+
 def refresh_login_qr():
     """Explicit owner action only. Wait for a new image; never restart the account."""
     import importlib.util
@@ -263,18 +277,14 @@ def refresh_login_qr():
             return {'ok':False,'error':'QQ正在确认或恢复连接，请稍后查看状态，不打断当前登录'}
         if guard.VERIFY.search(str(state.get('loginError',''))):
             return {'ok':False,'error':'QQ要求手机安全验证，请先在手机完成验证；当前状态已保留'}
-        def copy_qr():
-            p=subprocess.run(['docker','exec','little-atlas-mac-qq-account-1','cat','/app/napcat/cache/qrcode.png'],capture_output=True,timeout=5)
-            return p.stdout if p.returncode==0 else b''
-        old=copy_qr();api.post('/QQLogin/RefreshQRcode',{})
+        try:old=current_login_qr()
+        except (OSError,ValueError,subprocess.SubprocessError):old=b''
+        api.post('/QQLogin/RefreshQRcode',{})
         for _ in range(20):
-            time.sleep(.5);data=copy_qr()
+            time.sleep(.5)
+            try:data=current_login_qr()
+            except (OSError,ValueError,subprocess.SubprocessError):continue
             if data and data!=old and data.startswith(b'\x89PNG\r\n\x1a\n'):
-                from PIL import Image
-                try:
-                    with Image.open(io.BytesIO(data)) as image:image.verify()
-                except (OSError, ValueError):
-                    continue
                 path=ROOT.parent/'login-qr.png';path.write_bytes(data);path.chmod(0o600)
                 return {'ok':True,'img':'data:image/png;base64,'+base64.b64encode(data).decode()}
         return {'ok':False,'error':'未取得更新后的二维码，请稍后重试；没有重启或重登'}
@@ -433,6 +443,14 @@ def run_panel():
     panel.H.route = route
     original_get=panel.H.do_GET
     def get(self):
+        if self.path.split('?',1)[0]=='/qrcode':
+            if not self._host_ok():return self._json({'ok':False},403)
+            try:data=current_login_qr()
+            except (OSError,ValueError,subprocess.SubprocessError):
+                return self._json({'ok':False,'error':'当前QQ二维码暂不可读，请获取新二维码'},503)
+            self.send_response(200);self.send_header('Content-Type','image/png')
+            self.send_header('Cache-Control','private, no-store');self.send_header('Content-Length',str(len(data)))
+            self.end_headers();self.wfile.write(data);return
         if self.path.split('?',1)[0]=='/api/mac-qq-status':
             if not self._host_ok():return self._json({'ok':False},403)
             return self._json(connection_diagnostics(panel.cfg().get('bot_qq')))
