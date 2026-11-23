@@ -136,6 +136,8 @@ def delivery_error(result):
         return 'qq_media_upload_failed', 'QQ媒体上传失败；图片已在本机读取，腾讯端未确认收图'
     if 'enoent' in message or 'no such file' in message:
         return 'qq_media_missing', 'QQ端找不到媒体文件，请检查容器中的媒体路径'
+    if '网络连接异常' in message or '1006514' in message or 'network' in message:
+        return 'qq_network_error', 'QQ发送网络连接异常；当前登录可能仍有效，请勿反复扫码或重登'
     if 'timeout' in message or 'timed out' in message:
         return 'qq_timeout', 'QQ发送超时，结果尚未确认，请先查看聊天再决定是否重发'
     return 'qq_send_failed', 'QQ拒绝了本次发送，请查看登录状态与群发言权限'

@@ -123,3 +123,4 @@ def test_delivery_errors_are_classified_without_exposing_raw_response():
     code,message=fatfish_mac.delivery_error(result)
     assert code=='qq_media_upload_failed' and 'private' not in message
     assert fatfish_mac.delivery_error({'message':"ENOENT /private/path"})[0]=='qq_media_missing'
+    assert fatfish_mac.delivery_error({'message':'EventRet: {"result":1006514,"errMsg":"网络连接异常!"}'})[0]=='qq_network_error'

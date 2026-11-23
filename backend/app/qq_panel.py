@@ -51,7 +51,7 @@ async function status(){try{const r=await fetch('/qq-panel/api/mac-qq-status',{c
  const rows=['连接保护：'+(fresh?(labels[g.status]||'状态待确认'):'状态尚未更新'), '快速登录：'+(g.quick_login_eligible===true?'有可用记录':g.quick_login_eligible===false?'无可用记录，失效后需要手机扫码':'尚未确认'), '最近确认在线：'+fmt(g.last_online_at)];
  if(g.last_outage)rows.push('最近一次离线持续：'+Math.round(g.last_outage.seconds)+' 秒');
  if(g.next_retry>Date.now()/1000)rows.push('下次允许重试：'+fmt(g.next_retry));
- if(m.checked_at)rows.push('最近发送：'+fmt(m.checked_at)+' · '+(m.ok?'QQ接口返回成功':m.category==='qq_media_upload_failed'?'媒体上传失败（不等于掉线）':m.category||'发送未成功'));
+ if(m.checked_at)rows.push('最近发送：'+fmt(m.checked_at)+' · '+(m.ok?'QQ接口返回成功':m.category==='qq_media_upload_failed'?'媒体上传失败（不等于掉线）':m.category==='qq_network_error'?'QQ发送网络异常（不等于登录失效）':m.category||'发送未成功'));
  const history=(g.history||[]).slice(-5);if(history.length)rows.push('最近状态变化：',...history.map(e=>fmt(e.at)+' '+(labels[e.to]||e.to)));
  el('diagnostics').textContent=rows.join('\\n');if(d.state==='ok'){el('qr').hidden=true;el('message').textContent='QQ已在线，无需扫码。';}}catch(e){el('status').textContent=e.message||'状态接口暂不可用，不能据此判定掉线。';el('diagnostics').textContent='';}}
 
