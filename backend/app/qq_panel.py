@@ -41,9 +41,22 @@ window.fetch=async(input,options={})=>{
   const headers=new Headers(options.headers||{});headers.set('X-Panel-Confirm','1');options={...options,headers};
  }
  return checked(input,options);
-};})();</script>'''
+};
+let qrRefreshing=false;
+document.addEventListener('click',async event=>{
+ const button=event.target.closest('[data-qq-qr-refresh]');if(!button||qrRefreshing)return;
+ qrRefreshing=true;button.disabled=true;button.textContent='刷新中…';const note=button.parentElement.querySelector('[role="status"]');note.textContent='正在获取新二维码…';
+ try{
+  const r=await checked('/qq-panel/api/mac-qq-login',{method:'POST',headers:{'Content-Type':'application/json','X-Panel':'1','X-Panel-Confirm':'1'},body:JSON.stringify({action:'refresh'})});
+  const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'刷新失败');
+  if(d.img){const image=button.parentElement.querySelector('img.qr');await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>finish(Error('二维码加载超时，请重试')),10000);function finish(error){clearTimeout(timeout);image.onload=null;image.onerror=null;error?reject(error):resolve();}image.onload=()=>finish();image.onerror=()=>finish(Error('二维码加载失败，请重试'));image.src='/qq-panel/qrcode?t='+Date.now();});note.textContent='已刷新，请扫码';}
+  else note.textContent=d.message||'QQ已在线，无需扫码';
+ }catch(error){note.textContent=error.message||'刷新失败，请重试';}
+ finally{button.disabled=false;button.textContent='刷新二维码';qrRefreshing=false;}
+});
+})();</script>'''
 
-QQ_LOGIN_HTML='''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QQ登录与诊断</title><style>body{font:16px/1.8 system-ui;background:#eef4f6;color:#12222b;max-width:800px;margin:40px auto;padding:20px}section{background:white;padding:28px;border-radius:16px}button{padding:12px;cursor:pointer}img{display:block;width:min(280px,100%);height:auto;image-rendering:pixelated;margin:20px auto}img[hidden]{display:none}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><body><a href="/qq-panel/">← 返回控制面板</a><section><h1>QQ登录与连接诊断</h1><p>仅刷新登录二维码，不重启QQ、不删除登录数据。已在线时不会重新登录。</p><pre id="status">读取状态中…</pre><pre id="diagnostics" aria-label="连接保护与最近故障"></pre><button id="refresh">需要登录时获取新二维码</button><p id="message" role="status"></p><a id="login-again" href="/login/?next=%2Fqq-panel%2Fqq-login" hidden>重新登录图鉴后查看二维码</a><img id="qr" alt="QQ登录二维码" hidden></section><script>
+QQ_LOGIN_HTML='''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QQ登录与诊断</title><style>body{font:16px/1.8 system-ui;background:#eef4f6;color:#12222b;max-width:800px;margin:40px auto;padding:20px}section{background:white;padding:28px;border-radius:16px}button{padding:12px;cursor:pointer}img{display:block;width:min(280px,100%);height:auto;image-rendering:pixelated;margin:20px auto}img[hidden]{display:none}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><body><a href="/qq-panel/">← 返回控制面板</a><section><h1>QQ登录与连接诊断</h1><p>仅刷新登录二维码，不重启QQ、不删除登录数据。已在线时不会重新登录。</p><pre id="status">读取状态中…</pre><pre id="diagnostics" aria-label="连接保护与最近故障"></pre><p id="message" role="status"></p><a id="login-again" href="/login/?next=%2Fqq-panel%2Fqq-login" hidden>重新登录图鉴后查看二维码</a><img id="qr" alt="QQ登录二维码" hidden><button id="refresh" style="display:block;margin:12px auto;background:#126a85;color:white;border:0;border-radius:10px;min-width:180px;font-weight:600">刷新二维码</button></section><script>
 const el=id=>document.getElementById(id);const fmt=t=>Number.isFinite(t)&&t>0?new Date(t*1000).toLocaleString('zh-CN'):'暂无记录';
 const labels={transport_stalled:'QQ假在线：持续发送失败，收发不可用',online:'QQ在线',offline:'QQ离线',probe_error:'探测失败（不代表掉线）',login_required:'需要手机登录',recovering:'正在确认/恢复连接',rate_limited:'达到重试上限，等待冷却',quick_login_requested:'已请求保存的快速登录',starting_account:'正在恢复停止的账号服务',restarting_stale_client:'正在恢复陈旧登录进程'};
 async function status(){try{const r=await fetch('/qq-panel/api/mac-qq-status',{cache:'no-store'});const d=await r.json();if(!r.ok){el('qr').hidden=true;el('message').textContent='';el('login-again').hidden=d.code!=='AUTH_REQUIRED';throw Error(d.code==='AUTH_REQUIRED'?'图鉴登录已失效，请重新登录控制面板':'状态接口暂不可用，不能据此判定掉线');}el('login-again').hidden=true;el('status').textContent=(d.state==='ok'?'QQ当前在线':d.reason||d.category||'暂无法确认状态')+'\\n检查时间：'+fmt(d.checked_at);
@@ -68,7 +81,7 @@ async function showQR(force=false){
  try{await qrLoad;}finally{qrLoad=null;}
 }
 
-el('refresh').onclick=async()=>{el('refresh').disabled=true;try{const r=await fetch('/qq-panel/api/mac-qq-login',{method:'POST',headers:{'Content-Type':'application/json','X-Panel':'1','X-Panel-Confirm':'1'},body:JSON.stringify({action:'refresh'})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'刷新失败');if(d.img){await showQR(true);el('message').textContent='请用机器人账号的手机QQ扫码并确认；过期后可再次获取。';}else el('message').textContent=d.message||'QQ已在线';await status();}catch(e){el('message').textContent=e.message;}finally{el('refresh').disabled=false;}};status();setInterval(status,10000);
+el('refresh').onclick=async()=>{el('refresh').disabled=true;el('refresh').textContent='刷新中…';el('message').textContent='正在获取新二维码…';try{const r=await fetch('/qq-panel/api/mac-qq-login',{method:'POST',headers:{'Content-Type':'application/json','X-Panel':'1','X-Panel-Confirm':'1'},body:JSON.stringify({action:'refresh'})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'刷新失败');if(d.img){await showQR(true);el('message').textContent='二维码已刷新，请扫码并在手机确认。';}else el('message').textContent=d.message||'QQ已在线';}catch(e){el('message').textContent=e.message;}finally{el('refresh').disabled=false;el('refresh').textContent='刷新二维码';}};status();setInterval(status,10000);
 </script></body></html>'''
 
 
@@ -235,6 +248,10 @@ def remote_html(text):
     paths=r'''(["'`])/(?=api/|local-core(?:["'`?#])|sticker(?:thumb)?(?:["'`?/#])|qrcode(?:["'`?])|avatar(?:["'`?])|songclip(?:["'`?])|judge_eval(?:["'`?])|fuimg(?:["'`?])|voicefile(?:["'`?])|index\.html|#)'''
     text=re.sub(paths,lambda match:match.group(1)+PREFIX+'/',text)
     text=re.sub(r'''(href|src|action)=(['"])/\2''',lambda match:match.group(1)+'='+match.group(2)+PREFIX+'/'+match.group(2),text)
+    qr='<img class="qr" src="/qq-panel/qrcode?t=${q.qr_t}" alt="登录二维码">'
+    refresh='<div style="text-align:center">'+qr+'<button type="button" class="btn primary" data-qq-qr-refresh style="display:block;margin:10px auto">刷新二维码</button><div role="status" class="small" style="max-width:220px"></div></div>'
+    text=text.replace(qr,refresh,1)
+    text=text.replace('码每 2 分钟换一次，这里会自动换成最新的（扫了没反应就等它换新的再扫）','二维码过期或扫码没反应时，点击图片下方的“刷新二维码”，再扫描新图。')
     text=text.replace('只有这台电脑能打开','仅所有者可远程管理')
     text=text.replace('停止全部（会弹管理员确认）','停止聊天（保留QQ登录）').replace('启动全部（含 QQ）','启动聊天（保留QQ登录）')
     banner='<div style="padding:12px 20px;background:#e2f2f8;color:#12222b;border-bottom:1px solid #c4d5dc">远程管理 · 仅所有者账号可操作，删除数据和QQ登录需确认。<a href="/qq-panel/qq-login">QQ登录与连接诊断</a></div>'

@@ -59,3 +59,12 @@ const fetch=async(url,options={})=>{
     result=subprocess.run([node,str(script)],capture_output=True,text=True)
     assert result.returncode==0,result.stderr
     assert 'img[hidden]{display:none}' in QQ_LOGIN_HTML
+
+
+def test_refresh_button_is_next_to_qr_on_both_remote_screens():
+    from backend.app.qq_panel import remote_html
+    assert QQ_LOGIN_HTML.index('<img id="qr"') < QQ_LOGIN_HTML.index('<button id="refresh"')
+    assert '>刷新二维码</button>' in QQ_LOGIN_HTML and '刷新中…' in QQ_LOGIN_HTML
+    page=remote_html('<body><script>const qr=`<img class="qr" src="/qrcode?t=${q.qr_t}" alt="登录二维码">`;</script></body>')
+    assert 'data-qq-qr-refresh' in page and '已刷新，请扫码' in page
+    assert page.index('alt="登录二维码"') < page.index('data-qq-qr-refresh style=')
