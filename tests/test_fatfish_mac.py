@@ -3,6 +3,7 @@ import io
 import json
 import tarfile
 import time
+from types import SimpleNamespace
 
 import httpx
 from fastapi.testclient import TestClient
@@ -13,6 +14,73 @@ from qqbot.qq_bot import QQSettings, create_app
 from qqbot import fatfish_mac
 from scripts.mac_fatfish_update import extract
 from official_qq.whale_tools import choose
+
+
+@pytest.mark.parametrize('stderr,expected', [
+    (b'HTTP Error 403: Forbidden','gateway_auth_failed'),
+    (b'No such container: test','bridge_missing'),
+    (b'Container test is not running','bridge_stopped'),
+    (b'Cannot connect to the Docker daemon','docker_unavailable'),
+    (b'private-token must not appear in errors','gateway_unavailable'),
+])
+def test_gateway_errors_are_categorized_without_private_details(monkeypatch,stderr,expected):
+    monkeypatch.setattr(fatfish_mac.subprocess,'run',lambda *a,**k:SimpleNamespace(returncode=1,stdout=b'',stderr=stderr))
+    with pytest.raises(RuntimeError,match='^'+expected+'$'):
+        fatfish_mac.gateway({'operation':'action','action':'get_login_info'})
+
+
+def test_gateway_missing_docker_and_invalid_response_are_explicit(monkeypatch):
+    def missing(*a,**k):raise FileNotFoundError('private-path')
+    monkeypatch.setattr(fatfish_mac.subprocess,'run',missing)
+    with pytest.raises(RuntimeError,match='^docker_unavailable$'):fatfish_mac.gateway({})
+    monkeypatch.setattr(fatfish_mac.subprocess,'run',lambda *a,**k:SimpleNamespace(returncode=0,stdout=b'private-output'))
+    with pytest.raises(RuntimeError,match='^gateway_invalid_response$'):fatfish_mac.gateway({})
+
+
+@pytest.mark.parametrize('online,expected', [(True,'ok'),(False,'offline'),(None,'error')])
+def test_qq_status_checks_actual_connection_not_only_saved_identity(tmp_path,monkeypatch,online,expected):
+    monkeypatch.setattr(fatfish_mac,'ROOT',tmp_path/'fatfish')
+    def gateway(data):
+        return {'retcode':0,'data':{'user_id':949494401} if data['action']=='get_login_info' else {'online':online}}
+    monkeypatch.setattr(fatfish_mac,'gateway',gateway)
+    assert fatfish_mac.qq_status(949494401)['state']==expected
+
+
+def test_failed_probe_does_not_claim_qq_is_logging_in(monkeypatch):
+    def failed(data):raise RuntimeError('gateway_auth_failed')
+    monkeypatch.setattr(fatfish_mac,'gateway',failed)
+    result=fatfish_mac.qq_status(949494401)
+    assert result['state']=='error' and result['category']=='gateway_auth_failed'
+    assert result['state'] not in {'starting','scan','offline'}
+
+
+def test_old_login_required_state_is_not_reused(tmp_path,monkeypatch):
+    monkeypatch.setattr(fatfish_mac,'ROOT',tmp_path/'fatfish')
+    monkeypatch.setattr(fatfish_mac,'gateway',lambda data:{'retcode':0,'data':{'user_id':949494401} if data['action']=='get_login_info' else {'online':False}})
+    file=tmp_path/'guard-state.json'
+    file.write_text(json.dumps({'status':'login_required','checked_at':0}))
+    assert fatfish_mac.qq_status(949494401)['state']=='offline'
+    file.write_text(json.dumps({'status':'login_required','checked_at':time.time()}))
+    assert fatfish_mac.qq_status(949494401)['state']=='scan'
+
+
+def test_panel_diagnostic_is_read_only_and_keeps_local_host_check(monkeypatch):
+    class Handler:
+        path='/api/mac-qq-status'
+        allowed=True
+        def _host_ok(self):return self.allowed
+        def _json(self,value,code=200):return value,code
+        def do_GET(self):return {'native':True},200
+        def route(self,path,body):return {'native':True}
+        def _file(self,*args,**kwargs):pass
+    panel=SimpleNamespace(H=Handler,cfg=lambda:{'bot_qq':949494401},serve=lambda **kwargs:None)
+    monkeypatch.setattr(fatfish_mac,'load_module',lambda name:panel)
+    monkeypatch.setattr(fatfish_mac,'qq_status',lambda account:{'state':'error','category':'bridge_stopped'})
+    fatfish_mac.run_panel()
+    handler=Handler()
+    assert handler.do_GET()==({'state':'error','category':'bridge_stopped'},200)
+    handler.allowed=False
+    assert handler.do_GET()==({'ok':False},403)
 
 
 def test_fatfish_uses_single_authenticated_gateway_and_enforces_scope(tmp_path):

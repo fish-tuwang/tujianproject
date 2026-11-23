@@ -37,6 +37,16 @@ Mac 已额外安装 python-pptx、imageio-ffmpeg 和 yt-dlp，并把 Chrome 的�
 
 ## 验证与公司任务
 
+### QQ连接诊断
+
+异地所有者可读取 `/qq-panel/api/mac-qq-status`，获取检查时间、在线状态和错误分类。
+Mac 本机为 `/api/mac-qq-status`，仍校验本机 Host。接口不返回凭据、原始命令输出或聊天，
+也不执行重启/登录。`online` 需 QQ 身份匹配且 `get_status.online=true`；
+`docker_unavailable`、`bridge_missing/stopped`、`gateway_auth_failed`、`gateway_timeout`
+等探测错误不再统一误报为“正在登录”，也不能直接认定账号掉线。
+明确离线且90秒内的守护检查要求手机验证时才报告 `login_required`。
+此适配器修正由 QQ 自动更新线部署，仅切换聊天与面板，保留账号容器及既有恢复策略。
+
 ### 网易云远程关联（2026-11-23）
 
 用户已明确授权异地只读面板的一个例外：图鉴所有者可在 `/qq-panel/#sing`

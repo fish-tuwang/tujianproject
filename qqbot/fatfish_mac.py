@@ -27,10 +27,55 @@ with urllib.request.urlopen(r,timeout=65) as f:sys.stdout.buffer.write(f.read())
 
 
 def gateway(data):
-    p = subprocess.run(['docker', 'exec', '-i', CONTAINER, 'python', '-c', GATEWAY], input=json.dumps(data).encode(), capture_output=True, timeout=70)
+    try:
+        p = subprocess.run(['docker', 'exec', '-i', CONTAINER, 'python', '-c', GATEWAY], input=json.dumps(data).encode(), capture_output=True, timeout=70)
+    except FileNotFoundError:
+        raise RuntimeError('docker_unavailable') from None
+    except subprocess.TimeoutExpired:
+        raise RuntimeError('gateway_timeout') from None
     if p.returncode:
-        raise RuntimeError('local QQ gateway unavailable')
-    return json.loads(p.stdout)
+        error=p.stderr.decode('utf-8',errors='replace')
+        category='gateway_unavailable'
+        if 'HTTP Error 403' in error:category='gateway_auth_failed'
+        elif 'No such container' in error:category='bridge_missing'
+        elif 'is not running' in error:category='bridge_stopped'
+        elif 'Cannot connect to the Docker daemon' in error:category='docker_unavailable'
+        raise RuntimeError(category)
+    try:
+        result=json.loads(p.stdout)
+        if not isinstance(result,dict):raise ValueError('response')
+        return result
+    except ValueError:
+        raise RuntimeError('gateway_invalid_response') from None
+
+
+def qq_status(account):
+    """Do not turn a failed probe or stale identity into a login diagnosis."""
+    checked=time.time()
+    base={'account':str(account),'checked_at':checked}
+    try:
+        info=gateway({'operation':'action','action':'get_login_info','params':{}})
+        if info.get('retcode')!=0:
+            return {**base,'state':'error','category':'qq_rpc_failed','reason':'QQ接口未成功返回；尚不能判定掉线'}
+        if str((info.get('data') or {}).get('user_id'))!=str(account):
+            return {**base,'state':'error','category':'account_mismatch','reason':'QQ身份与配置不匹配，未尝试登录'}
+        connection=gateway({'operation':'action','action':'get_status','params':{}})
+        online=(connection.get('data') or {}).get('online') if connection.get('retcode')==0 else None
+        if online is True:return {**base,'state':'ok','category':'online'}
+        if online is not False:
+            return {**base,'state':'error','category':'qq_status_unknown','reason':'QQ在线检查未成功，保留现有登录'}
+        file=ROOT.parent/'guard-state.json'
+        guard=json.loads(file.read_text()) if file.exists() else {}
+        fresh=0<=checked-float(guard.get('checked_at',0))<=90
+        if fresh and guard.get('status')=='login_required':
+            return {**base,'state':'scan','category':'login_required','reason':'守护器确认需要手机验证，未自动重登',
+                    'qr_t':(ROOT.parent/'login-qr.png').stat().st_mtime if (ROOT.parent/'login-qr.png').exists() else 0}
+        return {**base,'state':'offline','category':'qq_offline','reason':'QQ接口明确返回离线；等待原守护器限频恢复'}
+    except (RuntimeError,OSError,ValueError,TypeError) as error:
+        known={'docker_unavailable','gateway_timeout','gateway_auth_failed','bridge_missing','bridge_stopped',
+               'gateway_unavailable','gateway_invalid_response'}
+        category=str(error) if str(error) in known else 'probe_error'
+        return {**base,'state':'error','category':category,'reason':'QQ探测失败，未判定掉线或触发重登'}
 
 
 async def call_gateway(data):
@@ -187,19 +232,8 @@ def run_panel():
         from qqbot.fatfish_extensions.panel import install as install_core_panel
     install_core_panel(panel)
     panel.QRCODE = ROOT.parent / 'login-qr.png'
-    def qq_status():
-        try:
-            info = gateway({'operation':'action','action':'get_login_info','params':{}})
-            online = info.get('retcode') == 0 and str((info.get('data') or {}).get('user_id')) == str(panel.cfg().get('bot_qq'))
-            if online:return {'state':'ok','account':str(panel.cfg().get('bot_qq'))}
-            guard = json.loads((ROOT.parent/'guard-state.json').read_text()) if (ROOT.parent/'guard-state.json').exists() else {}
-            needs_login=guard.get('status')=='login_required'
-            return {'state':'scan' if needs_login else 'starting','account':str(panel.cfg().get('bot_qq')),
-                    'reason':'QQ登录已失效，需要手机确认；聊天进程仍在运行' if needs_login else '正在检查QQ连接',
-                    'qr_t':panel.QRCODE.stat().st_mtime if panel.QRCODE.exists() else 0}
-        except Exception:return {'state':'starting','account':str(panel.cfg().get('bot_qq'))}
-    panel.qq_status = qq_status
-    panel.napcat_up = lambda: qq_status()['state'] == 'ok'
+    panel.qq_status = lambda: qq_status(panel.cfg().get('bot_qq'))
+    panel.napcat_up = lambda: panel.qq_status()['state'] == 'ok'
     panel.qq_running = lambda: True
     panel.bot_procs = lambda: []
     panel.ws_clients = lambda: False
@@ -224,6 +258,13 @@ def run_panel():
             return {'ok':False,'error':'为保留在线服务，请使用重启聊天机器人'}
         return original(self, url, body)
     panel.H.route = route
+    original_get=panel.H.do_GET
+    def get(self):
+        if self.path.split('?',1)[0]=='/api/mac-qq-status':
+            if not self._host_ok():return self._json({'ok':False},403)
+            return self._json(panel.qq_status())
+        return original_get(self)
+    panel.H.do_GET=get
     panel.serve(quiet=True)
 
 
