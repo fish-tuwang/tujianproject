@@ -124,3 +124,17 @@ def test_delivery_errors_are_classified_without_exposing_raw_response():
     assert code=='qq_media_upload_failed' and 'private' not in message
     assert fatfish_mac.delivery_error({'message':"ENOENT /private/path"})[0]=='qq_media_missing'
     assert fatfish_mac.delivery_error({'message':'EventRet: {"result":1006514,"errMsg":"网络连接异常!"}'})[0]=='qq_network_error'
+
+
+def test_network_failure_evidence_and_success_reset(tmp_path,monkeypatch):
+ monkeypatch.setattr(fatfish_mac,'ROOT',tmp_path)
+ failed={'retcode':200,'message':'网络连接异常!'}
+ for at in [100,140,180]:fatfish_mac.note_delivery('send_group_msg',failed,now=at)
+ d=json.loads((tmp_path/'delivery-state.json').read_text())
+ assert d['consecutive_network_failures']==3 and d['network_failure_since']==100
+ monkeypatch.setattr(fatfish_mac.time,'time',lambda:181)
+ monkeypatch.setattr(fatfish_mac,'gateway',lambda data:{'retcode':0,'data':{'user_id':949494401,'online':True}})
+ assert fatfish_mac.qq_status('949494401')['category']=='transport_stalled'
+ fatfish_mac.note_delivery('send_group_msg',{'retcode':0},now=182)
+ assert fatfish_mac.qq_status('949494401')['category']=='online'
+ assert json.loads((tmp_path/'delivery-state.json').read_text())['consecutive_network_failures']==0

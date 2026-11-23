@@ -110,3 +110,29 @@ def test_history_and_last_outage_are_bounded_and_contain_no_raw_error():
 def test_explicit_verification_wins_over_reconnecting_phase():
  state,action=decide({}, {'requires_login':True,'phase':'reconnecting','quick_eligible':True},100)
  assert state['status']=='login_required' and action is None
+
+
+def test_repeated_stalled_transport_does_not_look_online_and_recovery_is_bounded():
+ obs={'online':True,'stalled_transport':True,'quick_eligible':False,'reason':'repeated_send_network_failure'}
+ state,action=decide({},obs,100)
+ assert state['status']=='transport_stalled' and action is None and 'last_online_at' not in state
+ obs['quick_eligible']=True
+ state,action=decide(state,obs,101)
+ assert action=='restart_account'
+ state,action=decide(state,obs,500)
+ assert action is None and len(state['restarts'])==1
+
+
+def test_transport_evidence_requires_repeated_fresh_failures(tmp_path):
+ import json
+ from scripts.mac_qq_guard import transport_observation,reset_transport_evidence
+ p=tmp_path/'fatfish'/'delivery-state.json';p.parent.mkdir()
+ obs={'online':True,'quick_eligible':True}
+ d={'category':'qq_network_error','checked_at':180,'network_failure_since':100,'consecutive_network_failures':3}
+ p.write_text(json.dumps(d))
+ assert transport_observation(tmp_path,obs,181)['stalled_transport']
+ assert 'stalled_transport' not in transport_observation(tmp_path,obs,600)
+ reset_transport_evidence(tmp_path,179)
+ assert json.loads(p.read_text())['consecutive_network_failures']==3
+ reset_transport_evidence(tmp_path,181)
+ assert json.loads(p.read_text())['consecutive_network_failures']==0

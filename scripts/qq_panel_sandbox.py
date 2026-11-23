@@ -147,7 +147,8 @@ def run(upstream):
             require('QQ媒体上传失败' in result['error'])
             diagnostic = json.loads((root / 'delivery-state.json').read_text())
             require(diagnostic['category'] == 'qq_media_upload_failed')
-            require(set(diagnostic) == {'checked_at', 'action', 'ok', 'category', 'retcode'})
+            require(set(diagnostic) <= {'checked_at', 'action', 'ok', 'category', 'retcode',
+                                      'consecutive_network_failures','network_failure_since','last_success_at'})
         module.main = scenarios
         check('real admin_send text/image/mixed group/private + voice + missing asset', lambda: asyncio.run(adapter.run_bot()))
         require(bool(sent))

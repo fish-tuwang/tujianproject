@@ -19,7 +19,17 @@ VERIFY=re.compile(r'登录态.*失效|登录态.*过期|安全验证|身份验�
 
 def _decide(state,observation,now):
  state={**state};state['checked_at']=now
- if observation.get('online'):
+ if (observation.get('stalled_transport') and observation.get('online')
+     and not observation.get('requires_login') and observation.get('phase') not in {'qrcode_scanned','initializing','reconnecting'}):
+  state['status']='transport_stalled'
+  if state.get('offline_since') is None:state['offline_since']=now
+  # A single failed send is insufficient; the caller requires repeated failures
+  # over a minute. Without saved login a restart would merely require a QR.
+  restarts=[t for t in state.get('restarts',[]) if 0<=now-t<3600]
+  if observation.get('quick_eligible') is True and not state.get('requires_login') and not restarts:
+   state.update(restarts=[now],next_retry=now+120);return state,'restart_account'
+  return state,None
+ if observation.get('online') and not observation.get('stalled_transport'):
   state.update(status='online',offline_since=None,attempts=[],next_retry=0,requires_login=False)
   return state,None
  if observation.get('probe_error'):
@@ -63,7 +73,7 @@ def decide(state,observation,now):
  if updated['status']=='login_required' and not observation.get('requires_login'):
   updated['reason']='saved_login_unavailable' if observation.get('quick_eligible') is False else 'verification_required'
  if 'quick_eligible' in observation:updated['quick_login_eligible']=observation['quick_eligible']
- if observation.get('online'):
+ if observation.get('online') and not observation.get('stalled_transport'):
   updated['last_online_at']=now
   if since is not None:updated['last_outage']={'started_at':since,'recovered_at':now,'seconds':max(0,now-since)}
  if previous!=updated['status'] or not state.get('history'):
@@ -116,6 +126,29 @@ def observe(api,account):
          'quick_eligible':quick}
 
 
+def transport_observation(root,observation,now):
+ if not observation.get('online'):return observation
+ try:
+  d=json.loads((root/'fatfish/delivery-state.json').read_text())
+  stalled=(d.get('category')=='qq_network_error' and d.get('consecutive_network_failures',0)>=3
+           and 0<=now-d.get('checked_at',0)<300 and d.get('checked_at',0)-d.get('network_failure_since',now)>=60)
+  if stalled:return {**observation,'stalled_transport':True,'reason':'repeated_send_network_failure'}
+ except (OSError,ValueError,TypeError):pass
+ return observation
+
+
+def reset_transport_evidence(root,before):
+ path=root/'fatfish/delivery-state.json'
+ try:
+  with path.with_suffix('.json.lock').open('a') as lock:
+   fcntl.flock(lock,fcntl.LOCK_EX)
+   d=json.loads(path.read_text())
+   if d.get('checked_at',0)<=before:
+    d['consecutive_network_failures']=0
+    temp=path.with_suffix('.reset.tmp');temp.write_text(json.dumps(d));temp.chmod(0o600);temp.replace(path)
+ except (OSError,ValueError,TypeError):pass
+
+
 def tick(root,configure=False):
  root.mkdir(parents=True,exist_ok=True,mode=0o700)
  with (root/'guard.lock').open('a') as lock:
@@ -133,7 +166,7 @@ def tick(root,configure=False):
      if configure:
       api.post('/QQLogin/SetQuickLoginQQ',{'uin':account})
       if str(api.post('/QQLogin/GetQuickLoginQQ'))!=account:raise RuntimeError('auto_login_configuration_not_saved')
-     observation=observe(api,account)
+     observation=transport_observation(root,observe(api,account),time.time())
    except Exception:
     if configure:raise
     observation={'probe_error':True}
@@ -142,7 +175,8 @@ def tick(root,configure=False):
     try:
      if action=='quick_login':api.post('/QQLogin/SetQuickLogin',{'uin':account})
      elif action=='start_account':command(['docker','compose','--env-file',str(root/'runtime.env'),'-f',str(root/'compose.yaml'),'up','-d','account'])
-     elif action=='restart_account':command(['docker','restart','--time','20','little-atlas-mac-qq-account-1'])
+     elif action=='restart_account':
+      before=time.time();command(['docker','restart','--time','20','little-atlas-mac-qq-account-1']);reset_transport_evidence(root,before)
      state.pop('last_action_error',None)
      state['last_action']=action;state['last_action_at']=time.time()
     except Exception as error:

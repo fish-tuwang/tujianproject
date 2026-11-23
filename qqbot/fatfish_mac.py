@@ -55,6 +55,13 @@ def qq_status(account):
     checked=time.time()
     base={'account':str(account),'checked_at':checked}
     try:
+        guard=json.loads((ROOT.parent/'guard-state.json').read_text())
+        if (0<=checked-float(guard.get('checked_at',0))<=90
+            and guard.get('status')=='login_required' and guard.get('requires_login')):
+            return {**base,'state':'scan','category':'login_required',
+                    'reason':'QQ守护器已确认需要手机登录，请扫码确认；未循环重登'}
+    except (OSError,ValueError,TypeError):pass
+    try:
         info=gateway({'operation':'action','action':'get_login_info','params':{}})
         if info.get('retcode')!=0:
             return {**base,'state':'error','category':'qq_rpc_failed','reason':'QQ接口未成功返回；尚不能判定掉线'}
@@ -62,7 +69,17 @@ def qq_status(account):
             return {**base,'state':'error','category':'account_mismatch','reason':'QQ身份与配置不匹配，未尝试登录'}
         connection=gateway({'operation':'action','action':'get_status','params':{}})
         online=(connection.get('data') or {}).get('online') if connection.get('retcode')==0 else None
-        if online is True:return {**base,'state':'ok','category':'online'}
+        if online is True:
+            try:
+                delivery=json.loads((ROOT/'delivery-state.json').read_text())
+                if (delivery.get('category')=='qq_network_error'
+                    and delivery.get('consecutive_network_failures',0)>=3
+                    and 0<=checked-delivery.get('checked_at',0)<300
+                    and delivery.get('checked_at',0)-delivery.get('network_failure_since',checked)>=60):
+                    return {**base,'state':'error','category':'transport_stalled',
+                            'reason':'QQ登录接口显示在线，但持续发送网络异常，收发链路不可用；不能视为正常在线'}
+            except (OSError,ValueError,TypeError):pass
+            return {**base,'state':'ok','category':'online'}
         if online is not False:
             return {**base,'state':'error','category':'qq_status_unknown','reason':'QQ在线检查未成功，保留现有登录'}
         file=ROOT.parent/'guard-state.json'
@@ -141,6 +158,30 @@ def delivery_error(result):
     if 'timeout' in message or 'timed out' in message:
         return 'qq_timeout', 'QQ发送超时，结果尚未确认，请先查看聊天再决定是否重发'
     return 'qq_send_failed', 'QQ拒绝了本次发送，请查看登录状态与群发言权限'
+
+
+def note_delivery(action,result,now=None):
+    """Persist evidence, not a boolean that cached QQ online status can hide."""
+    try:
+        try:from fatfish_extensions import common
+        except ImportError:from qqbot.fatfish_extensions import common
+        now=time.time() if now is None else now
+        path=ROOT/'delivery-state.json'
+        with common.locked(path):
+            old=common.read(path,{})
+            success=result.get('retcode')==0
+            category='ok' if success else delivery_error(result)[0]
+            value={'checked_at':now,'action':action,'ok':success,'category':category,'retcode':result.get('retcode')}
+            if category=='qq_network_error':
+                continuing=old.get('category')==category and 0<=now-old.get('checked_at',0)<300
+                value['consecutive_network_failures']=old.get('consecutive_network_failures',0)+1 if continuing else 1
+                value['network_failure_since']=old.get('network_failure_since',now) if continuing else now
+            else:value['consecutive_network_failures']=0
+            if success:value['last_success_at']=now
+            elif old.get('last_success_at'):value['last_success_at']=old['last_success_at']
+            common.write(path,value)
+    except (OSError,ValueError,TypeError):
+        pass  # Diagnostics must never change the result or cause a duplicate send.
 
 
 def rotate_images(group, params, *, remember=False):
@@ -320,16 +361,7 @@ async def run_bot():
             category, explanation = ('ok', '') if success else delivery_error(result)
             if not success:
                 last_failure.set((category, explanation))
-            # Private diagnostics contain no recipient, content, file path or token.
-            try:
-                try:
-                    from fatfish_extensions import common
-                except ImportError:
-                    from qqbot.fatfish_extensions import common
-                common.write(ROOT/'delivery-state.json', {'checked_at':time.time(),'action':action,
-                             'ok':success,'category':category,'retcode':result.get('retcode')})
-            except OSError:
-                pass  # A diagnostics write must never change a delivered message result.
+            note_delivery(action,result)
         if result.get('retcode') == 0 and action in {'send_group_msg','send_private_msg','send_msg'}:
             await asyncio.to_thread(rotate_images, group, original, remember=True)
             if idle and not idle['recorded']:
