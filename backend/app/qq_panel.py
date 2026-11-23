@@ -13,8 +13,18 @@ def remote_html(text):
     # The upstream app uses root-relative API/image links. Keep every request inside
     # this authenticated namespace, including JavaScript string/template literals.
     text=re.sub(r'''(["'`])/(?!/)''',lambda match:match.group(1)+PREFIX+'/',text)
-    banner='<div style="padding:12px 20px;background:#e2f2f8;color:#12222b;border-bottom:1px solid #c4d5dc">异地只读查看 · 已通过图鉴账号鉴权；修改与管理请在 Mac 本机面板操作。</div>'
-    return text.replace('<body>', '<body>'+banner,1)
+    text=text.replace('只有这台电脑能打开','通过图鉴账号异地只读查看')
+    banner='<div style="padding:12px 20px;background:#e2f2f8;color:#12222b;border-bottom:1px solid #c4d5dc">异地只读查看 · 已通过图鉴账号登录；修改与管理请在 Mac 本机面板操作。</div>'
+    readonly='''<script>(()=>{let pending=false;function disable(){pending=false;for(const b of document.querySelectorAll('main button,button[data-action]')){if(/^(启动机器人|重启机器人|停止机器人|强制重启|开火力|从现在重新算|回到平常|恢复平静|保存|添加|移入归档|删除|现在整理|关掉夜猫子|打开夜猫子|发送|代发|钉住|取消钉住|找回|现在忘)/.test(b.textContent.trim())){b.disabled=true;b.title='异地只读；请在Mac本机管理';}}}new MutationObserver(()=>{if(!pending){pending=true;requestAnimationFrame(disable);}}).observe(document.body,{childList:true,subtree:true});disable();})();</script>'''
+    return text.replace('<body>', '<body>'+banner,1).replace('</body>',readonly+'</body>',1)
+
+
+@router.get('/mac-mini/qq-panel')
+@router.get('/mac-mini/qq-panel/{path:path}')
+async def mac_entry(request:Request,path:str=''):
+    destination=PREFIX+'/'+path
+    if request.url.query:destination+='?'+request.url.query
+    return RedirectResponse(destination,status_code=307)
 
 
 @router.api_route('/qq-panel',methods=['GET','POST','PUT','PATCH','DELETE'])

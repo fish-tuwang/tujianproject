@@ -21,3 +21,11 @@ def test_all_native_root_links_stay_authenticated():
     assert "fetch('/qq-panel/api/overview')" in page
     assert '`/qq-panel/api/local-core`' in page
     assert 'https://example.com' in page and '异地只读查看' in page
+
+
+def test_mac_entry_resolves_to_authenticated_namespace():
+    app=FastAPI();app.include_router(router)
+    with TestClient(app) as client:
+        response=client.get('/mac-mini/qq-panel/local-core',follow_redirects=False)
+        assert response.status_code==307
+        assert response.headers['location']=='/qq-panel/local-core'

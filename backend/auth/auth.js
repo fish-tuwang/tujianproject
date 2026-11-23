@@ -3,7 +3,8 @@
   const $=id=>document.getElementById(id);
   function destination(){
     const value=new URLSearchParams(location.search).get('next')||'/preview/';
-    if(!value.startsWith('/preview/')||/[\\\x00-\x1f]/.test(value))return '/preview/';
+    const allowed=value.startsWith('/preview/')||value==='/qq-panel'||value.startsWith('/qq-panel/')||value==='/mac-mini/qq-panel'||value.startsWith('/mac-mini/qq-panel/');
+    if(!allowed||/[\\\x00-\x1f]/.test(value))return '/preview/';
     const parsed=new URL(value,location.origin);
     if(parsed.origin!==location.origin)return '/preview/';
     return value+(location.hash&&!value.includes('#')?location.hash:'');
