@@ -1,5 +1,7 @@
 # FatFish：Mac 运行与自动发布
 
+**当前人格：** 用户已授权按 FatFish 公开行为说明复刻群友性格，保留“哦鲸鲸”身份与温和边界。源码及运行渲染快照见 [qq-personality-current.md](qq-personality-current.md)；这是本项目复刻，不是作者未公开的私有人设。本次只更新普通 QQ，不修改腾讯官方 QQ harness 插件。
+
 **远程管理更新：** 用户已授权在公司操作全部已实现的普通 QQ 控制面板管理功能，原只读限制已取消，仍仅所有者可管理；删除/退出/进程控制需界面确认。见 [远程管理说明](qq-panel-remote-management.md)。
 
 2026-11-23。普通 QQ 现采用 Vegra85/fatfish-bot 的完整公开 Python 运行框架与原版网页控制台，当前上游版本 v1.18.2、提交 fe3b52438fcba5798609baae2d32c33f51305bff。上游地址：<https://github.com/Vegra85/fatfish-bot>，MIT；上游 LICENSE 保留在每个本机版本内。表情资源分别保留原来源/署名与许可，不因此变成 MIT。
