@@ -39,6 +39,10 @@ Mac 已额外安装 python-pptx、imageio-ffmpeg 和 yt-dlp，并把 Chrome 的�
 
 官方插件不使用 NapCat。当前工具未暴露原生引用参数时使用短文字引用，不能声称出现原生引用卡片；不照搬普通 QQ 主动冒泡到官方消息窗口之外。官方的配置及运行独立于普通 QQ 自动发布；模板变更需使用该插件支持的配置入口应用并验证，不把 main 推送当成官方已更新。
 
+## 模型消耗统计
+
+千问等模型的实际 usage 与费用统计见 [qq-model-usage.md](qq-model-usage.md)，不再将千问套用 DeepSeek 的计价与缓存规则。
+
 ## 验证与公司任务
 
 `python3 scripts/mac_qq_status.py` 检查 QQ 网关；面板总览检查机器人在线和 QQ 在线。LaunchAgent：com.little-atlas.fatfish、com.little-atlas.fatfish-panel、com.little-atlas.fatfish-updater，均保留登录启动与进程恢复。日志只留本机，排障只输出状态/分类，不公开聊天和密钥。

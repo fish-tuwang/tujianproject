@@ -3,7 +3,7 @@ import importlib
 from pathlib import Path
 import sys
 
-from . import common,memory,mood,soul,relation
+from . import common,memory,mood,soul,relation,usage
 
 VERSION='1.0.0'
 
@@ -20,4 +20,5 @@ def install(bot_directory):
             if key not in {'__name__','__file__','__package__','__spec__','__loader__','__builtins__','common','memory','mood','json','re','time','math','hashlib','unicodedata'}:
                 setattr(target,key,value)
         target.STUB=False
+    usage.install(bot_directory)
     return VERSION
