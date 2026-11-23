@@ -16,6 +16,7 @@ import sqlite3
 import subprocess
 import sys
 import time
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path.home() / 'Library/Application Support/LittleAtlasQQ/fatfish'
 CONTAINER = 'little-atlas-mac-qq-bridge-1'
@@ -82,6 +83,19 @@ async def call_gateway(data):
     return await asyncio.to_thread(gateway, data)
 
 
+def local_media_path(source):
+    """Decode file URIs once; a raw filesystem name may contain a literal %."""
+    source = str(source)
+    if source.startswith('file:'):
+        uri = urlsplit(source)
+        if uri.netloc not in {'', 'localhost'}:
+            raise ValueError('remote_file_host')
+        return Path(unquote(uri.path)).expanduser()
+    if '://' in source:
+        return None
+    return Path(source).expanduser()
+
+
 def rotate_images(group, params, *, remember=False):
     """Compare decoded pictures, not filenames/captions, across runtime restarts."""
     from PIL import Image
@@ -101,9 +115,11 @@ def rotate_images(group, params, *, remember=False):
             if segment.get('type') not in {'image', 'record'}:
                 continue
             source = str(segment.get('data', {}).get('file', ''))
-            path = Path(source.removeprefix('file://'))
-            if not path.is_file():
+            path = local_media_path(source)
+            if path is None:
                 continue
+            if not path.is_file():
+                raise ValueError('local_media_missing')
             if segment['type'] == 'image':
                 key = fingerprint(path)
                 if recent and key == recent[0]:
@@ -218,12 +234,18 @@ async def run_bot():
         group = str(params.get('group_id') or params.get('user_id') or '')
         original = params
         if action in {'send_group_msg','send_private_msg','send_msg'}:
-            params = await asyncio.to_thread(rotate_images, group, params)
+            try:
+                params = await asyncio.to_thread(rotate_images, group, params)
+            except (ValueError, OSError):
+                return {'retcode':400,'status':'failed','message':'本机图片或语音不可用，请刷新素材后重试'}
             if not params.get('message'):
                 return {'retcode':403,'status':'failed','message':'no non-repeating content'}
         # Native QQ file upload needs a path inside the existing account container.
         if action in {'upload_group_file','upload_private_file'}:
-            file = Path(str(params.get('file',''))).expanduser().resolve()
+            file = local_media_path(params.get('file',''))
+            if file is None:
+                return {'retcode':403,'status':'failed','message':'file outside runtime'}
+            file = file.resolve()
             if not file.is_file() or ROOT.resolve() not in file.parents:
                 return {'retcode':403,'status':'failed','message':'file outside runtime'}
             target = '/tmp/fatfish-' + hashlib.sha256(file.read_bytes()).hexdigest()[:20] + file.suffix

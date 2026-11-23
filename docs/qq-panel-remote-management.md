@@ -25,3 +25,17 @@
 GitHub main 的 backend 更新部署远程代理；qqbot 更新部署宿主适配器。保留公司的6cf7869诊断实现，不能回退为探测失败就显示“登录中”。中转脚本 scripts/configure_panel_post_proxy.py 将旧两个精确POST路由升级为 /qq-panel/api/ 的 GET/HEAD/POST 转发；授权与操作白名单仍由 Mac 后端强制执行。中转配置先备份、nginx -t 通过后热加载，失败还原，不重启QQ。
 
 验证：所有者/其他账号、跨站请求、确认标志、敏感配置拒绝、仅表情发送、二维码新鲜度、账号在线不打断、宿主适配和原鉴权回归测试。真实群消息测试由用户触发，开发检查不自行发送测试消息。
+
+## 隔离功能验收
+
+新增 `scripts/qq_panel_sandbox.py`。在 Mac 使用已安装的 FatFish 虚拟环境运行：
+
+```sh
+"$HOME/Library/Application Support/LittleAtlasQQ/fatfish/venv/bin/python" scripts/qq_panel_sandbox.py
+```
+
+脚本只复制公开 Python/HTML 源码，在临时目录生成虚拟配置、图片、歌曲和记忆；禁止网络连接和启动进程，QQ 网关为内存模拟，绝不启动另一个账号或向真实群发消息。调用真实面板读取/保存处理器与真实 `_admin_send` → Mac 适配器链路，涵盖群/私聊文字、纯表情、图文、媒体路径、歌曲上传/编辑/删除，以及设置/人设/表情/心情管理。临时目录结束即删除，报告只含检查名和结果。
+
+这类沙箱检查不等于音乐平台实际扫码成功、语音服务合成成功或真实 QQ 已收图；外部服务依赖与平台登录需另行核验。公开版没有 `personcard.py`，人物卡目前标记 unsupported，已有的记忆、关系和情绪管理独立可用。恶作剧关闭属于原配置状态，验收不会擅自开启。
+
+2026-11-23 修复：`Path.as_uri()` 会编码 Mac 的 `Application Support` 空格及中文文件名；适配器现在只对 file URI 解码一次，把图片/语音转为 base64 后交给 QQ 容器，原始路径中的 `%` 不重复解码。素材缺失在宿主侧明确失败，不再让容器报 ENOENT。文件上传同样正确处理 file URI。
