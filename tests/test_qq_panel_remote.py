@@ -20,7 +20,7 @@ def test_all_native_root_links_stay_authenticated():
     assert 'href="/qq-panel/local-core"' in page
     assert "fetch('/qq-panel/api/overview')" in page
     assert '`/qq-panel/api/local-core`' in page
-    assert 'https://example.com' in page and '所有者面板' in page
+    assert 'https://example.com' in page and '远程管理' in page
     assert "'/100分'" in remote_html("<script>const denominator='/100分';</script>")
     assert 'href="/qq-panel/"' in remote_html('<a href="/">返回</a>')
     assert '"/"+3' in remote_html('<script>const ratio="/"+3;</script>')

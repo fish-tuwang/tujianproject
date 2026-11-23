@@ -1,5 +1,7 @@
 # FatFish：Mac 运行与自动发布
 
+**远程管理更新：** 用户已授权在公司操作全部已实现的普通 QQ 控制面板管理功能，原只读限制已取消，仍仅所有者可管理；删除/退出/进程控制需界面确认。见 [远程管理说明](qq-panel-remote-management.md)。
+
 2026-11-23。普通 QQ 现采用 Vegra85/fatfish-bot 的完整公开 Python 运行框架与原版网页控制台，当前上游版本 v1.18.2、提交 fe3b52438fcba5798609baae2d32c33f51305bff。上游地址：<https://github.com/Vegra85/fatfish-bot>，MIT；上游 LICENSE 保留在每个本机版本内。表情资源分别保留原来源/署名与许可，不因此变成 MIT。
 
 ## 实际架构
@@ -36,32 +38,6 @@ Mac 已额外安装 python-pptx、imageio-ffmpeg 和 yt-dlp，并把 Chrome 的�
 官方插件不使用 NapCat。当前工具未暴露原生引用参数时使用短文字引用，不能声称出现原生引用卡片；不照搬普通 QQ 主动冒泡到官方消息窗口之外。官方的配置及运行独立于普通 QQ 自动发布；模板变更需使用该插件支持的配置入口应用并验证，不把 main 推送当成官方已更新。
 
 ## 验证与公司任务
-
-### QQ连接诊断
-
-异地所有者可读取 `/qq-panel/api/mac-qq-status`，获取检查时间、在线状态和错误分类。
-Mac 本机为 `/api/mac-qq-status`，仍校验本机 Host。接口不返回凭据、原始命令输出或聊天，
-也不执行重启/登录。`online` 需 QQ 身份匹配且 `get_status.online=true`；
-`docker_unavailable`、`bridge_missing/stopped`、`gateway_auth_failed`、`gateway_timeout`
-等探测错误不再统一误报为“正在登录”，也不能直接认定账号掉线。
-明确离线且90秒内的守护检查要求手机验证时才报告 `login_required`。
-此适配器修正由 QQ 自动更新线部署，仅切换聊天与面板，保留账号容器及既有恢复策略。
-
-### 网易云远程关联（2026-11-23）
-
-用户已明确授权异地只读面板的一个例外：图鉴所有者可在 `/qq-panel/#sing`
-使用网易云“扫码登录”和“检查登录”。仅允许 `POST /qq-panel/api/music/login`
-的 `platform=netease` 与 `action=start/poll/check`，要求 HTTPS 同源、JSON 和
-`X-Panel: 1`；其他平台、退出登录、配置修改、机器人启停等仍拒绝。
-二维码和状态响应禁止缓存，不返回 Cookie、平台 key 或上游 Set-Cookie。
-Cookie 继续由上游 musiclogin 保存在家庭 Mac 私有 `data/music_login.json`，
-不进入 Git、公司电脑或官方 harness 插件。用户需用网易云 App 扫码并确认；
-实际登录和歌曲可用性以平台返回为准，不绕过会员/地区限制。
-
-修复位于 `backend/app/qq_panel.py`，由图鉴 API 自动更新线发布，无新增依赖、
-宿主安装或 QQ 账号容器重建。API 更新沿用原 readiness/文件校验及失败回滚；
-图鉴数据库、原有鉴权与 QQ 私有数据不变。推送不代表 Mac 已拉取或已扫码成功。
-本机网易云管理流程及官方插件发布方式不变。
 
 `python3 scripts/mac_qq_status.py` 检查 QQ 网关；面板总览检查机器人在线和 QQ 在线。LaunchAgent：com.little-atlas.fatfish、com.little-atlas.fatfish-panel、com.little-atlas.fatfish-updater，均保留登录启动与进程恢复。日志只留本机，排障只输出状态/分类，不公开聊天和密钥。
 

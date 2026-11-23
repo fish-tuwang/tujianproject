@@ -5,10 +5,41 @@ import re
 import httpx
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
+from .audit import audit
 
 router=APIRouter()
 PREFIX='/qq-panel'
 NO_STORE={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'}
+
+REMOTE_CONTROLS='''<script>(()=>{
+const original=window.fetch.bind(window);
+window.fetch=async(input,options={})=>{
+ const url=new URL(typeof input==='string'?input:input.url,location.href);
+ if(url.origin!==location.origin||!url.pathname.startsWith('/qq-panel/api/')||String(options.method||'GET').toUpperCase()!=='POST')return original(input,options);
+ let body;try{body=JSON.parse(options.body||'{}');}catch(e){return original(input,options);}
+ const path=url.pathname.slice('/qq-panel/'.length);
+ if(path==='api/tool'){
+  if(body.name==='open_logs'){location.hash='logs';return new Response(JSON.stringify({ok:true,msg:'已打开日志页'}),{headers:{'Content-Type':'application/json'}});}
+  return new Response(JSON.stringify({ok:false,error:'这是Mac本机安装/文件夹操作；远程可使用日志、歌单与表情管理页面'}),{status:400,headers:{'Content-Type':'application/json'}});
+ }
+ const dangerous=['api/wipe','api/memory/forget','api/songs/delete','api/mac-qq-login'].includes(path)
+  ||path==='api/bot'&&!['start','start_all'].includes(body.action)
+  ||path==='api/music/login'&&body.action==='logout'
+  ||path==='api/local-core'&&['self_remove','diary_archive','event_remove'].includes(body.action)
+  ||['api/fixup','api/tasks','api/prank','api/person/impression'].includes(path)&&['del','delete','clear','cl_del','cancel','prom_del','send','schedule','next','undo'].includes(body.op||body.action)
+  ||path==='api/qzone'&&!['status','pause','resume','selftest'].includes(body.what);
+ if(dangerous){
+  const message=path==='api/wipe'?'将删除指定用户的聊天和记忆数据。确认继续？':path==='api/bot'?'将操作聊天进程，QQ账号和登录数据保持不变。确认继续？':'此操作会删除、退出登录或执行对外操作。确认继续？';
+  if(!window.confirm(message))return new Response(JSON.stringify({ok:false,error:'操作已取消'}),{status:409,headers:{'Content-Type':'application/json'}});
+  const headers=new Headers(options.headers||{});headers.set('X-Panel-Confirm','1');options={...options,headers};
+ }
+ return original(input,options);
+};})();</script>'''
+
+QQ_LOGIN_HTML='''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QQ登录与诊断</title><style>body{font:16px/1.8 system-ui;background:#eef4f6;color:#12222b;max-width:800px;margin:40px auto;padding:20px}section{background:white;padding:28px;border-radius:16px}button{padding:12px;cursor:pointer}img{display:block;max-width:300px;margin:20px auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><body><a href="/qq-panel/">← 返回控制面板</a><section><h1>QQ登录与连接诊断</h1><p>仅刷新登录二维码，不重启QQ、不删除登录数据。已在线时不会重新登录。</p><pre id="status">读取状态中…</pre><button id="refresh">需要登录时获取新二维码</button><p id="message" role="status"></p><img id="qr" alt="QQ登录二维码" hidden></section><script>
+const el=id=>document.getElementById(id);async function status(){try{const r=await fetch('/qq-panel/api/mac-qq-status',{cache:'no-store'});const d=await r.json();el('status').textContent=(d.state==='ok'?'QQ当前在线':d.reason||d.category||'暂无法确认状态')+'\\n检查时间：'+new Date(d.checked_at*1000).toLocaleString('zh-CN');if(d.state==='ok'){el('qr').hidden=true;el('message').textContent='QQ已在线，无需扫码。';}}catch(e){el('status').textContent='状态接口暂不可用，不能据此判定掉线。';}}
+el('refresh').onclick=async()=>{if(!confirm('刷新当前QQ登录二维码？不重启QQ，也不清除登录数据。'))return;el('refresh').disabled=true;try{const r=await fetch('/qq-panel/api/mac-qq-login',{method:'POST',headers:{'Content-Type':'application/json','X-Panel':'1','X-Panel-Confirm':'1'},body:JSON.stringify({action:'refresh'})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'刷新失败');if(d.img){el('qr').src=d.img;el('qr').hidden=false;el('message').textContent='请用机器人账号的手机QQ扫码并确认；过期后可再次获取。';}else el('message').textContent=d.message||'QQ已在线';await status();}catch(e){el('message').textContent=e.message;}finally{el('refresh').disabled=false;}};status();setInterval(status,10000);
+</script></body></html>'''
 
 
 async def netease_login(request):
@@ -29,9 +60,11 @@ async def netease_login(request):
         body=json.loads(data)
     except (ValueError,UnicodeError):
         return JSONResponse({'ok':False,'error':'无效JSON'},status_code=400,headers=NO_STORE)
-    if (not isinstance(body,dict) or set(body)!={'platform','action'} or body.get('platform')!='netease'
-            or body.get('action') not in ('start','poll','check') or request.url.query):
-        return JSONResponse({'ok':False,'error':'仅允许网易云扫码关联与登录检查'},status_code=403,headers=NO_STORE)
+    if (not isinstance(body,dict) or set(body)!={'platform','action'} or body.get('platform') not in ('netease','qq','kugou')
+            or body.get('action') not in ('start','poll','check','logout') or request.url.query):
+        return JSONResponse({'ok':False,'error':'无效的音乐平台登录操作'},status_code=403,headers=NO_STORE)
+    if body['action']=='logout' and request.headers.get('x-panel-confirm')!='1':
+        return JSONResponse({'ok':False,'error':'请先确认退出音乐平台登录'},status_code=409,headers=NO_STORE)
     try:
         async with httpx.AsyncClient(timeout=30,trust_env=False,follow_redirects=False) as client:
             async with client.stream('POST','http://host.docker.internal:8765/api/music/login',json=body,
@@ -52,7 +85,7 @@ async def netease_login(request):
                 if key in answer:out[key]=answer[key]
         if body['action']=='start' and out['ok']:
             img=answer.get('img','')
-            if not isinstance(img,str) or not re.fullmatch(r'data:image/png;base64,[A-Za-z0-9+/=\r\n]+',img):
+            if not isinstance(img,str) or not re.fullmatch(r'data:image/(?:png|jpeg|gif|webp);base64,[A-Za-z0-9+/=\r\n]+',img):
                 raise ValueError('invalid QR image')
             out['img']=img
         return JSONResponse(out,headers=NO_STORE)
@@ -93,17 +126,91 @@ async def panel_send(request):
         return JSONResponse({'ok':False,'error':'代发请求未确认成功，请先查看聊天记录，避免重复发送'},status_code=503,headers=NO_STORE)
 
 
+MANAGEMENT_PATHS={
+    'api/bot','api/config','api/control','api/her_blocked','api/person/impression','api/tasks',
+    'api/memory/forget','api/memory/add','api/memory/pin','api/memory/unpin','api/memory/restore',
+    'api/memory/fade','api/memory/taboo_del','api/memory/consolidate','api/quick','api/qzone',
+    'api/prank','api/life','api/fixup','api/favor','api/wipe','api/persona','api/stickers/toggle',
+    'api/tts','api/prices','api/music/selftest','api/songs/save','api/songs/upload',
+    'api/songs/import','api/songs/preview','api/songs/delete','api/fu_label','api/stickerlib_label',
+    'api/stickerdict_edit','api/shadow_label','api/local-core','api/mac-qq-login',
+}
+
+
+def needs_confirmation(path,body):
+    if path in {'api/wipe','api/memory/forget','api/songs/delete','api/mac-qq-login'}:return True
+    if path=='api/bot':return body.get('action') not in {'start','start_all'}
+    if path=='api/music/login':return body.get('action')=='logout'
+    if path=='api/local-core':return body.get('action') in {'self_remove','diary_archive','event_remove'}
+    if path in {'api/fixup','api/tasks','api/prank','api/person/impression'}:
+        return body.get('op',body.get('action')) in {'del','delete','clear','cl_del','cancel','prom_del','send','schedule','next','undo'}
+    if path=='api/qzone':return body.get('what') not in {'status','pause','resume','selftest'}
+    return False
+
+
+def validate_management(path,body):
+    if not isinstance(body,dict):raise ValueError('请求必须为JSON对象')
+    if path=='api/bot' and body.get('action') not in {'start','start_all','restart','restart_hard','force_restart','stop','shutdown','stop_all'}:
+        raise ValueError('只允许管理聊天进程，不重建或清空QQ登录')
+    if path=='api/mac-qq-login' and body!={'action':'refresh'}:raise ValueError('只允许刷新QQ登录二维码')
+    if path=='api/config':
+        changes=body.get('changes')
+        if not isinstance(changes,list) or len(changes)>150:raise ValueError('配置项格式不正确')
+        for change in changes:
+            if not isinstance(change,dict) or set(change)!={'path','value'}:raise ValueError('配置项格式不正确')
+            key=change.get('path')
+            if not isinstance(key,str) or not re.fullmatch(r'[a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z0-9_]+)*',key):raise ValueError('配置路径不正确')
+            if key.split('.')[0] in {'onebot','panel','persona_file','bot_qq','owner_qq','group_card','profile'}:raise ValueError('账号、设备、管理鉴权与文件路径配置仅能在本机维护')
+            if any(part in {'path','root','directory','dir','file','command','cwd','pdf_browser'} for part in key.split('.')):raise ValueError('宿主路径与命令配置仅能在本机维护')
+
+
+async def management(request,path):
+    if path not in MANAGEMENT_PATHS:
+        return JSONResponse({'ok':False,'error':'未开放的面板操作'},status_code=403,headers=NO_STORE)
+    origin=str(request.url.replace(scheme='https',path='',query='',fragment='')).rstrip('/')
+    if (request.headers.get('origin')!=origin or request.headers.get('x-panel')!='1'
+            or request.headers.get('sec-fetch-site','same-origin')!='same-origin' or request.url.query):
+        return JSONResponse({'ok':False,'error':'请从当前登录的面板操作'},status_code=403,headers=NO_STORE)
+    if request.headers.get('content-type','').split(';',1)[0].strip().lower()!='application/json':
+        return JSONResponse({'ok':False,'error':'请使用JSON提交'},status_code=415,headers=NO_STORE)
+    raw=bytearray();limit=32*1024*1024 if path=='api/songs/upload' else 512*1024
+    async for chunk in request.stream():
+        raw.extend(chunk)
+        if len(raw)>limit:return JSONResponse({'ok':False,'error':'上传音频最大32MB；普通操作最大512KB'},status_code=413,headers=NO_STORE)
+    try:
+        body=json.loads(raw);validate_management(path,body)
+    except (ValueError,TypeError,UnicodeError) as error:
+        message=str(error) if type(error) is ValueError else '无效的JSON操作'
+        return JSONResponse({'ok':False,'error':message[:120]},status_code=400,headers=NO_STORE)
+    if needs_confirmation(path,body) and request.headers.get('x-panel-confirm')!='1':
+        return JSONResponse({'ok':False,'error':'请在面板中确认此操作'},status_code=409,headers=NO_STORE)
+    try:
+        async with httpx.AsyncClient(timeout=180,trust_env=False,follow_redirects=False) as client:
+            async with client.stream('POST','http://host.docker.internal:8765/'+path,json=body,
+                    headers={'Host':'127.0.0.1:8765','X-Panel':'1'}) as response:
+                result=bytearray()
+                async for chunk in response.aiter_bytes():
+                    result.extend(chunk)
+                    if len(result)>8*1024*1024:raise ValueError('response too large')
+                answer=json.loads(result)
+                if not isinstance(answer,dict):raise ValueError('invalid response')
+                return JSONResponse(answer,status_code=response.status_code,headers=NO_STORE)
+    except (httpx.HTTPError,ValueError,UnicodeError):
+        return JSONResponse({'ok':False,'error':'操作结果未能确认，请刷新查看状态后再决定是否重试'},status_code=503,headers=NO_STORE)
+
+
 def remote_html(text):
     # The upstream app uses root-relative API/image links. Keep every request inside
     # this authenticated namespace, including JavaScript string/template literals.
     paths=r'''(["'`])/(?=api/|local-core(?:["'`?#])|sticker(?:thumb)?(?:["'`?/#])|qrcode(?:["'`?])|avatar(?:["'`?])|songclip(?:["'`?])|judge_eval(?:["'`?])|fuimg(?:["'`?])|voicefile(?:["'`?])|index\.html|#)'''
     text=re.sub(paths,lambda match:match.group(1)+PREFIX+'/',text)
     text=re.sub(r'''(href|src|action)=(['"])/\2''',lambda match:match.group(1)+'='+match.group(2)+PREFIX+'/'+match.group(2),text)
-    text=text.replace('只有这台电脑能打开','通过图鉴账号异地只读查看')
-    banner='<div style="padding:12px 20px;background:#e2f2f8;color:#12222b;border-bottom:1px solid #c4d5dc">所有者面板 · 支持代发文字/表情及扫码关联网易云；其他管理操作仍为只读。登录信息仅保存在家庭 Mac。</div>'
-    readonly='''<script>(()=>{let pending=false;function disable(){pending=false;for(const b of document.querySelectorAll('main button,button[data-action]')){if(b.id==='go')continue;if(/^(启动机器人|重启机器人|停止机器人|强制重启|开火力|从现在重新算|回到平常|恢复平静|保存|添加|移入归档|删除|现在整理|关掉夜猫子|打开夜猫子|发送|代发|钉住|取消钉住|找回|现在忘)/.test(b.textContent.trim())){b.disabled=true;b.title='异地只读；请在Mac本机管理';}}}new MutationObserver(()=>{if(!pending){pending=true;requestAnimationFrame(disable);}}).observe(document.body,{childList:true,subtree:true});disable();})();</script>'''
-    music='''<script>(()=>{let pending=false;function restrictMusic(){pending=false;for(const b of document.querySelectorAll('[data-mu]')){const a=b.dataset.mu,p=b.dataset.pf;if(a==='cancel'||(p==='netease'&&['start','check'].includes(a)))continue;b.disabled=true;b.title='远程仅允许网易云扫码关联；其他操作请在Mac本机进行';}}new MutationObserver(()=>{if(!pending){pending=true;requestAnimationFrame(restrictMusic);}}).observe(document.body,{childList:true,subtree:true});restrictMusic();})();</script>'''
-    return text.replace('<body>', '<body>'+banner,1).replace('</body>',readonly+music+'</body>',1)
+    text=text.replace('只有这台电脑能打开','仅所有者可远程管理')
+    text=text.replace('停止全部（会弹管理员确认）','停止聊天（保留QQ登录）').replace('启动全部（含 QQ）','启动聊天（保留QQ登录）')
+    banner='<div style="padding:12px 20px;background:#e2f2f8;color:#12222b;border-bottom:1px solid #c4d5dc">远程管理 · 仅所有者账号可操作，删除数据和QQ登录需确认。<a href="/qq-panel/qq-login">QQ登录与连接诊断</a></div>'
+    controls=REMOTE_CONTROLS
+    return text.replace('<body>', '<body>'+banner,1).replace('</body>',controls+'</body>',1)
+
 
 
 @router.get('/mac-mini/qq-panel')
@@ -125,11 +232,16 @@ async def proxy(request:Request,path:str):
     if str(identity.get('username','')).casefold()!='peyro-gogogo':
         return JSONResponse({'error':'仅图鉴所有者账号可查看机器人面板'},status_code=403,headers={'Cache-Control':'no-store'})
     if request.method!='GET':
-        if request.method=='POST' and path=='api/music/login':
-            return await netease_login(request)
-        if request.method=='POST' and path=='api/send':
-            return await panel_send(request)
-        return JSONResponse({'ok':False,'error':'异地面板为只读；请在Mac本机进行管理'},status_code=403,headers=NO_STORE)
+        if request.method!='POST':return JSONResponse({'ok':False,'error':'仅允许GET/POST'},status_code=405,headers=NO_STORE)
+        if path=='api/music/login':result=await netease_login(request)
+        elif path=='api/send':result=await panel_send(request)
+        else:result=await management(request,path)
+        success=False
+        try:success=json.loads(result.body).get('ok') is True
+        except (ValueError,AttributeError):pass
+        audit('qq_panel_operation',channel='auth',username=identity.get('username'),route=path,status=result.status_code,success=success)
+        return result
+    if path=='qq-login':return Response(QQ_LOGIN_HTML,media_type='text/html',headers=NO_STORE)
     if not path and not request.url.path.endswith('/'):
         return RedirectResponse(PREFIX+'/',status_code=307)
     if '..' in path or '\\' in path or path.startswith('/') or not re.fullmatch(r'[A-Za-z0-9_./-]*',path):

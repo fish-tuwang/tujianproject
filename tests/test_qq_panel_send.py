@@ -50,10 +50,10 @@ def test_send_rejects_wrong_user_csrf_or_payload(headers,body,status):
 
 def test_ui_allows_send_but_keeps_other_management_protected():
     page=qq_panel.remote_html('<body><main><button id="go">发送</button></main></body>')
-    assert "if(b.id==='go')continue" in page
-    assert '网易云' in page and '其他管理操作仍为只读' in page
+    assert "window.fetch=async" in page
+    assert '仅所有者账号可操作' in page
     with TestClient(app()) as client:
-        assert client.post('/qq-panel/api/bot',headers=HEADERS,json={'action':'restart'}).status_code==403
+        assert client.post('/qq-panel/api/bot',headers=HEADERS,json={'action':'restart'}).status_code==409
 
 
 def test_nginx_changes_are_scoped_and_keep_mac_relay_target():
@@ -61,8 +61,8 @@ def test_nginx_changes_are_scoped_and_keep_mac_relay_target():
         location / { proxy_pass $atlas_mac_upstream; }
     }}'''
     result=render_config(original)
-    assert 'location = /qq-panel/api/send {' in result
-    assert 'location = /qq-panel/api/music/login {' in result
-    assert result.count('limit_except POST { deny all; }')==2
-    assert result.count('proxy_pass $atlas_mac_upstream;')==3
+    assert 'location ^~ /qq-panel/api/ {' in result
+    assert 'client_max_body_size 32m;' in result
+    assert result.count('limit_except GET HEAD POST { deny all; }')==1
+    assert result.count('proxy_pass $atlas_mac_upstream;')==2
     assert render_config(result)==result

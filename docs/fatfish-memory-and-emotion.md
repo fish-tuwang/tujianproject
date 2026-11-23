@@ -1,5 +1,7 @@
 # 本机记忆、情绪与关系模块
 
+**最新授权：** 用户已要求在公司完整操作控制面板，下文早期“只放行代发和网易云”的部署记录已升级为所有者管理模式；当前权限与部署见 [qq-panel-remote-management.md](qq-panel-remote-management.md)。
+
 2026-11-23。实现位于 `qqbot/fatfish_extensions/`，为本项目自行实现，依据 FatFish 公开的接口与设计说明，不能称为作者的私人内核。
 
 ## 生效与持久化

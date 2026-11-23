@@ -135,7 +135,41 @@ def load_module(name):
     except ImportError:
         from qqbot.fatfish_extensions import install
     install(path)
+    import shutil
+    sing=importlib.import_module('sing')
+    songs=ROOT/'songs'
+    if not songs.exists():
+        if (path/'songs').is_dir():shutil.copytree(path/'songs',songs)
+        else:songs.mkdir(parents=True)
+    sing.SONG_DIR=songs;sing.INDEX=songs/'songs.json'
     return importlib.import_module(name)
+
+
+def refresh_login_qr():
+    """Explicit owner action only. Wait for a new image; never restart the account."""
+    import importlib.util
+    spec=importlib.util.spec_from_file_location('mac_qq_guard',ROOT.parent/'guard.py')
+    guard=importlib.util.module_from_spec(spec);spec.loader.exec_module(guard)
+    try:
+        api=guard.WebUI(ROOT.parent);api.auth();state=api.post('/QQLogin/CheckLoginStatus') or {}
+        if state.get('isLogin'):
+            return {'ok':True,'message':'QQ已登录，不刷新、不重新登录'}
+        if state.get('loginPhase') in {'qrcode_scanned','initializing','reconnecting'}:
+            return {'ok':False,'error':'QQ正在确认或恢复连接，请稍后查看状态，不打断当前登录'}
+        if guard.VERIFY.search(str(state.get('loginError',''))):
+            return {'ok':False,'error':'QQ要求手机安全验证，请先在手机完成验证；当前状态已保留'}
+        def copy_qr():
+            p=subprocess.run(['docker','exec','little-atlas-mac-qq-account-1','cat','/app/napcat/cache/qrcode.png'],capture_output=True,timeout=5)
+            return p.stdout if p.returncode==0 else b''
+        old=copy_qr();api.post('/QQLogin/RefreshQRcode',{})
+        for _ in range(20):
+            time.sleep(.5);data=copy_qr()
+            if data and data!=old and data.startswith(b'\x89PNG\r\n\x1a\n'):
+                path=ROOT.parent/'login-qr.png';path.write_bytes(data);path.chmod(0o600)
+                return {'ok':True,'img':'data:image/png;base64,'+base64.b64encode(data).decode()}
+        return {'ok':False,'error':'未取得更新后的二维码，请稍后重试；没有重启或重登'}
+    except Exception:
+        return {'ok':False,'error':'QQ登录管理接口暂不可用；保留当前状态，未重启或重登'}
 
 
 async def run_bot():
@@ -232,6 +266,7 @@ def run_panel():
         from qqbot.fatfish_extensions.panel import install as install_core_panel
     install_core_panel(panel)
     panel.QRCODE = ROOT.parent / 'login-qr.png'
+    panel.BACKUP=ROOT/'backups';panel.LOG=ROOT/'bot.log'
     panel.qq_status = lambda: qq_status(panel.cfg().get('bot_qq'))
     panel.napcat_up = lambda: panel.qq_status()['state'] == 'ok'
     panel.qq_running = lambda: True
@@ -249,11 +284,13 @@ def run_panel():
     panel.stop_all = lambda: (False, '账号服务由 Mac 守护器管理；请只重启聊天机器人')
     original = panel.H.route
     def route(self, url, body):
+        if url=='/api/mac-qq-login':
+            return refresh_login_qr() if body=={'action':'refresh'} else {'ok':False,'error':'不支持的登录操作'}
         if url == '/api/bot':
             action = body.get('action')
-            if action in {'start','start_all','restart','force_restart'}:
+            if action in {'start','start_all','restart','force_restart','restart_hard'}:
                 ok, message = service('restart');return {'ok':ok,'msg':message}
-            if action == 'stop':
+            if action in {'stop','shutdown','stop_all'}:
                 ok, message = service('stop');return {'ok':ok,'msg':message}
             return {'ok':False,'error':'为保留在线服务，请使用重启聊天机器人'}
         return original(self, url, body)
