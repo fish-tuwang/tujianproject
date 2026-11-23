@@ -270,6 +270,11 @@ def refresh_login_qr():
         for _ in range(20):
             time.sleep(.5);data=copy_qr()
             if data and data!=old and data.startswith(b'\x89PNG\r\n\x1a\n'):
+                from PIL import Image
+                try:
+                    with Image.open(io.BytesIO(data)) as image:image.verify()
+                except (OSError, ValueError):
+                    continue
                 path=ROOT.parent/'login-qr.png';path.write_bytes(data);path.chmod(0o600)
                 return {'ok':True,'img':'data:image/png;base64,'+base64.b64encode(data).decode()}
         return {'ok':False,'error':'未取得更新后的二维码，请稍后重试；没有重启或重登'}

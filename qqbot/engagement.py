@@ -32,7 +32,7 @@ def day(now):return datetime.fromtimestamp(now,TZ).date().isoformat()
 def eligible(row,now,minutes=30,limit=3):
  if quiet(now) or not row:return False
  group,human,mention,last_idle,count_date,count,attempt=row
- return (mention>now-86400 and now-human>=minutes*60 and human>last_idle and now-last_idle>=7200 and (count_date!=day(now) or count<limit))
+ return (now-human>=max(60,minutes)*60 and now-last_idle>=3600 and (count_date!=day(now) or count<limit))
 
 
 class EngagementStore:

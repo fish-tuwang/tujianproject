@@ -13,25 +13,28 @@ from qqbot.qq_chat import ChatReplies
 def ts(day=23,hour=10,minute=0):return datetime(2026,11,day,hour,minute,tzinfo=ZoneInfo('Asia/Shanghai')).timestamp()
 
 
-def test_idle_persistence_quiet_hours_and_one_message_per_idle_episode(tmp_path):
- path=tmp_path/'bot.sqlite';s=BotStore(path);s.note_activity('10',True,ts())
- assert not s.idle_candidates(ts(minute=29))
- assert s.idle_candidates(ts(minute=30))==['10']
- assert s.claim_idle('10',ts(minute=30)) and not s.claim_idle('10',ts(minute=31))
- s.record_idle('10','安静得听见鱼尾巴了',ts(minute=30))
- assert not BotStore(path).idle_candidates(ts(hour=13))
- s.note_activity('10',False,ts(hour=13));assert s.idle_candidates(ts(hour=13,minute=30))==['10']
- assert not s.idle_candidates(ts(hour=23))
- s.note_activity('20',False,ts());assert '20' not in s.idle_candidates(ts(hour=14))
-
-
-def test_daily_quota_and_activity_recheck(tmp_path):
+def test_hourly_idle_without_mentions_survives_restart(tmp_path):
+ s=BotStore(tmp_path/'bot.sqlite');s.note_activity('10',False,ts())
+ assert not s.idle_candidates(ts(minute=59))
+ assert s.idle_candidates(ts(hour=11))==['10']
+ s.record_idle('10','bubble',ts(hour=11))
  s=BotStore(tmp_path/'bot.sqlite')
- for hour in [10,13,16]:
-  s.note_activity('10',True,ts(hour=hour));assert s.idle_allowed('10',ts(hour=hour,minute=31));s.record_idle('10','冒泡',ts(hour=hour,minute=31))
- s.note_activity('10',True,ts(hour=19));assert not s.idle_allowed('10',ts(hour=19,minute=31))
- s.note_activity('10',True,ts(day=24,hour=10));assert s.idle_allowed('10',ts(day=24,hour=10,minute=31))
- s.note_activity('10',False,ts(day=24,hour=10,minute=32));assert not s.idle_allowed('10',ts(day=24,hour=10,minute=33))
+ assert not s.idle_candidates(ts(hour=11,minute=59))
+ assert s.idle_candidates(ts(hour=12))==['10']
+ s.record_idle('10','bubble',ts(hour=12))
+ assert s.idle_candidates(ts(hour=13))==['10']
+ s.record_idle('10','bubble',ts(hour=13))
+ assert not s.idle_candidates(ts(hour=14))
+ assert s.idle_candidates(ts(day=24))==['10']
+ assert not s.idle_candidates(ts(day=24,hour=23))
+
+
+def test_hourly_idle_activity_recheck_and_independent_groups(tmp_path):
+ s=BotStore(tmp_path/'bot.sqlite')
+ for group in ['10','20']:s.note_activity(group,False,ts())
+ s.note_activity('10',False,ts(hour=11))
+ assert not s.idle_allowed('10',ts(hour=11,minute=1))
+ assert s.idle_candidates(ts(hour=11,minute=1))==['20']
 
 
 def make_images(tmp_path):

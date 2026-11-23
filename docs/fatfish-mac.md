@@ -50,3 +50,7 @@ Mac 已额外安装 python-pptx、imageio-ffmpeg 和 yt-dlp，并把 Chrome 的�
 测试：`python -m pytest tests/test_fatfish_mac.py tests/test_qq_engagement.py tests/test_mac_qq_update.py tests/test_mac_qq_guard.py -q`。另有本机隔离测试直接调用上游 FatFish.handle 和真实 Qwen 模型，拦截所有 QQ 发出动作；测试不等于用户群真实收发。
 
 可直接发送给公司 Codex 的任务见 [company-codex-task.md](company-codex-task.md)。公司仅开发并推送，不启动同一账号的 QQ 实例。
+
+## 2026-11-23 冒泡节奏调整
+
+按用户最新要求，取消近期被@及无人回应只发一次的条件。已授权且已有活动记录的群，安静至少一小时后可冒泡，每群两次至少间隔一小时、每天最多三次；22:00—09:00仍静默，生成期间有人说话仍取消。既有较长的冷场配置保留，不更改私有群范围。二维码在返回前校验完整PNG，网页转为Blob加载并等待成功，失败不会继续展示破图。二维码真实远程加载仍需Mac更新后验证。

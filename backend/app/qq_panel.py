@@ -55,7 +55,16 @@ async function status(){try{const r=await fetch('/qq-panel/api/mac-qq-status',{c
  const history=(g.history||[]).slice(-5);if(history.length)rows.push('最近状态变化：',...history.map(e=>fmt(e.at)+' '+(labels[e.to]||e.to)));
  el('diagnostics').textContent=rows.join('\\n');if(d.state==='ok'){el('qr').hidden=true;el('message').textContent='QQ已在线，无需扫码。';}}catch(e){el('status').textContent=e.message||'状态接口暂不可用，不能据此判定掉线。';el('diagnostics').textContent='';}}
 
-el('refresh').onclick=async()=>{if(!confirm('刷新当前QQ登录二维码？不重启QQ，也不清除登录数据。'))return;el('refresh').disabled=true;try{const r=await fetch('/qq-panel/api/mac-qq-login',{method:'POST',headers:{'Content-Type':'application/json','X-Panel':'1','X-Panel-Confirm':'1'},body:JSON.stringify({action:'refresh'})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'刷新失败');if(d.img){el('qr').src=d.img;el('qr').hidden=false;el('message').textContent='请用机器人账号的手机QQ扫码并确认；过期后可再次获取。';}else el('message').textContent=d.message||'QQ已在线';await status();}catch(e){el('message').textContent=e.message;}finally{el('refresh').disabled=false;}};status();setInterval(status,10000);
+async function showQR(value){
+ const match=/^data:image\\/png;base64,([A-Za-z0-9+/=]+)$/.exec(value||'');
+ if(!match)throw Error('二维码数据无效，请重新获取');
+ const bytes=Uint8Array.from(atob(match[1]),c=>c.charCodeAt(0));
+ const url=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));
+ const img=el('qr');img.hidden=true;
+ try{await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('二维码加载失败，请重新获取'));img.src=url;});img.hidden=false;}
+ finally{img.onload=null;img.onerror=null;URL.revokeObjectURL(url);}
+}
+el('refresh').onclick=async()=>{if(!confirm('刷新当前QQ登录二维码？不重启QQ，也不清除登录数据。'))return;el('refresh').disabled=true;try{const r=await fetch('/qq-panel/api/mac-qq-login',{method:'POST',headers:{'Content-Type':'application/json','X-Panel':'1','X-Panel-Confirm':'1'},body:JSON.stringify({action:'refresh'})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'刷新失败');if(d.img){await showQR(d.img);el('message').textContent='请用机器人账号的手机QQ扫码并确认；过期后可再次获取。';}else el('message').textContent=d.message||'QQ已在线';await status();}catch(e){el('message').textContent=e.message;}finally{el('refresh').disabled=false;}};status();setInterval(status,10000);
 </script></body></html>'''
 
 
