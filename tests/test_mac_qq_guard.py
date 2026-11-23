@@ -59,3 +59,54 @@ def test_stale_logged_in_but_offline_client_restarts_only_once_per_hour():
  state['requires_login']=True
  _,action=decide(state,{'quick_eligible':True},5000)
  assert action is None
+
+
+def test_hourly_retry_budget_survives_brief_online_recovery():
+ state={'offline_since':0,'recovery_requests':[10,20,30]}
+ state,_=decide(state,{'online':True},40)
+ assert state['attempts']==[] and state['recovery_requests']==[10,20,30]
+ state,_=decide(state,{'quick_eligible':True},50)
+ state,action=decide(state,{'quick_eligible':True},120)
+ assert action is None and state['status']=='rate_limited'
+ state,action=decide(state,{'quick_eligible':True},3700)
+ assert action=='quick_login'
+
+
+def test_observe_does_not_treat_logged_in_but_offline_as_online():
+ from scripts.mac_qq_guard import observe
+ class API:
+  def post(self,path):
+   if path.endswith('CheckLoginStatus'):return {'isLogin':True,'coreReady':True,'isOffline':True}
+   if path.endswith('GetQuickLoginListNew'):return []
+   raise AssertionError('must not declare online')
+ assert observe(API(),'949494401')=={'phase':None,'requires_login':False,'quick_eligible':False}
+
+
+def test_saved_list_failure_cannot_reclassify_online_as_offline():
+ from scripts.mac_qq_guard import observe
+ class API:
+  def post(self,path):
+   if path.endswith('CheckLoginStatus'):return {'isLogin':True,'coreReady':True,'isOffline':False}
+   if path.endswith('GetQQLoginInfo'):return {'uin':'949494401'}
+   raise RuntimeError('query unavailable')
+ assert observe(API(),'949494401')['online'] is True
+
+
+def test_recovery_phase_not_interrupted_by_previous_login_required():
+ state,action=decide({'requires_login':True},{'phase':'qrcode_scanned'},100)
+ assert state['status']=='recovering' and action is None
+
+
+def test_history_and_last_outage_are_bounded_and_contain_no_raw_error():
+ state={}
+ for i in range(50):
+  state,_=decide(state,{'online':True} if i%2 else {'probe_error':True},i)
+ assert len(state['history'])==40 and 'loginError' not in str(state)
+ state,_=decide(state,{'quick_eligible':False},100)
+ state,_=decide(state,{'online':True},150)
+ assert state['last_outage']['seconds']==50 and state['last_online_at']==150
+
+
+def test_explicit_verification_wins_over_reconnecting_phase():
+ state,action=decide({}, {'requires_login':True,'phase':'reconnecting','quick_eligible':True},100)
+ assert state['status']=='login_required' and action is None

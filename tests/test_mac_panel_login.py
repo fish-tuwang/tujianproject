@@ -42,3 +42,16 @@ def test_qr_refresh_preserves_confirmation_in_progress(tmp_path,monkeypatch):
     setup_guard(tmp_path,monkeypatch,{'isLogin':False,'loginPhase':'qrcode_scanned'})
     monkeypatch.setattr(fatfish_mac.subprocess,'run',lambda *a,**k:(_ for _ in ()).throw(AssertionError('must not call Docker')))
     assert not fatfish_mac.refresh_login_qr()['ok']
+
+
+def test_connection_diagnostics_only_exposes_whitelisted_fields(tmp_path,monkeypatch):
+ import json
+ root=tmp_path/'fatfish';root.mkdir()
+ monkeypatch.setattr(fatfish_mac,'ROOT',root)
+ monkeypatch.setattr(fatfish_mac,'qq_status',lambda account:{'state':'ok','checked_at':100})
+ (tmp_path/'guard-state.json').write_text(json.dumps({'status':'online','quick_login_eligible':False,'token':'secret'}))
+ (root/'delivery-state.json').write_text(json.dumps({'category':'qq_media_upload_failed','message':'private','target':'123'}))
+ result=fatfish_mac.connection_diagnostics('949494401')
+ assert result['guard']=={'status':'online','quick_login_eligible':False}
+ assert result['delivery']=={'category':'qq_media_upload_failed'}
+ assert 'secret' not in str(result) and 'private' not in str(result)

@@ -17,14 +17,18 @@ ROOT=Path.home()/'Library/Application Support/LittleAtlasQQ'
 VERIFY=re.compile(r'登录态.*失效|登录态.*过期|安全验证|身份验证|人机|验证码|滑块|新设备验证|captcha|new.device|account.*blocked',re.I)
 
 
-def decide(state,observation,now):
+def _decide(state,observation,now):
  state={**state};state['checked_at']=now
  if observation.get('online'):
   state.update(status='online',offline_since=None,attempts=[],next_retry=0,requires_login=False)
   return state,None
  if observation.get('probe_error'):
   state['status']='probe_error';return state,None
- if observation.get('requires_login') or state.get('requires_login'):
+ if observation.get('requires_login'):
+  state.update(status='login_required',requires_login=True);return state,None
+ if observation.get('phase') in {'qrcode_scanned','initializing','reconnecting'}:
+  state['status']='recovering';return state,None
+ if state.get('requires_login'):
   state.update(status='login_required',requires_login=True);return state,None
  if state.get('offline_since') is None:state['offline_since']=now
  state['status']='offline'
@@ -41,9 +45,32 @@ def decide(state,observation,now):
  restarts=[t for t in state.get('restarts',[]) if now-t<3600]
  if len(attempts)>=2 and now-state['offline_since']>=300 and state.get('last_action_error')=='stale_login_state' and not restarts:
   state.update(restarts=[now],status='restarting_stale_client',next_retry=now+120);return state,'restart_account'
- if len(attempts)>=3 or now<state.get('next_retry',0):return state,None
+ requests=[t for t in state.get('recovery_requests',[]) if 0<=now-t<3600]
+ if len(attempts)>=3 or len(requests)>=3:
+  state['status']='rate_limited';return state,None
+ if now<state.get('next_retry',0):return state,None
+ state['recovery_requests']=requests+[now]
  state.update(attempts=attempts+[now],next_retry=now+[60,300,900][len(attempts)],status='quick_login_requested')
  return state,'quick_login'
+
+
+def decide(state,observation,now):
+ previous=state.get('status');since=state.get('offline_since')
+ updated,action=_decide(state,observation,now)
+ updated['reason']=observation.get('reason') or ('probe_failed' if observation.get('probe_error') else
+                    'online' if observation.get('online') else 'verification_required' if observation.get('requires_login') else
+                    'account_stopped' if observation.get('account_stopped') else 'qq_offline')
+ if updated['status']=='login_required' and not observation.get('requires_login'):
+  updated['reason']='saved_login_unavailable' if observation.get('quick_eligible') is False else 'verification_required'
+ if 'quick_eligible' in observation:updated['quick_login_eligible']=observation['quick_eligible']
+ if observation.get('online'):
+  updated['last_online_at']=now
+  if since is not None:updated['last_outage']={'started_at':since,'recovered_at':now,'seconds':max(0,now-since)}
+ if previous!=updated['status'] or not state.get('history'):
+  history=list(state.get('history',[]))
+  history.append({'at':now,'from':previous,'to':updated['status'],'reason':updated['reason']})
+  updated['history']=history[-40:]
+ return updated,action
 
 
 class WebUI:
@@ -75,13 +102,18 @@ def inspect_account():
 
 def observe(api,account):
  status=api.post('/QQLogin/CheckLoginStatus') or {}
- if status.get('isLogin') and status.get('coreReady'):
+ quick=None
+ try:
+  saved=api.post('/QQLogin/GetQuickLoginListNew') or []
+  quick=any(str(r.get('uin'))==account and r.get('isQuickLogin') for r in saved)
+ except Exception:pass  # A saved-login query failure cannot turn an online account offline.
+ if status.get('isLogin') and status.get('coreReady') and status.get('isOffline') is not True:
   identity=api.post('/QQLogin/GetQQLoginInfo') or {}
-  if str(identity.get('uin'))!=account:return {'requires_login':True}
-  return {'online':True}
- saved=api.post('/QQLogin/GetQuickLoginListNew') or []
+  if str(identity.get('uin'))!=account:return {'requires_login':True,'reason':'account_mismatch'}
+  return {'online':True,'quick_eligible':quick}
+ if quick is None:return {'probe_error':True,'reason':'saved_login_probe_failed'}
  return {'phase':status.get('loginPhase'),'requires_login':bool(VERIFY.search(str(status.get('loginError','')))),
-         'quick_eligible':any(str(r.get('uin'))==account and r.get('isQuickLogin') for r in saved)}
+         'quick_eligible':quick}
 
 
 def tick(root,configure=False):

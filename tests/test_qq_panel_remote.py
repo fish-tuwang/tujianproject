@@ -32,3 +32,10 @@ def test_mac_entry_resolves_to_authenticated_namespace():
         response=client.get('/mac-mini/qq-panel/local-core',follow_redirects=False)
         assert response.status_code==307
         assert response.headers['location']=='/qq-panel/local-core'
+
+
+def test_login_diagnostics_distinguishes_login_media_and_stale_status():
+ from backend.app.qq_panel import QQ_LOGIN_HTML,REMOTE_CONTROLS
+ assert 'quick_login_eligible' in QQ_LOGIN_HTML and '媒体上传失败（不等于掉线）' in QQ_LOGIN_HTML
+ assert '状态尚未更新' in QQ_LOGIN_HTML and 'last_outage' in QQ_LOGIN_HTML
+ assert 'AUTH_REQUIRED' in REMOTE_CONTROLS and 'location.assign' in REMOTE_CONTROLS

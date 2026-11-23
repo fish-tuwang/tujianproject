@@ -83,6 +83,21 @@ async def call_gateway(data):
     return await asyncio.to_thread(gateway, data)
 
 
+def connection_diagnostics(account):
+    result = qq_status(account)
+    for name, filename, keys in [
+        ('guard', ROOT.parent/'guard-state.json', ('status','reason','checked_at','requires_login',
+          'quick_login_eligible','last_online_at','next_retry','last_outage','history')),
+        ('delivery', ROOT/'delivery-state.json', ('checked_at','action','ok','category','retcode')),
+    ]:
+        try:
+            value = json.loads(filename.read_text())
+            result[name] = {key:value.get(key) for key in keys if key in value}
+        except (OSError,ValueError,TypeError):
+            result[name] = {'unavailable':True}
+    return result
+
+
 def local_media_path(source):
     """Decode file URIs once; a raw filesystem name may contain a literal %."""
     source = str(source)
@@ -381,7 +396,7 @@ def run_panel():
     def get(self):
         if self.path.split('?',1)[0]=='/api/mac-qq-status':
             if not self._host_ok():return self._json({'ok':False},403)
-            return self._json(panel.qq_status())
+            return self._json(connection_diagnostics(panel.cfg().get('bot_qq')))
         return original_get(self)
     panel.H.do_GET=get
     panel.serve(quiet=True)

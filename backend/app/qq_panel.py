@@ -13,10 +13,17 @@ NO_STORE={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'
 
 REMOTE_CONTROLS='''<script>(()=>{
 const original=window.fetch.bind(window);
+const checked=async(...args)=>{
+ const r=await original(...args);
+ if(r.status===401&&new URL(r.url||location.href).origin===location.origin){
+  try{const d=await r.clone().json();if(d.code==='AUTH_REQUIRED'){location.assign('/login/?next='+encodeURIComponent(location.pathname+location.hash));throw Error('图鉴登录已失效，请重新登录控制面板');}}catch(error){if(error.message.includes('图鉴登录已失效'))throw error;}
+ }
+ return r;
+};
 window.fetch=async(input,options={})=>{
  const url=new URL(typeof input==='string'?input:input.url,location.href);
- if(url.origin!==location.origin||!url.pathname.startsWith('/qq-panel/api/')||String(options.method||'GET').toUpperCase()!=='POST')return original(input,options);
- let body;try{body=JSON.parse(options.body||'{}');}catch(e){return original(input,options);}
+ if(url.origin!==location.origin||!url.pathname.startsWith('/qq-panel/api/')||String(options.method||'GET').toUpperCase()!=='POST')return checked(input,options);
+ let body;try{body=JSON.parse(options.body||'{}');}catch(e){return checked(input,options);}
  const path=url.pathname.slice('/qq-panel/'.length);
  if(path==='api/tool'){
   if(body.name==='open_logs'){location.hash='logs';return new Response(JSON.stringify({ok:true,msg:'已打开日志页'}),{headers:{'Content-Type':'application/json'}});}
@@ -33,11 +40,21 @@ window.fetch=async(input,options={})=>{
   if(!window.confirm(message))return new Response(JSON.stringify({ok:false,error:'操作已取消'}),{status:409,headers:{'Content-Type':'application/json'}});
   const headers=new Headers(options.headers||{});headers.set('X-Panel-Confirm','1');options={...options,headers};
  }
- return original(input,options);
+ return checked(input,options);
 };})();</script>'''
 
-QQ_LOGIN_HTML='''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QQ登录与诊断</title><style>body{font:16px/1.8 system-ui;background:#eef4f6;color:#12222b;max-width:800px;margin:40px auto;padding:20px}section{background:white;padding:28px;border-radius:16px}button{padding:12px;cursor:pointer}img{display:block;max-width:300px;margin:20px auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><body><a href="/qq-panel/">← 返回控制面板</a><section><h1>QQ登录与连接诊断</h1><p>仅刷新登录二维码，不重启QQ、不删除登录数据。已在线时不会重新登录。</p><pre id="status">读取状态中…</pre><button id="refresh">需要登录时获取新二维码</button><p id="message" role="status"></p><img id="qr" alt="QQ登录二维码" hidden></section><script>
-const el=id=>document.getElementById(id);async function status(){try{const r=await fetch('/qq-panel/api/mac-qq-status',{cache:'no-store'});const d=await r.json();el('status').textContent=(d.state==='ok'?'QQ当前在线':d.reason||d.category||'暂无法确认状态')+'\\n检查时间：'+new Date(d.checked_at*1000).toLocaleString('zh-CN');if(d.state==='ok'){el('qr').hidden=true;el('message').textContent='QQ已在线，无需扫码。';}}catch(e){el('status').textContent='状态接口暂不可用，不能据此判定掉线。';}}
+QQ_LOGIN_HTML='''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QQ登录与诊断</title><style>body{font:16px/1.8 system-ui;background:#eef4f6;color:#12222b;max-width:800px;margin:40px auto;padding:20px}section{background:white;padding:28px;border-radius:16px}button{padding:12px;cursor:pointer}img{display:block;max-width:300px;margin:20px auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><body><a href="/qq-panel/">← 返回控制面板</a><section><h1>QQ登录与连接诊断</h1><p>仅刷新登录二维码，不重启QQ、不删除登录数据。已在线时不会重新登录。</p><pre id="status">读取状态中…</pre><pre id="diagnostics" aria-label="连接保护与最近故障"></pre><button id="refresh">需要登录时获取新二维码</button><p id="message" role="status"></p><img id="qr" alt="QQ登录二维码" hidden></section><script>
+const el=id=>document.getElementById(id);const fmt=t=>Number.isFinite(t)&&t>0?new Date(t*1000).toLocaleString('zh-CN'):'暂无记录';
+const labels={online:'QQ在线',offline:'QQ离线',probe_error:'探测失败（不代表掉线）',login_required:'需要手机登录',recovering:'正在确认/恢复连接',rate_limited:'达到重试上限，等待冷却',quick_login_requested:'已请求保存的快速登录',starting_account:'正在恢复停止的账号服务',restarting_stale_client:'正在恢复陈旧登录进程'};
+async function status(){try{const r=await fetch('/qq-panel/api/mac-qq-status',{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.code==='AUTH_REQUIRED'?'图鉴登录已失效，请重新登录控制面板':'状态接口暂不可用，不能据此判定掉线');el('status').textContent=(d.state==='ok'?'QQ当前在线':d.reason||d.category||'暂无法确认状态')+'\\n检查时间：'+fmt(d.checked_at);
+ const g=d.guard||{},m=d.delivery||{};const fresh=g.checked_at&&Date.now()/1000-g.checked_at<90;
+ const rows=['连接保护：'+(fresh?(labels[g.status]||'状态待确认'):'状态尚未更新'), '快速登录：'+(g.quick_login_eligible===true?'有可用记录':g.quick_login_eligible===false?'无可用记录，失效后需要手机扫码':'尚未确认'), '最近确认在线：'+fmt(g.last_online_at)];
+ if(g.last_outage)rows.push('最近一次离线持续：'+Math.round(g.last_outage.seconds)+' 秒');
+ if(g.next_retry>Date.now()/1000)rows.push('下次允许重试：'+fmt(g.next_retry));
+ if(m.checked_at)rows.push('最近发送：'+fmt(m.checked_at)+' · '+(m.ok?'QQ接口返回成功':m.category==='qq_media_upload_failed'?'媒体上传失败（不等于掉线）':m.category||'发送未成功'));
+ const history=(g.history||[]).slice(-5);if(history.length)rows.push('最近状态变化：',...history.map(e=>fmt(e.at)+' '+(labels[e.to]||e.to)));
+ el('diagnostics').textContent=rows.join('\\n');if(d.state==='ok'){el('qr').hidden=true;el('message').textContent='QQ已在线，无需扫码。';}}catch(e){el('status').textContent=e.message||'状态接口暂不可用，不能据此判定掉线。';el('diagnostics').textContent='';}}
+
 el('refresh').onclick=async()=>{if(!confirm('刷新当前QQ登录二维码？不重启QQ，也不清除登录数据。'))return;el('refresh').disabled=true;try{const r=await fetch('/qq-panel/api/mac-qq-login',{method:'POST',headers:{'Content-Type':'application/json','X-Panel':'1','X-Panel-Confirm':'1'},body:JSON.stringify({action:'refresh'})});const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||'刷新失败');if(d.img){el('qr').src=d.img;el('qr').hidden=false;el('message').textContent='请用机器人账号的手机QQ扫码并确认；过期后可再次获取。';}else el('message').textContent=d.message||'QQ已在线';await status();}catch(e){el('message').textContent=e.message;}finally{el('refresh').disabled=false;}};status();setInterval(status,10000);
 </script></body></html>'''
 
