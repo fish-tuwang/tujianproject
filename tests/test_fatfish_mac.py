@@ -95,3 +95,31 @@ def test_missing_media_never_leaks_host_path_to_qq(tmp_path,monkeypatch):
         fatfish_mac.local_media_path('file://remote-host/private.png')
     for value in ['https://example.com/a.png','base64://YWJj']:
         assert fatfish_mac.rotate_images('10',{'message':[{'type':'image','data':{'file':value}}]})['message'][0]['data']['file']==value
+
+
+def test_webp_wire_copy_is_png_and_original_unchanged(tmp_path,monkeypatch):
+    import base64
+    monkeypatch.setattr(fatfish_mac,'ROOT',tmp_path)
+    path=tmp_path/'睡觉.webp'
+    Image.new('RGBA',(8,8),(2,3,4,128)).save(path,lossless=True)
+    original=path.read_bytes()
+    result=fatfish_mac.rotate_images('10',{'message':[{'type':'image','data':{'file':path.as_uri()}}]})
+    raw=base64.b64decode(result['message'][0]['data']['file'][9:])
+    with Image.open(io.BytesIO(raw)) as converted:
+        assert converted.format=='PNG' and converted.getpixel((0,0))==(2,3,4,128)
+    assert path.read_bytes()==original
+
+
+def test_animated_webp_wire_copy_retains_multiple_frames(tmp_path):
+    path=tmp_path/'animated.webp'
+    frames=[Image.new('RGB',(8,8),color) for color in ['red','blue']]
+    frames[0].save(path,save_all=True,append_images=frames[1:],duration=[100,200],loop=0,lossless=True)
+    with Image.open(io.BytesIO(fatfish_mac.compatible_picture(path))) as converted:
+        assert converted.format=='GIF' and converted.n_frames==2
+
+
+def test_delivery_errors_are_classified_without_exposing_raw_response():
+    result={'retcode':1200,'message':'EventChecker Failed: '+json.dumps({'result':-1,'errMsg':'rich media transfer failed','secret':'private'})}
+    code,message=fatfish_mac.delivery_error(result)
+    assert code=='qq_media_upload_failed' and 'private' not in message
+    assert fatfish_mac.delivery_error({'message':"ENOENT /private/path"})[0]=='qq_media_missing'

@@ -117,7 +117,7 @@ def run(upstream):
             require(handler.route('/api/songs/delete', {'id': sid}).get('ok'))
         check('song upload/edit/delete', song_cycle)
         module = adapter.load_module('bot')
-        sent = []
+        sent = []; fail_next = [False]
         async def gateway(data):
             require(data.get('operation') == 'action')
             sent.append(data)
@@ -125,6 +125,9 @@ def run(upstream):
                 if segment['type'] in {'image', 'record'}:
                     require(segment['data']['file'].startswith('base64://'))
                     require(bool(base64.b64decode(segment['data']['file'][9:])))
+            if fail_next[0]:
+                fail_next[0] = False
+                return {'retcode': 1200, 'status': 'failed', 'message': 'EventChecker Failed: rich media transfer failed'}
             return {'retcode': 0, 'status': 'ok', 'data': {'message_id': len(sent)}}
         adapter.call_gateway = gateway
         async def scenarios():
@@ -138,6 +141,13 @@ def run(upstream):
             before = len(sent)
             result = await fish.call('send_group_msg', group_id=123456, message=[{'type': 'image', 'data': {'file': (root / 'missing.png').as_uri()}}])
             require(result['retcode'] != 0 and len(sent) == before)
+            fail_next[0] = True
+            result = await fish._admin_send({'scene': 'group', 'target': '123456', 'sticker': next(iter(entries)), 'remember': False})
+            require(not result['ok'] and result['error_code'] == 'qq_media_upload_failed')
+            require('QQ媒体上传失败' in result['error'])
+            diagnostic = json.loads((root / 'delivery-state.json').read_text())
+            require(diagnostic['category'] == 'qq_media_upload_failed')
+            require(set(diagnostic) == {'checked_at', 'action', 'ok', 'category', 'retcode'})
         module.main = scenarios
         check('real admin_send text/image/mixed group/private + voice + missing asset', lambda: asyncio.run(adapter.run_bot()))
         require(bool(sent))

@@ -96,6 +96,36 @@ def local_media_path(source):
     return Path(source).expanduser()
 
 
+def compatible_picture(path):
+    """QQNT's WebP upload is unreliable; keep originals and encode the wire copy."""
+    from PIL import Image, ImageSequence
+    with Image.open(path) as picture:
+        if picture.format != 'WEBP':
+            return path.read_bytes()
+        output = io.BytesIO()
+        if getattr(picture, 'n_frames', 1) > 1:
+            frames = [frame.convert('RGBA').copy() for frame in ImageSequence.Iterator(picture)]
+            durations = []
+            for i in range(picture.n_frames):
+                picture.seek(i); durations.append(picture.info.get('duration', 100))
+            frames[0].save(output, format='GIF', save_all=True, append_images=frames[1:],
+                           duration=durations, loop=picture.info.get('loop', 0), disposal=2)
+        else:
+            picture.convert('RGBA').save(output, format='PNG')
+        return output.getvalue()
+
+
+def delivery_error(result):
+    message = str(result.get('message') or result.get('wording') or '').lower()
+    if 'rich media transfer failed' in message:
+        return 'qq_media_upload_failed', 'QQ媒体上传失败；图片已在本机读取，腾讯端未确认收图'
+    if 'enoent' in message or 'no such file' in message:
+        return 'qq_media_missing', 'QQ端找不到媒体文件，请检查容器中的媒体路径'
+    if 'timeout' in message or 'timed out' in message:
+        return 'qq_timeout', 'QQ发送超时，结果尚未确认，请先查看聊天再决定是否重发'
+    return 'qq_send_failed', 'QQ拒绝了本次发送，请查看登录状态与群发言权限'
+
+
 def rotate_images(group, params, *, remember=False):
     """Compare decoded pictures, not filenames/captions, across runtime restarts."""
     from PIL import Image
@@ -135,7 +165,8 @@ def rotate_images(group, params, *, remember=False):
                         segment.clear(); continue
                 if remember:
                     db.execute('INSERT INTO pictures VALUES(?,?,?)', (str(group), key, time.time()))
-            segment['data']['file'] = 'base64://' + base64.b64encode(path.read_bytes()).decode()
+            raw = compatible_picture(path) if segment['type'] == 'image' else path.read_bytes()
+            segment['data']['file'] = 'base64://' + base64.b64encode(raw).decode()
         params['message'] = [s for s in message if s]
         if not any(s.get('type') == 'text' and s.get('data', {}).get('text', '').strip() for s in params['message']):
             params['message'] = [s for s in params['message'] if s.get('type') not in {'reply','text'}]
@@ -194,6 +225,20 @@ async def run_bot():
     if not hasattr(module.galgame, 'stage'):
         module.galgame.stage = lambda value: (0, '普通群友')
     bubble = contextvars.ContextVar('bubble', default=None)
+    last_failure = contextvars.ContextVar('last_delivery_failure', default=None)
+    original_admin_send = module.FatFish._admin_send
+    async def admin_send(self, params):
+        token = last_failure.set(None)
+        try:
+            result = await original_admin_send(self, params)
+            failure = last_failure.get()
+            if failure and result.get('error'):
+                result['error'] = failure[1]
+                result['error_code'] = failure[0]
+            return result
+        finally:
+            last_failure.reset(token)
+    module.FatFish._admin_send = admin_send
     original_handle = module.FatFish.handle
     async def handle(self,event,catch=None):
         # Explicit "remember" statements should work immediately, rather than waiting
@@ -253,6 +298,21 @@ async def run_bot():
             if result.returncode: return {'retcode':-1,'status':'failed'}
             params = {**params,'file':target}
         result = await call_gateway({'operation':'action','action':action,'params':params})
+        if action in {'send_group_msg','send_private_msg','send_msg'}:
+            success = result.get('retcode') == 0
+            category, explanation = ('ok', '') if success else delivery_error(result)
+            if not success:
+                last_failure.set((category, explanation))
+            # Private diagnostics contain no recipient, content, file path or token.
+            try:
+                try:
+                    from fatfish_extensions import common
+                except ImportError:
+                    from qqbot.fatfish_extensions import common
+                common.write(ROOT/'delivery-state.json', {'checked_at':time.time(),'action':action,
+                             'ok':success,'category':category,'retcode':result.get('retcode')})
+            except OSError:
+                pass  # A diagnostics write must never change a delivered message result.
         if result.get('retcode') == 0 and action in {'send_group_msg','send_private_msg','send_msg'}:
             await asyncio.to_thread(rotate_images, group, original, remember=True)
             if idle and not idle['recorded']:
