@@ -37,6 +37,22 @@ Mac 已额外安装 python-pptx、imageio-ffmpeg 和 yt-dlp，并把 Chrome 的�
 
 ## 验证与公司任务
 
+### 网易云远程关联（2026-11-23）
+
+用户已明确授权异地只读面板的一个例外：图鉴所有者可在 `/qq-panel/#sing`
+使用网易云“扫码登录”和“检查登录”。仅允许 `POST /qq-panel/api/music/login`
+的 `platform=netease` 与 `action=start/poll/check`，要求 HTTPS 同源、JSON 和
+`X-Panel: 1`；其他平台、退出登录、配置修改、机器人启停等仍拒绝。
+二维码和状态响应禁止缓存，不返回 Cookie、平台 key 或上游 Set-Cookie。
+Cookie 继续由上游 musiclogin 保存在家庭 Mac 私有 `data/music_login.json`，
+不进入 Git、公司电脑或官方 harness 插件。用户需用网易云 App 扫码并确认；
+实际登录和歌曲可用性以平台返回为准，不绕过会员/地区限制。
+
+修复位于 `backend/app/qq_panel.py`，由图鉴 API 自动更新线发布，无新增依赖、
+宿主安装或 QQ 账号容器重建。API 更新沿用原 readiness/文件校验及失败回滚；
+图鉴数据库、原有鉴权与 QQ 私有数据不变。推送不代表 Mac 已拉取或已扫码成功。
+本机网易云管理流程及官方插件发布方式不变。
+
 `python3 scripts/mac_qq_status.py` 检查 QQ 网关；面板总览检查机器人在线和 QQ 在线。LaunchAgent：com.little-atlas.fatfish、com.little-atlas.fatfish-panel、com.little-atlas.fatfish-updater，均保留登录启动与进程恢复。日志只留本机，排障只输出状态/分类，不公开聊天和密钥。
 
 测试：`python -m pytest tests/test_fatfish_mac.py tests/test_qq_engagement.py tests/test_mac_qq_update.py tests/test_mac_qq_guard.py -q`。另有本机隔离测试直接调用上游 FatFish.handle 和真实 Qwen 模型，拦截所有 QQ 发出动作；测试不等于用户群真实收发。
