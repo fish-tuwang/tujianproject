@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from . import common,memory,mood,soul,VERSION
+from .panel_ui import enhance_sticker_ui
 
 
 def snapshot():
@@ -59,7 +60,7 @@ def install(panel):
     def route(self,path,body):return manage(body) if path=='/api/local-core' else original_route(self,path,body)
     def file(self,path,ctype=None,cache=True):
         if Path(path)==Path(panel.HTML):
-            body=Path(path).read_text().replace('<nav aria-label="控制台页面">','<nav aria-label="控制台页面"><a style="padding:14px" href="/local-core">记忆与心情管理 ↗</a>',1).encode()
+            body=enhance_sticker_ui(Path(path).read_text()).replace('<nav aria-label="控制台页面">','<nav aria-label="控制台页面"><a style="padding:14px" href="/local-core">记忆与心情管理 ↗</a>',1).encode()
             self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body);return
         return original_file(self,path,ctype,cache)
     panel.H.do_GET=get;panel.H.route=route;panel.H._file=file
