@@ -110,6 +110,9 @@ def deploy(root,target,archive):
   stage=Path(directory);hashes=extract_package(archive,stage);(stage/'Dockerfile').write_text(DOCKERFILE)
   log('BUILD_START '+target[:12]);run(['docker','build','--pull=false','-t',new,str(stage)],timeout=300)
   run(['docker','run','--rm','--entrypoint','python',new,'-c','import qqbot.qq_bot,qqbot.qq_chat,qqbot.qq_images'],timeout=30)
+  if (root/'fatfish/adapter.py').is_file() and (stage/'qqbot/fatfish_extensions').is_dir():
+   probe="import sys;sys.path.insert(0,sys.argv[1]);from fatfish_extensions import install;install(sys.argv[2]);import bot,panel;assert not bot.memory.STUB and not bot.mood2.STUB"
+   run([str(root/'fatfish/venv/bin/python'),'-c',probe,str(stage/'qqbot'),str(root/'fatfish/current/bot')],timeout=45)
   try:
    run(['docker','image','tag',new,IMAGE]);switched=True
    compose(root,'up','-d','--no-deps','bridge');wait_healthy(online)
@@ -123,13 +126,21 @@ def deploy(root,target,archive):
   # This reviewed host adapter is part of qqbot/, separate from upstream releases.
   # Never replace FatFish config.json, persona.md, data, account containers or credentials.
   adapter=root/'fatfish/adapter.py';source=stage/'qqbot/fatfish_mac.py'
-  if adapter.is_file() and source.is_file() and adapter.read_bytes()!=source.read_bytes():
+  extensions=root/'fatfish/extensions';link=extensions/'current'
+  package=stage/'qqbot/fatfish_extensions';previous_extensions=link.resolve() if link.is_symlink() else None
+  if adapter.is_file() and source.is_file() and (adapter.read_bytes()!=source.read_bytes() or package.is_dir()):
+   if package.is_dir():
+    version=extensions/target;version.mkdir(parents=True,exist_ok=True)
+    shutil.copytree(package,version/'fatfish_extensions',dirs_exist_ok=True)
+    next_link=extensions/'next';next_link.unlink(missing_ok=True);next_link.symlink_to(version);next_link.replace(link)
    backup=adapter.read_bytes();temp=adapter.with_suffix('.tmp');temp.write_bytes(source.read_bytes());temp.replace(adapter)
    try:
     for label in ['com.little-atlas.fatfish','com.little-atlas.fatfish-panel']:
      run(['launchctl','kickstart','-k','gui/'+str(os.getuid())+'/'+label],timeout=15)
    except BaseException:
     adapter.write_bytes(backup)
+    if previous_extensions:
+     next_link=extensions/'next';next_link.unlink(missing_ok=True);next_link.symlink_to(previous_extensions);next_link.replace(link)
     for label in ['com.little-atlas.fatfish','com.little-atlas.fatfish-panel']:
      subprocess.run(['launchctl','kickstart','-k','gui/'+str(os.getuid())+'/'+label],capture_output=True)
     run(['docker','image','tag',old,IMAGE]);compose(root,'up','-d','--no-deps','bridge');wait_healthy(online)

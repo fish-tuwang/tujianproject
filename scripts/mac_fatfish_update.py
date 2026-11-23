@@ -74,7 +74,8 @@ def check(root=ROOT):
                 else: target.unlink()
             target.symlink_to(root/name, target_is_directory=name in {'data','stickers'})
         run([str(python),'-m','compileall','-q',str(release/'bot')], timeout=60)
-        run([str(python),'-c',"import sys;sys.path.insert(0,sys.argv[1]);import bot,panel;assert callable(bot.main) and callable(panel.serve)", str(release/'bot')], timeout=40)
+        probe="import sys;sys.path.insert(0,sys.argv[2]);from fatfish_extensions import install;install(sys.argv[1]);import bot,panel;assert callable(bot.main) and callable(panel.serve) and not bot.memory.STUB"
+        run([str(python),'-c',probe,str(release/'bot'),str(root/'extensions/current')], timeout=40)
         link = root/'next'
         link.unlink(missing_ok=True); link.symlink_to(release); link.replace(current)
         env_link=root/'venv-next';env_link.unlink(missing_ok=True);env_link.symlink_to(release/'venv');env_link.replace(root/'venv')

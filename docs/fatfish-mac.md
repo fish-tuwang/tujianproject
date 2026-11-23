@@ -25,7 +25,7 @@
 
 Mac 已额外安装 python-pptx、imageio-ffmpeg 和 yt-dlp，并把 Chrome 的实际 Mac 路径配置给 PDF 工具；ffmpeg/yt-dlp 包装命令在私有 bin/，启动项 PATH 包含该目录。各次上游更新的新虚拟环境也安装这些依赖，避免更新后丢失 PPT/视频能力。实际 QQ 发文件仍经过原账号容器，Mac 生成文件先复制到该容器临时目录，不重建账号。
 
-作者未公开的记忆提炼、情绪、关系等模块在公开仓库里是空壳；部署公开仓库不能变出其私人实现。控制台提供的手动记忆/人设编辑仍可使用。本机适配补齐公开 galgame.stage 缺失函数，避免普通回复时出错。
+作者未公开的记忆提炼、情绪、关系等模块在公开仓库里是空壳。现已由本项目在 qqbot/fatfish_extensions/ 自行补全，机器人和控制台共同加载，详情见 [记忆与情绪说明](fatfish-memory-and-emotion.md)。这些是本项目实现，不能称为作者私人内核。
 
 人设基础模板仍来自 qqbot/qq_chat.py 的 PERSONALITY，安装时转换为 FatFish 原生文字/[[表情:名字]] 协议。正在生效的 FatFish 人设是私有 persona.md，可在控制台“人设”查看/修改。上游更新保留此文件。公司修改基础模板时必须明确评估如何更新本机私有覆盖，不能误报只改旧 Qwen 提示词就已改变当前 FatFish 人设。
 

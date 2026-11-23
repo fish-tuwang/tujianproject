@@ -84,6 +84,12 @@ def rotate_images(group, params, *, remember=False):
 def load_module(name):
     path = ROOT / 'current/bot'
     sys.path.insert(0, str(path))
+    sys.path.insert(0, str(ROOT/'extensions/current'))
+    try:
+        from fatfish_extensions import install
+    except ImportError:
+        from qqbot.fatfish_extensions import install
+    install(path)
     return importlib.import_module(name)
 
 
@@ -93,6 +99,24 @@ async def run_bot():
     if not hasattr(module.galgame, 'stage'):
         module.galgame.stage = lambda value: (0, '普通群友')
     bubble = contextvars.ContextVar('bubble', default=None)
+    original_handle = module.FatFish.handle
+    async def handle(self,event,catch=None):
+        # Explicit "remember" statements should work immediately, rather than waiting
+        # for the regular batched background distillation threshold.
+        if catch is None and event.get('post_type')=='message' and event.get('message_type')=='group':
+            segments=event.get('message') or []
+            if isinstance(segments,list) and any(s.get('type')=='at' and str(s.get('data',{}).get('qq'))==str(event.get('self_id')) for s in segments):
+                text=''.join(str(s.get('data',{}).get('text','')) for s in segments if s.get('type')=='text').strip()
+                import re
+                match=re.search(r'(?:请)?记住[：:,，\s]*(我.{1,180})',text)
+                if match and not module.memory.is_injection(match.group(1)):
+                    key='group_'+str(event['group_id']);uid=str(event['user_id']);name=module.sender_name(event)
+                    async with module.mem_lock(key):
+                        mem=module.load_mem(key,'group')
+                        module.memory.apply2(mem,[{'text':match.group(1),'uid':uid,'who':name,'pin':True,'src':[1],'evidence':match.group(1),'kind':'fact','imp':4}],daily_cap=40,lines=[{'role':'user','text':text,'uid':uid,'name':name,'mid':event.get('message_id'),'ts':time.time()}])
+                        module.save_mem(mem)
+        return await original_handle(self,event,catch=catch)
+    module.FatFish.handle=handle
     class Socket:
         def __aiter__(self): return self
         async def __anext__(self):
@@ -157,12 +181,22 @@ async def run_bot():
 
 def run_panel():
     panel = load_module('panel')
+    try:
+        from fatfish_extensions.panel import install as install_core_panel
+    except ImportError:
+        from qqbot.fatfish_extensions.panel import install as install_core_panel
+    install_core_panel(panel)
     panel.QRCODE = ROOT.parent / 'login-qr.png'
     def qq_status():
         try:
             info = gateway({'operation':'action','action':'get_login_info','params':{}})
             online = info.get('retcode') == 0 and str((info.get('data') or {}).get('user_id')) == str(panel.cfg().get('bot_qq'))
-            return {'state':'ok' if online else 'starting','account':str(panel.cfg().get('bot_qq'))}
+            if online:return {'state':'ok','account':str(panel.cfg().get('bot_qq'))}
+            guard = json.loads((ROOT.parent/'guard-state.json').read_text()) if (ROOT.parent/'guard-state.json').exists() else {}
+            needs_login=guard.get('status')=='login_required'
+            return {'state':'scan' if needs_login else 'starting','account':str(panel.cfg().get('bot_qq')),
+                    'reason':'QQ登录已失效，需要手机确认；聊天进程仍在运行' if needs_login else '正在检查QQ连接',
+                    'qr_t':panel.QRCODE.stat().st_mtime if panel.QRCODE.exists() else 0}
         except Exception:return {'state':'starting','account':str(panel.cfg().get('bot_qq'))}
     panel.qq_status = qq_status
     panel.napcat_up = lambda: qq_status()['state'] == 'ok'

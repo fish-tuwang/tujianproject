@@ -2,6 +2,8 @@
 
 **2026-11-23 更新：** 普通 QQ 已切到完整 FatFish 公开框架。当前入口是 `fatfish_mac.py`，`qq_bot.py` 提供保留登录的认证传输网关；旧 Qwen worker 在 QQ_ENGINE=fatfish 下不接收群消息。请先阅读 [FatFish Mac 部署说明](../docs/fatfish-mac.md)。下文的 Qwen 聊天实现作为兼容回滚入口保留，不能误当当前唯一聊天引擎。
 
+记忆/情绪/关系/日记实现位于 `fatfish_extensions/`，由本仓库独立维护并随 qqbot 发布，不能直接改本机 upstream/current 中的空壳。控制面板原页与新增 `/local-core` 同用这些实现；异地只读入口保留图鉴所有者鉴权。阅读 [功能与数据说明](../docs/fatfish-memory-and-emotion.md)。
+
 这里是当前 Mac mini 运行的 Qwen 聊天、图片与表情机器人源码。与 `backend/app/qq_bot.py` 中的旧图鉴查询桥接分开。
 
 在公司用 Codex 修改本目录，提交并推送到 `fish-tuwang/tujianproject` 的 `main` 分支后，Mac 每 300 秒检查一次，有本目录变更时自动构建并更新聊天桥接。

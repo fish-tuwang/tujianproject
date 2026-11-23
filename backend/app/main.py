@@ -39,6 +39,8 @@ def create_app(settings):
     app.include_router(gunpla_router)
     app.include_router(gunpla_images_router)
     app.include_router(admin_router)
+    from .qq_panel import router as qq_panel_router
+    app.include_router(qq_panel_router)
 
     @app.exception_handler(CatalogError)
     async def domain_error(request, error):

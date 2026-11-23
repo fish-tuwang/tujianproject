@@ -60,3 +60,17 @@ def test_network_command_timeout_is_bounded():
  with pytest.raises(subprocess.TimeoutExpired):
   updater.run([sys.executable,'-c','import time;time.sleep(10)'],timeout=.1)
  assert time.monotonic()-started<2
+
+
+def test_extension_preflight_failure_keeps_current_bridge_and_revision(tmp_path,monkeypatch):
+ (tmp_path/'updater').mkdir();(tmp_path/'fatfish').mkdir();(tmp_path/'fatfish/adapter.py').write_text('# previous adapter')
+ calls=[]
+ def run(args,**kwargs):
+  calls.append(args)
+  if '-c' in args and any('from fatfish_extensions import install' in str(x) for x in args):raise RuntimeError('upstream incompatible')
+  return b'sha256:old\n' if args[:2]==['docker','inspect'] else b''
+ monkeypatch.setattr(updater,'run',run);monkeypatch.setattr(updater,'health',lambda name:{'status':'ready'})
+ with pytest.raises(RuntimeError,match='incompatible'):
+  updater.deploy(tmp_path,'c'*40,archive({'qqbot/fatfish_extensions/__init__.py':b'# extension'}))
+ assert not any(args[:3]==['docker','image','tag'] for args in calls)
+ assert not (tmp_path/'updater/revision').exists()
