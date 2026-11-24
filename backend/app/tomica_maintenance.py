@@ -37,7 +37,8 @@ def coverage(request: Request):
                 functions[key] = str(pyinspect.signature(value))
         paths = {key: str(value) for key, value in vars(module).items() if isinstance(value, Path)}
         classes = {key: {method: str(pyinspect.signature(value)) for method, value in vars(cls).items() if pyinspect.isfunction(value)} for key, cls in vars(module).items() if pyinspect.isclass(cls) and cls.__module__ == name}
-        modules.append({'name': name, 'functions': functions, 'classes': classes, 'paths': paths})
+        contracts = {key: pyinspect.getsource(value) for key, value in vars(module).items() if key in {'parse_snapshot', 'publish', 'enrich_rows', 'parse_product'} and pyinspect.isfunction(value) and value.__module__ == name}
+        modules.append({'name': name, 'functions': functions, 'classes': classes, 'paths': paths, 'contracts': contracts})
     from .config import ROOT
     import json
     files = []
