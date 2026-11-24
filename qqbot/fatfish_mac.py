@@ -336,6 +336,18 @@ async def run_bot():
         module.galgame.stage = lambda value: (0, '普通群友')
     bubble = contextvars.ContextVar('bubble', default=None)
     last_failure = contextvars.ContextVar('last_delivery_failure', default=None)
+    incoming = contextvars.ContextVar('incoming_text', default='')
+    original_say = module.FatFish.say
+    async def say(self, scene, target, segs, *args, **kwargs):
+        try:
+            from fatfish_extensions.no_echo import clean
+        except ImportError:
+            from qqbot.fatfish_extensions.no_echo import clean
+        query = incoming.get()
+        segs = [clean(s, query) if isinstance(s, str) else s for s in segs]
+        segs = [s for s in segs if s]
+        return await original_say(self, scene, target, segs, *args, **kwargs) if segs else []
+    module.FatFish.say = say
     original_admin_send = module.FatFish._admin_send
     async def admin_send(self, params):
         token = last_failure.set(None)
@@ -365,7 +377,13 @@ async def run_bot():
                         mem=module.load_mem(key,'group')
                         module.memory.apply2(mem,[{'text':match.group(1),'uid':uid,'who':name,'pin':True,'src':[1],'evidence':match.group(1),'kind':'fact','imp':4}],daily_cap=40,lines=[{'role':'user','text':text,'uid':uid,'name':name,'mid':event.get('message_id'),'ts':time.time()}])
                         module.save_mem(mem)
-        return await original_handle(self,event,catch=catch)
+        segments = event.get('message') or []
+        text = ''.join(str(x.get('data',{}).get('text','')) for x in segments if isinstance(x,dict) and x.get('type')=='text') if isinstance(segments,list) else str(segments)
+        token = incoming.set(text.strip())
+        try:
+            return await original_handle(self,event,catch=catch)
+        finally:
+            incoming.reset(token)
     module.FatFish.handle=handle
     class Socket:
         def __aiter__(self): return self
