@@ -32,7 +32,7 @@ def day(now):return datetime.fromtimestamp(now,TZ).date().isoformat()
 def eligible(row,now,minutes=30,limit=3):
  if quiet(now) or not row:return False
  group,human,mention,last_idle,count_date,count,attempt=row
- return (now-human>=max(60,minutes)*60 and now-last_idle>=3600 and (count_date!=day(now) or count<limit))
+ return (now-(mention or human)>=3600 and now-last_idle>=3600 and (count_date!=day(now) or count<limit))
 
 
 class EngagementStore:
@@ -42,7 +42,7 @@ class EngagementStore:
  def note_activity(self,group,mentioned,now=None):
   now=time.time() if now is None else now
   with self.connect() as db:
-   db.execute('INSERT INTO group_activity(group_id,last_human,last_mention) VALUES(?,?,?) ON CONFLICT(group_id) DO UPDATE SET last_human=excluded.last_human,last_mention=CASE WHEN ?>0 THEN excluded.last_mention ELSE group_activity.last_mention END',(group,now,now if mentioned else 0,int(mentioned)))
+   db.execute('INSERT INTO group_activity(group_id,last_human,last_mention) VALUES(?,?,?) ON CONFLICT(group_id) DO UPDATE SET last_human=excluded.last_human,last_mention=CASE WHEN ?>0 THEN excluded.last_mention ELSE group_activity.last_mention END',(group,now,now,int(mentioned)))
  def recent_images(self,group):
   with self.connect() as db:return [r[0] for r in db.execute('SELECT image_key FROM image_history WHERE group_id=? ORDER BY at DESC,rowid DESC LIMIT 3',(group,))]
  def record_image(self,group,key):

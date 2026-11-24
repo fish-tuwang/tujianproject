@@ -347,7 +347,7 @@ async def run_bot():
 
     async def call(self, action, _timeout=20, **params):
         idle = bubble.get()
-        if idle and action.startswith('send_') and not (await call_gateway({'operation':'idle_check','group':idle['group'], 'continuing':idle['recorded'], 'human':idle['human']})).get('allowed'):
+        if idle and action.startswith('send_') and not (await call_gateway({'operation':'idle_check','group':idle['group'], 'continuing':idle['recorded'], 'mention':idle['mention']})).get('allowed'):
             return {'retcode':403,'status':'failed','message':'idle cancelled by current activity or quiet hours'}
         group = str(params.get('group_id') or params.get('user_id') or '')
         original = params
@@ -388,13 +388,13 @@ async def run_bot():
     async def bounded_bubble(self, group, cfg):
         eligibility = await call_gateway({'operation':'idle_check','group':group})
         if not eligibility.get('allowed'):return
-        token = bubble.set({'group':group,'recorded':False,'human':eligibility.get('human')})
+        token = bubble.set({'group':group,'recorded':False,'mention':eligibility.get('mention')})
         try: await original_bubble(self, group, cfg)
         finally: bubble.reset(token)
     module.FatFish._bubble = bounded_bubble
     async def idle_loop(self):
         while True:
-            await asyncio.sleep(60)
+            await asyncio.sleep(10)
             try:
                 for group in (await call_gateway({'operation':'idle_candidates'})).get('groups',[]):
                     await self._bubble(group, module.CFG.get('speakup') or {})

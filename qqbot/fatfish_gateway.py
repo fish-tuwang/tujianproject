@@ -39,10 +39,10 @@ def install_gateway(app, settings, store, status):
             if operation == 'idle_check':
                 group = str(data.get('group'))
                 activity = store.activity(group)
-                continuing = data.get('continuing') and activity and activity[1] == data.get('human')
+                continuing = data.get('continuing') and activity and activity[2] == data.get('mention')
                 from .engagement import quiet
                 allowed = settings.idle_enabled and (store.idle_allowed(group, minutes=settings.idle_minutes, limit=settings.idle_daily_limit) or (continuing and not quiet(time.time())))
-                return {'allowed': bool(allowed), 'human': activity[1] if activity else None}
+                return {'allowed': bool(allowed), 'mention': activity[2] if activity else None}
             if operation == 'idle_record':
                 store.record_idle(str(data['group']), str(data.get('text', '')))
                 return {'ok': True}
