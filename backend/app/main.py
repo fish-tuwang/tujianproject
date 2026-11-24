@@ -39,8 +39,6 @@ def create_app(settings):
     app.include_router(gunpla_router)
     app.include_router(gunpla_images_router)
     app.include_router(admin_router)
-    from .tomica_maintenance import router as tomica_maintenance_router
-    app.include_router(tomica_maintenance_router)
     from .qq_panel import router as qq_panel_router
     app.include_router(qq_panel_router)
 
@@ -56,6 +54,9 @@ def create_app(settings):
     async def unexpected_error(request, error):
         logging.getLogger('catalog.api').error('request failed: %s', type(error).__name__)
         return JSONResponse({'code': 'INTERNAL_ERROR', 'message': '服务暂时不可用，请稍后重试'}, status_code=500)
+
+    from .tomica_maintenance import router as tomica_maintenance_router
+    app.include_router(tomica_maintenance_router)
 
     @app.get('/health/live')
     def live():
