@@ -231,6 +231,43 @@ def rotate_images(group, params, *, remember=False):
     return params
 
 
+def idle_sticker(group):
+    """Choose existing enabled pictures, preferring DeepSleep without visual repeats."""
+    import random
+    from PIL import Image
+    index = json.loads((ROOT / 'stickers/index.json').read_text()).get('stickers', {})
+    recent = []
+    database = ROOT / 'image-history.sqlite3'
+    if database.exists():
+        with sqlite3.connect(database) as db:
+            db.execute('CREATE TABLE IF NOT EXISTS pictures (place TEXT,key TEXT,at REAL)')
+            recent = [r[0] for r in db.execute('SELECT key FROM pictures WHERE place=? ORDER BY at DESC LIMIT 3', (str(group),))]
+    choices = []
+    for name, info in index.items():
+        if not isinstance(info, dict) or info.get('off'):
+            continue
+        filename = info.get('file')
+        if not filename:
+            filename = next((name + ext for ext in ('.png','.jpg','.jpeg','.gif','.webp') if (ROOT / 'stickers' / (name + ext)).is_file()), '')
+        path = (ROOT / 'stickers' / filename).resolve()
+        if (ROOT / 'stickers').resolve() not in path.parents or not path.is_file():
+            continue
+        try:
+            with Image.open(path) as picture:
+                picture = picture.convert('RGBA')
+                key = hashlib.sha256(str(picture.size).encode() + picture.tobytes()).hexdigest()
+        except (OSError, ValueError):
+            continue
+        if recent and key == recent[0]:
+            continue
+        label = (name + ' ' + json.dumps(info, ensure_ascii=False)).lower()
+        preferred = 'deepsleep' in label.replace(' ', '') or name.startswith('sleep-')
+        choices.append((path, key, preferred))
+    fresh = [x for x in choices if x[1] not in recent] or choices
+    preferred = [x for x in fresh if x[2]] or fresh
+    return random.choice(preferred)[0] if preferred else None
+
+
 def load_module(name):
     path = ROOT / 'current/bot'
     sys.path.insert(0, str(path))
@@ -391,12 +428,19 @@ async def run_bot():
                 idle['recorded'] = True
         return result
     module.FatFish.call = call
-    original_bubble = module.FatFish._bubble
     async def bounded_bubble(self, group, cfg):
         eligibility = await call_gateway({'operation':'idle_check','group':group})
         if not eligibility.get('allowed'):return
         token = bubble.set({'group':group,'recorded':False,'mention':eligibility.get('mention')})
-        try: await original_bubble(self, group, cfg)
+        try:
+            key = 'group_' + str(group)
+            if not self.ws or key in self.pending_reply or not module.control.allow('group', group, 'bubble'):
+                return
+            if module.commit.hold(key) or module.life.quiet() or cfg.get('dry_run', True):
+                return
+            path = await asyncio.to_thread(idle_sticker, group)
+            if path is not None:
+                await self._send('send_group_msg', 'group_id', group, [{'type':'image','data':{'file':str(path)}}])
         finally: bubble.reset(token)
     module.FatFish._bubble = bounded_bubble
     async def idle_loop(self):
