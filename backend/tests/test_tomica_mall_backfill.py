@@ -119,3 +119,21 @@ def test_product_gallery_resolves_changed_original_filename(tmp_path):
     with httpx.Client(transport=httpx.MockTransport(source)) as client:
         image=prepare_image('https://takaratomymall.jp/img/goods/6/car.png',False,set(),tmp_path,client,product_url='https://takaratomymall.jp/shop/g/g4904810746829/')
     assert image['url'].endswith('/5/actual.png')
+
+
+def test_seeded_official_image_requires_committed_content_checksum(tmp_path,monkeypatch):
+    import hashlib
+    from backend.app import tomica_mall_backfill as module
+    url='https://takaratomymall.jp/img/goods/L/recorded.png'
+    digest=hashlib.sha256(picture()).hexdigest()
+    monkeypatch.setattr(module,'SEED_IMAGES',{url:digest})
+    def source(request):
+        assert request.url.host=='117.72.11.77'
+        return httpx.Response(200,content=picture(),headers={'Content-Type':'application/octet-stream'})
+    with httpx.Client(transport=httpx.MockTransport(source)) as client:
+        result=prepare_image(url,True,set(),tmp_path,client)
+        assert result['sha256']==digest and result['url']==url
+    monkeypatch.setattr(module,'SEED_IMAGES',{url:'a'*64})
+    fresh=tmp_path/'other';fresh.mkdir()
+    with httpx.Client(transport=httpx.MockTransport(source)) as client,pytest.raises(ValueError,match='checksum mismatch'):
+        prepare_image(url,False,set(),fresh,client)

@@ -26,6 +26,9 @@ from .reference_images import image_type
 
 INVENTORY = ROOT / 'backend/data/tomica-mall-inventory.json'
 MAX_IMAGE = 20 * 1024 * 1024
+SEED_FILE = ROOT / 'backend/data/tomica-image-seed.json'
+SEED_IMAGES = json.loads(SEED_FILE.read_text(encoding='utf-8')) if SEED_FILE.exists() else {}
+SEED_BASE = 'https://117.72.11.77/tomica-image-seed-20261124/'
 
 
 def image_url(url):
@@ -61,9 +64,11 @@ def download(url, directory, client):
     path = directory / (hashlib.sha256(url.encode()).hexdigest() + '.image')
     if path.exists():
         return path, valid_image(path.read_bytes())
-    with client.stream('GET', url) as response:
+    expected = SEED_IMAGES.get(url)
+    fetch_url = SEED_BASE + expected + '.image' if expected and re.fullmatch(r'[a-f0-9]{64}', expected) else url
+    with client.stream('GET', fetch_url) as response:
         response.raise_for_status()
-        if not response.headers.get('content-type', '').startswith('image/'):
+        if not expected and not response.headers.get('content-type', '').startswith('image/'):
             raise ValueError('source did not return an image')
         chunks, size = [], 0
         for chunk in response.iter_bytes():
@@ -72,6 +77,8 @@ def download(url, directory, client):
                 raise ValueError('image exceeds size limit')
             chunks.append(chunk)
     body = valid_image(b''.join(chunks))
+    if expected and hashlib.sha256(body).hexdigest() != expected:
+        raise ValueError('official cache seed checksum mismatch')
     temporary = path.with_suffix('.tmp')
     temporary.write_bytes(body)
     temporary.replace(path)
@@ -296,7 +303,7 @@ class GalleryBackfill:
 
     def collect(self):
         body = INVENTORY.read_bytes()
-        version = hashlib.sha256(body).hexdigest()
+        version = hashlib.sha256(body + (SEED_FILE.read_bytes() if SEED_FILE.exists() else b'')).hexdigest()
         saved = self.directory / 'state.json'
         old = json.loads(saved.read_text(encoding='utf-8')) if saved.exists() else {}
         if old.get('version') == version and old.get('status') in {'succeeded', 'completed_with_review'}:
