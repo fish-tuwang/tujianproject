@@ -24,6 +24,11 @@ def get_session(request: Request):
 
 
 def public_cached(request, session, source, view, params, loader, missing='条目未收录', ttl=600):
+    if source == 'tomica' and view.startswith('list'):
+        from .tomica_mall_backfill import list_packaging_covers
+        original_loader = loader
+        loader = lambda repo: list_packaging_covers(original_loader(repo), session)
+        view = 'packaging-v1:' + view
     cache = request.app.state.cache
     repo = CatalogRepository(session, cache)
     revision = repo.get_revision(source)

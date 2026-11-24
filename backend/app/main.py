@@ -18,7 +18,12 @@ def create_app(settings):
     engine = create_engine(settings.database_url, pool_pre_ping=True)
     @asynccontextmanager
     async def lifespan(app):
+        from .tomica_mall_backfill import start
+        backfill = start(app)
         yield
+        if backfill is not None:
+            backfill.stop.set()
+            backfill.thread.join(timeout=5)
         app.state.cache.close()
         engine.dispose()
     app = FastAPI(title='双图鉴 API', version='0.1.0', lifespan=lifespan)

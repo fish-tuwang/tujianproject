@@ -50,3 +50,9 @@ def coverage(request: Request):
         shape = {key: {'type': type(value).__name__, 'count': len(value) if isinstance(value, (dict, list)) else None, 'sample': next(iter(value.items()), None) if isinstance(value, dict) else value[:1] if isinstance(value, list) else value} for key, value in data.items()} if isinstance(data, dict) else {'count': len(data), 'sample': data[:1]}
         files.append({'path': str(path), 'shape': shape})
     return {'tables': tables, 'collectors': modules, 'data_files': files}
+
+
+@router.get('/progress')
+def progress(request: Request):
+    job = getattr(request.app.state, 'tomica_backfill', None)
+    return job.snapshot() if job else {'status': 'not_started'}
