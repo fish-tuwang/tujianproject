@@ -1,4 +1,5 @@
 """Authenticated, read-only coverage report for the installed official collector."""
+from contextlib import asynccontextmanager
 import inspect as pyinspect
 from pathlib import Path
 import sys
@@ -6,7 +7,17 @@ import sys
 from fastapi import APIRouter, Request
 from sqlalchemy import MetaData, Table, func, inspect, select
 
-router = APIRouter(prefix='/api/tomica-maintenance')
+@asynccontextmanager
+async def maintenance_lifespan(app):
+    from .tomica_mall_backfill import start
+    job = start(app)
+    yield
+    if job is not None:
+        job.stop.set()
+        job.thread.join(timeout=5)
+
+
+router = APIRouter(prefix='/api/tomica-maintenance', lifespan=maintenance_lifespan)
 
 
 @router.get('')

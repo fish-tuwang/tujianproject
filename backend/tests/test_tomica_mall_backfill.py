@@ -107,3 +107,15 @@ def test_damaged_official_label_repair_requires_same_barcode_and_number(tmp_path
     existing.evidence=dict(raw,name='Tomica No.132 different clean name')
     with pytest.raises(ValueError,match='name changed'):
         job.document(raw,existing)
+
+
+def test_product_gallery_resolves_changed_original_filename(tmp_path):
+    def source(request):
+        path=request.url.path
+        if path.startswith('/shop/'):
+            return httpx.Response(200,text='<main><a rel="shadowbox[group]" href="/img/goods/5/actual.png"><img></a></main>')
+        if path.endswith('/car.png') and '/5/' in path:return httpx.Response(404)
+        return httpx.Response(200,content=picture(240 if '/6/' in path else 640),headers={'Content-Type':'image/png'})
+    with httpx.Client(transport=httpx.MockTransport(source)) as client:
+        image=prepare_image('https://takaratomymall.jp/img/goods/6/car.png',False,set(),tmp_path,client,product_url='https://takaratomymall.jp/shop/g/g4904810746829/')
+    assert image['url'].endswith('/5/actual.png')

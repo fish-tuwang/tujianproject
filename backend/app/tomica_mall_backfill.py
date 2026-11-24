@@ -11,7 +11,9 @@ import re
 import shutil
 import threading
 from types import SimpleNamespace
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
+
+from bs4 import BeautifulSoup
 
 import httpx
 from PIL import Image, ImageChops, ImageOps, ImageStat
@@ -76,7 +78,7 @@ def download(url, directory, client):
     return path, body
 
 
-def prepare_image(url, packaging, old_packaging, directory, client, alternatives=()):
+def prepare_image(url, packaging, old_packaging, directory, client, alternatives=(), product_url=None):
     source_url = image_url(url)
     path, body = download(url, directory, client)
     if '/img/goods/6/' in url:
@@ -89,8 +91,30 @@ def prepare_image(url, packaging, old_packaging, directory, client, alternatives
             # This native thumbnail/original pair was observed on the product page.
             # A successful URL alone is insufficient: the pictures must also match.
             original_url = url.replace('/img/goods/6/', '/img/goods/5/', 1)
-            original_path, original = download(original_url, directory, client)
-            if not same_picture(body, original):
+            try:
+                original_path, original = download(original_url, directory, client)
+                matched = same_picture(body, original)
+            except httpx.HTTPStatusError as error:
+                if error.response.status_code != 404:
+                    raise
+                matched = False
+            if not matched and product_url:
+                # Some official pages use different filenames for thumbnail and original.
+                # Read the actual gallery anchors instead of inventing filename variants.
+                parts = urlsplit(product_url)
+                if parts.scheme != 'https' or parts.netloc != 'takaratomymall.jp' or not re.fullmatch(r'/shop/g/g[0-9]{13}/', parts.path):
+                    raise ValueError('invalid official product page')
+                response = client.get(product_url)
+                response.raise_for_status()
+                soup = BeautifulSoup(response.text, 'html.parser')
+                for anchor in soup.select('main a[rel="shadowbox[group]"]'):
+                    candidate = image_url(urljoin(product_url, anchor.get('href', '')))
+                    candidate_path, candidate_body = download(candidate, directory, client)
+                    if same_picture(body, candidate_body):
+                        original_path, original, original_url = candidate_path, candidate_body, candidate
+                        matched = True
+                        break
+            if not matched:
                 raise ValueError('official original does not match its listed thumbnail')
             path, body, source_url = original_path, original, original_url
     digest = hashlib.sha256(body).hexdigest()
@@ -213,7 +237,7 @@ class GalleryBackfill:
             images = [future.result() for future in futures]
             for url in raw['images']:
                 if '/img/goods/6/' in url:
-                    images.append(prepare_image(url, url in verified, old_packaging, images_directory, client, images))
+                    images.append(prepare_image(url, url in verified, old_packaging, images_directory, client, images, raw['source_url']))
             unique = {}
             for image in images:
                 old_image = unique.get(image['sha256'])
