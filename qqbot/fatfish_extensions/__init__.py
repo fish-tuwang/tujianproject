@@ -3,7 +3,7 @@ import importlib
 from pathlib import Path
 import sys
 
-from . import common,memory,mood,soul,relation,usage,music_search,sticker_collect,song_truth
+from . import common,memory,mood,soul,relation,usage,music_search,sticker_collect,song_truth,link_share
 
 VERSION='1.0.0'
 
@@ -24,4 +24,5 @@ def install(bot_directory):
     music_search.install()
     sticker_collect.install()
     song_truth.install()
+    link_share.install()
     return VERSION

@@ -62,6 +62,14 @@ class EngagementStore:
    db.execute('BEGIN IMMEDIATE');row=db.execute('SELECT * FROM group_activity WHERE group_id=?',(group,)).fetchone()
    if not eligible(row,now,minutes,limit) or now-row[6]<1800:return False
    db.execute('UPDATE group_activity SET last_attempt=? WHERE group_id=?',(now,group));return True
+ def reserve_idle(self,group,now=None,minutes=30,limit=3):
+  """Consume an opportunity before sending; failures are never retried this round."""
+  now=time.time() if now is None else now
+  with self.connect() as db:
+   db.execute('BEGIN IMMEDIATE');row=db.execute('SELECT * FROM group_activity WHERE group_id=?',(group,)).fetchone()
+   if not eligible(row,now,minutes,limit):return None
+   db.execute('UPDATE group_activity SET last_idle=?,last_attempt=?,idle_count=CASE WHEN count_date=? THEN idle_count+1 ELSE 1 END,count_date=? WHERE group_id=?',(now,now,day(now),day(now),group))
+   return {'mention':row[2]}
  def record_idle(self,group,text,now=None):
   now=time.time() if now is None else now
   with self.connect() as db:

@@ -331,6 +331,11 @@ def refresh_login_qr():
 
 async def run_bot():
     module = load_module('bot')
+    try:
+        from fatfish_extensions.link_share import install_bot
+    except ImportError:
+        from qqbot.fatfish_extensions.link_share import install_bot
+    install_bot(module)
     # v1.18.2's public galgame stub omits a function used by its public bot.py.
     if not hasattr(module.galgame, 'stage'):
         module.galgame.stage = lambda value: (0, '普通群友')
@@ -473,6 +478,9 @@ async def run_bot():
                 return
             if module.commit.hold(key) or module.life.quiet() or cfg.get('dry_run', True):
                 return
+            reservation = await call_gateway({'operation':'idle_attempt','group':group})
+            if not reservation.get('ok'):return
+            bubble.get().update(recorded=True, mention=reservation.get('mention'))
             path = await asyncio.to_thread(idle_sticker, group)
             if path is not None:
                 await self._send('send_group_msg', 'group_id', group, [{'type':'image','data':{'file':str(path)}}])

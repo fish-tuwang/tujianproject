@@ -145,3 +145,16 @@ def test_fatfish_continuing_bubble_only_cancelled_by_new_mention(tmp_path,monkey
   assert client.post('/admin/fatfish',headers=headers,json=body).json()['allowed']
   s.note_activity('10',True,now)
   assert not client.post('/admin/fatfish',headers=headers,json=body).json()['allowed']
+
+
+def test_failed_idle_attempt_consumes_opportunity_across_restart(tmp_path):
+ s=BotStore(tmp_path/'attempt.sqlite');s.note_activity('10',True,ts())
+ assert s.reserve_idle('10',ts(hour=11)) is not None
+ # No success record: simulate transport failure and process restart.
+ s=BotStore(tmp_path/'attempt.sqlite')
+ assert s.reserve_idle('10',ts(hour=11,minute=1)) is None
+ assert not s.idle_candidates(ts(hour=11,minute=59))
+ assert s.reserve_idle('10',ts(hour=12)) is not None
+ assert s.reserve_idle('10',ts(hour=13)) is not None
+ assert s.reserve_idle('10',ts(hour=14)) is None
+ assert s.reserve_idle('10',ts(hour=23)) is None
