@@ -137,3 +137,11 @@ def test_seeded_official_image_requires_committed_content_checksum(tmp_path,monk
     fresh=tmp_path/'other';fresh.mkdir()
     with httpx.Client(transport=httpx.MockTransport(source)) as client,pytest.raises(ValueError,match='checksum mismatch'):
         prepare_image(url,False,set(),fresh,client)
+
+
+def test_only_explicit_official_release_day_is_used(tmp_path):
+    job=make_job(tmp_path)
+    row={'jan':'4904810092162','source_url':'https://takaratomymall.jp/shop/g/g4904810092162/','name':'Tomica No.58','text':'\u767a\u58f2\u65e5\uff1a2026\u5e7412\u670819\u65e5'}
+    assert job.document(row,None)['release_date']=='2026-12-19'
+    row['text']='2026 collection'
+    assert job.document(row,None)['release_date'] is None

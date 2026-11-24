@@ -1,6 +1,7 @@
 """Resume the captured official Tomica gallery through the installed publisher."""
 import asyncio
 from concurrent.futures import ThreadPoolExecutor, wait
+from datetime import date
 import hashlib
 import importlib
 import inspect
@@ -206,6 +207,9 @@ class GalleryBackfill:
         snapshot['text'] = raw.get('text', '')
         snapshot['images'] = []
         document = self.collector.parse_snapshot(snapshot)
+        release = re.search(r'\u767a\u58f2\u65e5\s*[:\uff1a]\s*(\d{4})\u5e74(\d{1,2})\u6708(\d{1,2})\u65e5', snapshot['text'])
+        if release:
+            document['release_date'] = date(*map(int, release.groups())).isoformat()
         if existing:
             previous = existing.evidence
             if previous.get('jan') != raw['jan'] or previous.get('source_url') != raw['source_url']:
