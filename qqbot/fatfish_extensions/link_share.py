@@ -1,5 +1,8 @@
 """Share source pages instead of downloading and encoding requested music."""
 import asyncio
+import contextvars
+
+EVIDENCE = contextvars.ContextVar("search_link_evidence", default=())
 import re
 import time
 from urllib.parse import quote,urlsplit
@@ -62,11 +65,34 @@ def install_bot(module):
     module.FatFish._sing_full=full
 
 
+def guarded_reply(segments, query):
+    """Never let the language model invent a requested share URL or video facts."""
+    requested_video = bool(re.search(r'(?i)(b站|哔哩|bilibili)',query) and re.search(r'视频|最新|链接|分享|找|搜',query))
+    text = '\n'.join(x for x in segments if isinstance(x,str))
+    urls = re.findall(r'https?://[^\s<>）)\]，。]+',text)
+    evidence = EVIDENCE.get()
+    valid = [r for r in evidence if re.fullmatch(r'https://www\.bilibili\.com/video/(?:BV[0-9A-Za-z]{10}|av[0-9]+)',str(r.get('url') or ''))]
+    if requested_video:
+        if not valid:return ['这次没有查到可核实的B站视频链接，暂时不能确认标题或最新一期。']
+        lines=['找到的B站视频（搜索结果，未确认是该作者最新一期）：']
+        for result in valid[:3]:
+            lines.append(str(result.get('title') or '视频') + (' · ' + str(result['date']) if result.get('date') else '') + '\n' + result['url'])
+        return ['\n'.join(lines)]
+    known={str(r.get('url')) for r in evidence}
+    if urls and any(url not in known for url in urls):
+        return ['这次没有查到能核实的分享链接，不能提供未经确认的地址。']
+    return segments
+
+
 def install():
     import websearch
     if getattr(websearch,'_atlas_links',False):return
     original=websearch.block
+    original_bili=websearch._bili
+    original_search=websearch.search
     def block(found):
+        found=list(found)
+        EVIDENCE.set(tuple(r for _,results in found for r in results if isinstance(r,dict)))
         text=original(found).replace('别贴链接','分享已核实结果时附对应链接')
         links=[]
         for query,results in found:
@@ -100,5 +126,17 @@ def install():
             if not url:continue
             results.append({'title':websearch._strip(value.get('title') or ''),'url':url,'snippet':websearch._strip(value.get('description') or '')[:150], 'date':datetime.fromtimestamp(value['pubdate'],ZoneInfo('Asia/Shanghai')).strftime('%Y-%m-%d') if value.get('pubdate') else '', 'site':'B站'})
         return results
+    async def search(query, log=print, want=8, ori=None):
+        if re.search(r'(?i)b站|哔哩|bilibili',str(query)+' '+str(ori or '')):
+            client=await websearch.client()
+            try:
+                results=await bili(client,query)
+            except Exception as error:
+                log('[分享链接] B站搜索失败',type(error).__name__)
+                return []
+            return [dict(result,src='B站') for result in results[:want]]
+        return await original_search(query,log,want,ori)
+    websearch.search=search
     websearch._bili=bili
+    websearch.SOURCES=[(name,bili if fn is original_bili else fn) for name,fn in websearch.SOURCES]
     websearch._atlas_links=True

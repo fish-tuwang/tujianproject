@@ -351,6 +351,11 @@ async def run_bot():
         query = incoming.get()
         segs = [clean(s, query) if isinstance(s, str) else s for s in segs]
         segs = [s for s in segs if s]
+        try:
+            from fatfish_extensions.link_share import guarded_reply
+        except ImportError:
+            from qqbot.fatfish_extensions.link_share import guarded_reply
+        segs = guarded_reply(segs, query) if query else segs
         return await original_say(self, scene, target, segs, *args, **kwargs) if segs else []
     module.FatFish.say = say
     original_state_line = module.FatFish._state_line
@@ -389,11 +394,17 @@ async def run_bot():
                         module.save_mem(mem)
         segments = event.get('message') or []
         text = ''.join(str(x.get('data',{}).get('text','')) for x in segments if isinstance(x,dict) and x.get('type')=='text') if isinstance(segments,list) else str(segments)
+        try:
+            from fatfish_extensions.link_share import EVIDENCE
+        except ImportError:
+            from qqbot.fatfish_extensions.link_share import EVIDENCE
+        evidence_token = EVIDENCE.set(())
         token = incoming.set(text.strip())
         try:
             return await original_handle(self,event,catch=catch)
         finally:
             incoming.reset(token)
+            EVIDENCE.reset(evidence_token)
     module.FatFish.handle=handle
     class Socket:
         def __aiter__(self): return self

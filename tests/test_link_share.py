@@ -37,7 +37,8 @@ def test_share_uses_text_only_and_cancels_before_send():
 def test_bili_results_retain_share_url_and_latest_sort(monkeypatch):
     import sys
     from qqbot.fatfish_extensions.link_share import install
-    fake=SimpleNamespace(block=lambda found:'别贴链接',MIXIN=list(range(64)),_strip=lambda x:x)
+    old_bili=lambda *a:None
+    fake=SimpleNamespace(block=lambda found:'别贴链接',MIXIN=list(range(64)),_strip=lambda x:x,_bili=old_bili,SOURCES=[('B站',old_bili)],search=lambda *a:None)
     monkeypatch.setitem(sys.modules,'websearch',fake)
     install()
     urls=[]
@@ -48,8 +49,26 @@ def test_bili_results_retain_share_url_and_latest_sort(monkeypatch):
                 data={'data':{'wbi_img':{'img_url':'https://example.com/'+'a'*32+'.png','sub_url':'https://example.com/'+'b'*32+'.png'}}}
             else:data={'code':0,'data':{'result':[{'bvid':'BV1234567890','title':'视频','pubdate':1795500000}]}}
             return SimpleNamespace(json=lambda:data)
-    found=asyncio.run(fake._bili(Client(),'作者 最新视频'))
+    assert fake.SOURCES[0][1] is fake._bili
+    found=asyncio.run(fake.SOURCES[0][1](Client(),'作者 最新视频'))
     assert 'order=pubdate' in urls[-1]
     assert found[0]['url']=='https://www.bilibili.com/video/BV1234567890'
     text=fake.block([('query',found)])
     assert found[0]['url'] in text and '别贴链接' not in text
+
+
+def test_fake_links_and_latest_titles_cannot_reach_qq():
+    from qqbot.fatfish_extensions.link_share import EVIDENCE,guarded_reply
+    token=EVIDENCE.set(())
+    try:
+        fake=['最新视频是《随便编一个标题》 https://space.bilibili.com/XXXXXX']
+        blocked=guarded_reply(fake,'去B站找鲁大能最新视频发给我')
+        assert 'XXXXXX' not in str(blocked) and '随便编一个标题' not in str(blocked)
+        assert '没有查到' in blocked[0]
+        EVIDENCE.set(({'title':'真实搜索标题','url':'https://www.bilibili.com/video/BV1234567890','date':'2026-11-24'},))
+        result=guarded_reply(fake,'B站最新视频')
+        assert '真实搜索标题' in result[0] and 'BV1234567890' in result[0]
+        assert 'XXXXXX' not in result[0] and '未确认' in result[0]
+        EVIDENCE.set(())
+        assert '不能提供' in guarded_reply(['https://music.163.com/song?id=123'],'发个链接')[0]
+    finally:EVIDENCE.reset(token)
