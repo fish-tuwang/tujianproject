@@ -156,15 +156,20 @@ def test_recorded_catalogue_review_must_match_name_and_source(tmp_path):
     with pytest.raises(ValueError,match='review does not match'):job.document(row,None)
 
 
+@pytest.mark.parametrize('reviewed',[False,True])
 @pytest.mark.parametrize('has_original',[True,False])
-def test_unavailable_primary_never_invents_an_original_or_hides_a_model(session,tmp_path,has_original):
+def test_unavailable_primary_never_invents_an_original_or_hides_a_model(session,tmp_path,has_original,reviewed):
     from concurrent.futures import ThreadPoolExecutor
     import hashlib
     calls=[];published=[]
     thumb='https://takaratomymall.jp/img/goods/6/4904810072041.jpg'
     original='https://takaratomymall.jp/img/goods/L/4904810072041.jpg'
     raw={'jan':'4904810072041','source_url':'https://takaratomymall.jp/shop/g/g4904810072041/','name':'official vehicle','images':[thumb]+([original] if has_original else []),'deferred_originals':[thumb]}
+    if reviewed:
+        raw['model_review']={'model_id':'base-model','model_name':'official vehicle','source_name':raw['name'],
+            'variant_id':'base-variant','variant_code':None,'source_url':raw['source_url'],'reason':'source image and sole variant reviewed'}
     def publish(session,document,directory,cache,review=None):
+        assert review==({key:raw['model_review'][key] for key in ('model_id','model_name','source_name','variant_id','variant_code')} if reviewed else None)
         published.append(document)
         assert all((directory/i['path']).is_file() for i in document['images'])
         return {'action':'created','model_id':'test'}

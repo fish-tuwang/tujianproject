@@ -313,6 +313,14 @@ class GalleryBackfill:
                     if variant is None or variant.model_id != model.id:
                         raise ValueError('previous variant association is invalid')
                     review.update(variant_id=variant.id, variant_code=variant.variant_code)
+            elif raw.get('model_review'):
+                recorded = raw['model_review']
+                if (recorded.get('source_name') != document['name']
+                        or recorded.get('source_url') != document['source_url']
+                        or not recorded.get('reason')):
+                    raise ValueError('model review does not match official product')
+                review = {key: recorded[key] for key in
+                          ('model_id', 'model_name', 'source_name', 'variant_id', 'variant_code')}
             result = self.collector.publish(session, document, images_directory, media_directories(self.app.state.settings)[0], review=review)
             if not existing and result.get('action') == 'review':
                 identity_review = self.review_new_product(session, document, result)

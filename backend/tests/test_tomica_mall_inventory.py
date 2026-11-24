@@ -34,4 +34,4 @@ def test_132_packaging_is_visually_verified_source_image_not_assumed_last_image(
     product=next(p for p in data['products'] if p['jan']=='4904810950509')
     assert len(product['images'])==6
     assert product['verified_packaging_images']==['https://takaratomymall.jp/img/goods/3/4904810950509_rer2kr1w3.jpg']
-    assert sum('verified_packaging_images' in p for p in data['products'])==data['packaging_review']['verified_packaging_products']==377
+    assert sum('verified_packaging_images' in p for p in data['products'])==data['packaging_review']['verified_packaging_products']==468
