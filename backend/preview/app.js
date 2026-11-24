@@ -96,6 +96,55 @@ async function request(path, params = {}, signal) {
   return value;
 }
 
+// Official detail images are matched to this model by the collector, not by name.
+const tomicaCoverCache = new Map();
+function packagingCover(item) {
+  for (const product of item.official_products || []) {
+    if (product.packaging_status !== 'verified') continue;
+    const image = (product.images || []).find(image => image.kind === 'packaging' && /^\/api\/tomica\/official-images\/[a-f0-9]{64}$/.test(image.url));
+    if (image) return image.url;
+  }
+  return null;
+}
+async function loadTomicaCovers(items, cards) {
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const index = next++, item = items[index], card = cards[index];
+      if (!card?.isConnected || state.kind !== 'tomica') return;
+      if (!(item.official_product_count > 0)) continue;
+      try {
+        let cached = tomicaCoverCache.get(item.id);
+        if (!cached || Date.now() - cached.at > 300000) {
+          cached = {at: Date.now(), promise: request('tomica/' + encodeURIComponent(item.id)).then(packagingCover)};
+          tomicaCoverCache.set(item.id, cached);
+        }
+        const url = await cached.promise;
+        if (!url || !card.isConnected || state.kind !== 'tomica') continue;
+        // Keep the existing car image if the box is missing or cannot be loaded.
+        await new Promise(resolve => {
+          const image = new Image();
+          image.onload = () => {
+            if (card.isConnected && state.kind === 'tomica') {
+              const art = card.querySelector('.card-art');
+              art.querySelector('img')?.remove();
+              art.querySelector('.image-placeholder')?.remove();
+              image.alt = (item.name_display || item.name_original || '') + ' · 包装盒';
+              art.prepend(image);
+            }
+            resolve();
+          };
+          image.onerror = resolve;
+          image.src = url;
+        });
+      } catch (_) {
+        tomicaCoverCache.delete(item.id);
+      }
+    }
+  }
+  await Promise.all(Array.from({length: Math.min(4, items.length)}, worker));
+}
+
 function renderCards() {
   $('cards').innerHTML = state.items.map((item,index)=>{
     const name=item.name_display||item.name_original||item.name_zh;
@@ -105,6 +154,7 @@ function renderCards() {
   }).join('');
   $('cards').querySelectorAll('.catalog-card').forEach(card=>card.onclick=()=>{const item=state.items[Number(card.dataset.index)];detailReturnY=window.scrollY;rememberCatalogList();location.hash=state.kind+'/'+(state.kind==='tomica'?item.id:item.dex);});
   bindImages($('cards'));
+  if (state.kind === 'tomica') void loadTomicaCovers(state.items.slice(), Array.from($('cards').querySelectorAll('.catalog-card')));
   const region=regions.find(r=>r.key===state.query.region);
   $('result-caption').textContent = state.kind==='tomica' ? `微缩车库 · 共 ${state.total} 款车型 · 第 ${state.page} / ${state.totalPages} 页` : `${region?(region.key==='unknown'?'未确认分类':region.name+'地区图鉴'):'全国图鉴'} · 已呈现 ${state.items.length} / ${state.total} 位宝可梦`;
   renderPagination();
