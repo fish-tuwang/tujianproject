@@ -154,3 +154,30 @@ def test_recorded_catalogue_review_must_match_name_and_source(tmp_path):
     assert job.document(row,None)['eligibility']=='accepted'
     row['name']='different merchandise'
     with pytest.raises(ValueError,match='review does not match'):job.document(row,None)
+
+
+@pytest.mark.parametrize('has_original',[True,False])
+def test_unavailable_primary_never_invents_an_original_or_hides_a_model(session,tmp_path,has_original):
+    from concurrent.futures import ThreadPoolExecutor
+    import hashlib
+    calls=[];published=[]
+    thumb='https://takaratomymall.jp/img/goods/6/4904810072041.jpg'
+    original='https://takaratomymall.jp/img/goods/L/4904810072041.jpg'
+    raw={'jan':'4904810072041','source_url':'https://takaratomymall.jp/shop/g/g4904810072041/','name':'official vehicle','images':[thumb]+([original] if has_original else []),'deferred_originals':[thumb]}
+    def publish(session,document,directory,cache,review=None):
+        published.append(document)
+        assert all((directory/i['path']).is_file() for i in document['images'])
+        return {'action':'created','model_id':'test'}
+    collector=SimpleNamespace(SOURCE='test-official',parse_snapshot=lambda raw:dict(raw,eligibility='accepted',release_date=None),publish=publish)
+    app=SimpleNamespace(state=SimpleNamespace(settings=SimpleNamespace(artifact_dir=str(tmp_path)),session_factory=lambda:session))
+    job=GalleryBackfill(app,collector)
+    def source(request):
+        calls.append(str(request.url))
+        return httpx.Response(200,content=picture(640 if '/L/' in request.url.path else 240),headers={'Content-Type':'image/png'})
+    with httpx.Client(transport=httpx.MockTransport(source)) as client,ThreadPoolExecutor(max_workers=1) as pool:
+        result=job.publish_one(raw,tmp_path,tmp_path,client,pool)
+    assert result['action']=='created' and result['deferred_originals']==[thumb]
+    assert result['thumbnail_only'] is (not has_original)
+    assert calls==[original if has_original else thumb]
+    assert published[0]['images'][0]['kind']==('gallery' if has_original else 'thumbnail')
+    assert published[0]['images'][0]['sha256']==hashlib.sha256(picture(640 if has_original else 240)).hexdigest()

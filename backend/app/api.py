@@ -10,8 +10,10 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from .repository import CatalogError, CatalogRepository
 from .schemas import PokemonQuery, TomicaQuery
+from .tomica_mall_media import image_urls, serve_image
 
 router = APIRouter(prefix='/api')
+router.add_api_route('/tomica-mall-images/{digest}', serve_image, methods=['GET'])
 
 
 def get_session(request: Request):
@@ -35,11 +37,11 @@ def public_cached(request, session, source, view, params, loader, missing='Êù°Áõ
     key = f'api:{source}:{revision}:{view}:' + cache.signature(params)
     value = cache.get_json(key)
     if value is not None:
-        return JSONResponse(value, headers={'X-Catalog-Cache': 'hit'})
+        return JSONResponse(image_urls(value) if source == 'tomica' else value, headers={'X-Catalog-Cache': 'hit'})
     value = cache.remember(key, lambda: loader(repo), ttl=ttl)
     if value is None:
         raise CatalogError('NOT_FOUND', missing, 404)
-    return JSONResponse(jsonable_encoder(value), headers={'X-Catalog-Cache': 'miss'})
+    return JSONResponse(jsonable_encoder(image_urls(value) if source == 'tomica' else value), headers={'X-Catalog-Cache': 'miss'})
 
 
 @router.get('/reference-images/{asset_id}')

@@ -1,17 +1,14 @@
 """Resume the captured official Tomica gallery through the installed publisher."""
-import asyncio
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import date
 import hashlib
 import importlib
-import inspect
 from io import BytesIO
 import json
 from pathlib import Path
 import re
 import shutil
 import threading
-from types import SimpleNamespace
 from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
@@ -24,6 +21,7 @@ from .audit import audit
 from .config import ROOT
 from .models import SourceIdentity, TomicaModel, TomicaVariant
 from .reference_images import image_type
+from .tomica_mall_media import media_directories
 
 INVENTORY = ROOT / 'backend/data/tomica-mall-inventory.json'
 MAX_IMAGE = 20 * 1024 * 1024
@@ -131,29 +129,6 @@ def prepare_image(url, packaging, old_packaging, directory, client, alternatives
             'kind': 'packaging' if packaging or digest in old_packaging else 'gallery'}
 
 
-def official_cache(app, collector):
-    with app.state.session_factory() as session:
-        entry = session.scalar(select(SourceIdentity).where(
-            SourceIdentity.source == collector.SOURCE, SourceIdentity.kind == 'product',
-            SourceIdentity.needs_review.is_(False)))
-        if entry is None or not entry.evidence.get('images'):
-            raise ValueError('existing official image cache is not available')
-        digest = entry.evidence['images'][0]['sha256']
-    response = collector.image(digest, SimpleNamespace(app=app))
-    if inspect.isawaitable(response):
-        response = asyncio.run(response)
-    path = getattr(response, 'path', None)
-    if path and Path(path).is_file():
-        return Path(path).resolve().parent
-    directory = Path(app.state.settings.artifact_dir)
-    directory = directory if directory.is_absolute() else ROOT / directory
-    base = directory.parent if directory.name == 'acceptance' else directory
-    matches = list(base.rglob(digest + '.image'))
-    if len(matches) != 1:
-        raise ValueError('official cache location is ambiguous')
-    return matches[0].resolve().parent
-
-
 def list_packaging_covers(value, session):
     """Change list covers only; preserve the full car/detail gallery."""
     if not isinstance(value, dict) or not value.get('items'):
@@ -210,7 +185,7 @@ class GalleryBackfill:
         review = raw.get('catalog_review')
         if review:
             if (review.get('source_url') != raw['source_url'] or review.get('reviewed_name') != raw['name']
-                    or review.get('decision') not in {'accepted', 'excluded'} or not review.get('reason')):
+                    or review.get('decision') not in {'accepted', 'excluded', 'review'} or not review.get('reason')):
                 raise ValueError('catalogue review does not match its recorded source')
             document['eligibility'] = review['decision']
             document['eligibility_reason'] = review['reason']
@@ -248,12 +223,32 @@ class GalleryBackfill:
             if document.get('eligibility') != 'accepted':
                 return {'action': document.get('eligibility', 'review'), 'jan': raw['jan'], 'name': raw['name'],
                         'reason': document.get('eligibility_reason', 'material unverified')}
+            deferred = set(raw.get('deferred_originals', []))
+            if not deferred.issubset(raw['images']) or any('/img/goods/6/' not in u for u in deferred):
+                raise ValueError('deferred original is not a recorded thumbnail')
+            mapping = raw.get('original_image_map', {})
+            if (not set(mapping).issubset(raw['images']) or set(mapping) & deferred
+                    or any('/img/goods/6/' not in u for u in mapping)):
+                raise ValueError('original mapping is not a recorded thumbnail')
+            for original in mapping.values():
+                image_url(original)
+                if '/img/goods/6/' in original:
+                    raise ValueError('original mapping still points to a thumbnail')
+            available = list(dict.fromkeys(mapping.get(u, u) for u in raw['images'] if u not in deferred))
+            thumbnail = None
+            if not available and not previous.get('images'):
+                # Keep an identifiable model visible using its exact official thumbnail.
+                # Its original remains explicitly deferred; do not invent or upscale it.
+                url = next(iter(deferred))
+                path, body = download(url, images_directory, client)
+                thumbnail = {'url': url, 'path': path.name, 'sha256': hashlib.sha256(body).hexdigest(),
+                    'status': 'downloaded', 'kind': 'packaging' if url in raw.get('verified_packaging_images', []) else 'thumbnail'}
             old_packaging = {i['sha256'] for i in previous.get('images', []) if i.get('kind') == 'packaging'}
-            verified = set(raw.get('verified_packaging_images', []))
-            futures = [pool.submit(prepare_image, url, url in verified, old_packaging, images_directory, client) for url in raw['images'] if '/img/goods/6/' not in url]
+            verified = {mapping.get(u, u) for u in raw.get('verified_packaging_images', [])}
+            futures = [pool.submit(prepare_image, url, url in verified, old_packaging, images_directory, client) for url in available if '/img/goods/6/' not in url]
             wait(futures)
-            images = [future.result() for future in futures]
-            for url in raw['images']:
+            images = ([thumbnail] if thumbnail else []) + [future.result() for future in futures]
+            for url in available:
                 if '/img/goods/6/' in url:
                     images.append(prepare_image(url, url in verified, old_packaging, images_directory, client, images, raw['source_url']))
             unique = {}
@@ -266,7 +261,9 @@ class GalleryBackfill:
             for old_image in previous.get('images', []):
                 if old_image['sha256'] in unique:
                     continue
-                path = cache_directory / (old_image['sha256'] + '.image')
+                filename = old_image['sha256'] + '.image'
+                path = next((d / filename for d in media_directories(self.app.state.settings)
+                             if (d / filename).is_file()), cache_directory / filename)
                 body = valid_image(path.read_bytes())
                 if hashlib.sha256(body).hexdigest() != old_image['sha256']:
                     raise ValueError('previous official image checksum mismatch')
@@ -285,13 +282,13 @@ class GalleryBackfill:
                     if variant is None or variant.model_id != model.id:
                         raise ValueError('previous variant association is invalid')
                     review.update(variant_id=variant.id, variant_code=variant.variant_code)
-            result = self.collector.publish(session, document, images_directory, cache_directory, review=review)
+            result = self.collector.publish(session, document, images_directory, media_directories(self.app.state.settings)[0], review=review)
             if result['action'] in {'created', 'supplemented', 'unchanged'}:
                 session.commit()
             else:
                 session.rollback()
             return dict(result, jan=raw['jan'], name=raw['name'], image_count=len(document['images']),
-                        packaging=document['packaging_status'] == 'verified')
+                        packaging=document['packaging_status'] == 'verified', deferred_originals=sorted(deferred), thumbnail_only=thumbnail is not None)
 
     def run(self):
         try:
@@ -321,7 +318,7 @@ class GalleryBackfill:
             self.state = old
             return
         inventory = json.loads(body)
-        cache_directory = official_cache(self.app, self.collector)
+        cache_directory = media_directories(self.app.state.settings)[1]
         images_directory = self.directory / 'images'
         images_directory.mkdir(exist_ok=True)
         (self.directory / 'backups').mkdir(exist_ok=True)
@@ -357,10 +354,13 @@ class GalleryBackfill:
                 results.append(result)
                 packaging += bool(result.get('packaging') and action in {'created', 'supplemented', 'unchanged'})
                 self.save(processed=len(results), counts=counts, packaging_products=packaging,
-                          reviews=[r for r in results if r['action'] == 'review'], failures=[r for r in results if r['action'] == 'failed'])
+                          thumbnail_only_products=sum(bool(r.get('thumbnail_only')) for r in results),
+                          reviews=[r for r in results if r['action'] == 'review'], failures=[r for r in results if r['action'] == 'failed'],
+                          source_gaps=[{'jan': r['jan'], 'originals': r['deferred_originals']} for r in results if r.get('deferred_originals')])
                 audit('tomica_official_backfill_item', jan=row['jan'], action=action, images=result.get('image_count', 0))
         (self.directory / 'results.json').write_text(json.dumps(results, ensure_ascii=False), encoding='utf-8')
-        status = 'succeeded' if not counts['failed'] and not counts['review'] else 'completed_with_review' if not counts['failed'] else 'incomplete'
+        has_gaps = any(r.get('deferred_originals') for r in results)
+        status = 'incomplete' if counts['failed'] else 'completed_with_review' if counts['review'] or has_gaps else 'succeeded'
         self.save(status=status)
         audit('tomica_official_backfill_finished', **counts, packaging_products=packaging)
 
