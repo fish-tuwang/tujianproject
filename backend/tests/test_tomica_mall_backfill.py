@@ -181,3 +181,29 @@ def test_unavailable_primary_never_invents_an_original_or_hides_a_model(session,
     assert calls==[original if has_original else thumb]
     assert published[0]['images'][0]['kind']==('gallery' if has_original else 'thumbnail')
     assert published[0]['images'][0]['sha256']==hashlib.sha256(picture(640 if has_original else 240)).hexdigest()
+
+
+def test_reviewed_label_transition_keeps_exact_existing_identity(tmp_path):
+    job=make_job(tmp_path)
+    raw={'jan':'4904810091905','source_url':'https://takaratomymall.jp/shop/g/g4904810091905/','name':'Long Tomica No.136 drill'}
+    previous=dict(raw,name='Tomica No.136 drill')
+    existing=SimpleNamespace(entity_id='same-model',evidence=previous)
+    raw['reviewed_identity']={'model_id':'same-model','previous_name':previous['name'],'name':raw['name'],'source_url':raw['source_url'],'reason':'reviewed format only'}
+    assert job.document(raw,existing)['name']==raw['name']
+    existing.evidence=previous;raw['reviewed_identity']['model_id']='another-model'
+    with pytest.raises(ValueError,match='name changed'):job.document(raw,existing)
+
+
+@pytest.mark.parametrize('same_name',[False,True])
+def test_new_sourced_sku_is_not_guessed_into_partial_historical_peers(session,tmp_path,same_name):
+    model=TomicaModel(series='Tomica',number='58',name_original='new product' if same_name else 'different historical car')
+    session.add(model);session.flush()
+    job=make_job(tmp_path)
+    doc={'jan':'4904810092162','source_url':'https://takaratomymall.jp/shop/g/g4904810092162/','name':'new product'}
+    decision=job.review_new_product(session,doc,{'action':'review','reason':'ambiguous model/edition','candidates':[model.id]})
+    if same_name:assert decision is None
+    else:
+        assert decision['action']=='create' and decision['reviewed_candidates']==[model.id]
+        assert len(decision['catalog_sha256'])==64
+        assert (job.directory/'identity-reviews'/(doc['jan']+'.json')).exists()
+    assert model.name_original==('new product' if same_name else 'different historical car')

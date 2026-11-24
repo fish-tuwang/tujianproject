@@ -199,15 +199,46 @@ class GalleryBackfill:
             old, new = previous['name'], raw['name']
             if self.collector.canonical_name(old) != self.collector.canonical_name(new):
                 a, b = re.search(r'No\.?\s*(\d+)', old, re.I), re.search(r'No\.?\s*(\d+)', new, re.I)
-                if '\ufffd' not in old or not (a and b and int(a[1]) == int(b[1])):
+                reviewed = raw.get('reviewed_identity', {})
+                verified_label = (reviewed.get('model_id') is not None and reviewed.get('model_id') == existing.entity_id
+                    and reviewed.get('previous_name') == old and reviewed.get('name') == new
+                    and reviewed.get('source_url') == raw['source_url'] and bool(reviewed.get('reason')))
+                damaged_label = '\ufffd' in old and a and b and int(a[1]) == int(b[1])
+                if not verified_label and not damaged_label:
                     raise ValueError('official product name changed; review required')
-                # Repair only the damaged official label of the same barcode/number.
+                # Correct only a reviewed same-product label; keep its model and edition association.
                 existing.evidence = dict(previous, name=new)
             document['eligibility'] = 'accepted'
             document['eligibility_reason'] = previous.get('eligibility_reason') or 'previously verified same official barcode'
             document['release_date'] = document.get('release_date') or previous.get('release_date')
             document['metadata_source_url'] = raw['source_url']
         return document
+
+    def review_new_product(self, session, document, result):
+        if result.get('reason') != 'ambiguous model/edition' or not result.get('candidates'):
+            return None
+        ids = sorted(set(result['candidates']))
+        candidates = list(session.scalars(select(TomicaModel).where(TomicaModel.id.in_(ids))))
+        if len(candidates) != len(ids):
+            return None
+        wanted = self.collector.canonical_name(document['name'])
+        # Exact identities remain blocked: a partial car name or reused number is
+        # insufficient to attach a new official barcode to a historical generation.
+        number = re.search(r'No\.?\s*(\d+)', document['name'], re.I)
+        for model in candidates:
+            same_name = self.collector.canonical_name(model.name_original.split(' · ')[0]) == wanted
+            same_number = not number or (model.number.isdigit() and int(model.number) == int(number[1]))
+            if same_name and same_number:
+                return None
+        review = {'action': 'create', 'source_name': document['name'],
+            'review_note': 'verified official barcode and gallery; candidates are only partial/different historical names; create an independent product without rebinding them',
+            'catalog_sha256': hashlib.sha256(INVENTORY.read_bytes()).hexdigest(), 'reviewed_candidates': ids}
+        directory = self.directory / 'identity-reviews'
+        directory.mkdir(parents=True, exist_ok=True)
+        evidence = dict(review, jan=document['jan'], source_url=document['source_url'],
+            candidates=[{'id': m.id, 'name': m.name_original, 'series': m.series, 'number': m.number} for m in candidates])
+        (directory / (document['jan'] + '.json')).write_text(json.dumps(evidence, ensure_ascii=False), encoding='utf-8')
+        return review
 
     def publish_one(self, raw, images_directory, cache_directory, client, pool):
         with self.app.state.session_factory() as session:
@@ -283,6 +314,11 @@ class GalleryBackfill:
                         raise ValueError('previous variant association is invalid')
                     review.update(variant_id=variant.id, variant_code=variant.variant_code)
             result = self.collector.publish(session, document, images_directory, media_directories(self.app.state.settings)[0], review=review)
+            if not existing and result.get('action') == 'review':
+                identity_review = self.review_new_product(session, document, result)
+                if identity_review:
+                    result = self.collector.publish(session, document, images_directory,
+                        media_directories(self.app.state.settings)[0], review=identity_review)
             if result['action'] in {'created', 'supplemented', 'unchanged'}:
                 session.commit()
             else:
