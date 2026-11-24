@@ -348,6 +348,11 @@ async def run_bot():
         segs = [s for s in segs if s]
         return await original_say(self, scene, target, segs, *args, **kwargs) if segs else []
     module.FatFish.say = say
+    original_state_line = module.FatFish._state_line
+    async def state_line(self, kind, *args, **kwargs):
+        if kind == 'sing_fail':return '音频没能发送成功，QQ 返回了错误，请稍后重试。'
+        return await original_state_line(self, kind, *args, **kwargs)
+    module.FatFish._state_line = state_line
     original_admin_send = module.FatFish._admin_send
     async def admin_send(self, params):
         token = last_failure.set(None)
@@ -434,6 +439,18 @@ async def run_bot():
             params = {**params,'file':target}
         result = await call_gateway({'operation':'action','action':action,'params':params})
         if action in {'send_group_msg','send_private_msg','send_msg'}:
+            try:
+                from fatfish_extensions.song_truth import audio_fallback
+            except ImportError:
+                from qqbot.fatfish_extensions.song_truth import audio_fallback
+            source = audio_fallback(original, result)
+            path = local_media_path(source) if source else None
+            if path is not None and path.is_file() and ROOT.resolve() in path.resolve().parents:
+                upload = 'upload_group_file' if params.get('group_id') else 'upload_private_file'
+                target_key = 'group_id' if params.get('group_id') else 'user_id'
+                result = await self.call(upload, **{target_key:params[target_key], 'file':str(path), 'name':'点歌音频' + path.suffix})
+                if result.get('retcode') == 0:
+                    module.log('[唱歌]', 'QQ语音编码不可用，已改发音频文件')
             success = result.get('retcode') == 0
             category, explanation = ('ok', '') if success else delivery_error(result)
             if not success:
