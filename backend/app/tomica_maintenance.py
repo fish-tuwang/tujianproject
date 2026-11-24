@@ -28,12 +28,24 @@ def coverage(request: Request):
     modules = []
     names = {route.endpoint.__module__ for route in request.app.routes
              if hasattr(route, 'endpoint') and 'tomica/official-images' in getattr(route, 'path', '')}
-    for name in names:
+    names.update(name for name in sys.modules if name.startswith('backend.app.') and any(word in name for word in ('tomica', 'takaratomy', 'official')) and name != __name__)
+    for name in sorted(names):
         module = sys.modules[name]
         functions = {}
         for key, value in vars(module).items():
             if pyinspect.isfunction(value) and value.__module__ == name:
                 functions[key] = str(pyinspect.signature(value))
         paths = {key: str(value) for key, value in vars(module).items() if isinstance(value, Path)}
-        modules.append({'name': name, 'functions': functions, 'paths': paths})
-    return {'tables': tables, 'collectors': modules}
+        classes = {key: {method: str(pyinspect.signature(value)) for method, value in vars(cls).items() if pyinspect.isfunction(value)} for key, cls in vars(module).items() if pyinspect.isclass(cls) and cls.__module__ == name}
+        modules.append({'name': name, 'functions': functions, 'classes': classes, 'paths': paths})
+    from .config import ROOT
+    import json
+    files = []
+    directory = ROOT / 'backend/data'
+    for path in directory.glob('*.json'):
+        if not any(word in path.name for word in ('tomica', 'official')):
+            continue
+        data = json.loads(path.read_text(encoding='utf-8-sig'))
+        shape = {key: {'type': type(value).__name__, 'count': len(value) if isinstance(value, (dict, list)) else None, 'sample': next(iter(value.items()), None) if isinstance(value, dict) else value[:1] if isinstance(value, list) else value} for key, value in data.items()} if isinstance(data, dict) else {'count': len(data), 'sample': data[:1]}
+        files.append({'path': str(path), 'shape': shape})
+    return {'tables': tables, 'collectors': modules, 'data_files': files}
