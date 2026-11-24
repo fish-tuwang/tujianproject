@@ -145,3 +145,12 @@ def test_only_explicit_official_release_day_is_used(tmp_path):
     assert job.document(row,None)['release_date']=='2026-12-19'
     row['text']='2026 collection'
     assert job.document(row,None)['release_date'] is None
+
+
+def test_recorded_catalogue_review_must_match_name_and_source(tmp_path):
+    job=make_job(tmp_path)
+    row={'jan':'4904810092162','source_url':'https://takaratomymall.jp/shop/g/g4904810092162/','name':'TLV vehicle'}
+    row['catalog_review']={'source_url':row['source_url'],'reviewed_name':row['name'],'decision':'accepted','reason':'official named TLV vehicle listing'}
+    assert job.document(row,None)['eligibility']=='accepted'
+    row['name']='different merchandise'
+    with pytest.raises(ValueError,match='review does not match'):job.document(row,None)

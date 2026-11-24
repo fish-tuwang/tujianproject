@@ -207,6 +207,13 @@ class GalleryBackfill:
         snapshot['text'] = raw.get('text', '')
         snapshot['images'] = []
         document = self.collector.parse_snapshot(snapshot)
+        review = raw.get('catalog_review')
+        if review:
+            if (review.get('source_url') != raw['source_url'] or review.get('reviewed_name') != raw['name']
+                    or review.get('decision') not in {'accepted', 'excluded'} or not review.get('reason')):
+                raise ValueError('catalogue review does not match its recorded source')
+            document['eligibility'] = review['decision']
+            document['eligibility_reason'] = review['reason']
         release = re.search(r'\u767a\u58f2\u65e5\s*[:\uff1a]\s*(\d{4})\u5e74(\d{1,2})\u6708(\d{1,2})\u65e5', snapshot['text'])
         if release:
             document['release_date'] = date(*map(int, release.groups())).isoformat()
