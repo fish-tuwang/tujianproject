@@ -349,6 +349,13 @@ async def run_bot():
         idle = bubble.get()
         if idle and action.startswith('send_') and not (await call_gateway({'operation':'idle_check','group':idle['group'], 'continuing':idle['recorded'], 'mention':idle['mention']})).get('allowed'):
             return {'retcode':403,'status':'failed','message':'idle cancelled by current activity or quiet hours'}
+        if idle and action.startswith(('send_', 'upload_')):
+            if action not in {'send_group_msg','send_private_msg','send_msg'}:
+                return {'retcode':403,'status':'failed','message':'unsupported proactive content'}
+            from fatfish_extensions.idle_links import idle_without_links
+            params = {**params,'message':idle_without_links(params.get('message'))}
+            if not params['message']:
+                return {'retcode':403,'status':'failed','message':'proactive content contained only links'}
         group = str(params.get('group_id') or params.get('user_id') or '')
         original = params
         if action in {'send_group_msg','send_private_msg','send_msg'}:

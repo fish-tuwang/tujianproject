@@ -174,6 +174,9 @@ def create_app(settings, *, llm_transport=None, account_transport=None):
                                 audit('qq_chat_query_failed', error=type(error).__name__, group_id=group, user_id=user)
                                 raise ValueError('model generation failed') from error
                             if idle and not store.idle_allowed(group,minutes=settings.idle_minutes,limit=settings.idle_daily_limit):continue
+                            if idle:
+                                from .fatfish_extensions.idle_links import idle_without_links
+                                segments=idle_without_links(segments)
                             outbound=batches(segments,message)
                             idle_recorded=False
                             for batch in outbound:
