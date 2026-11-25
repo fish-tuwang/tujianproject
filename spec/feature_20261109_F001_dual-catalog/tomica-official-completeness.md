@@ -46,3 +46,11 @@ Mac 已确认成功更新 9b0b5bd，并实际运行后续全量清单版本。�
 用户提供 revision=6b9498d，连续 FETCH_DONE/UP_TO_DATE。重新认证只读检查后，Mac 清单指纹确认为 aaa8d2c930a85592393c7fa843ede82a5b628ee81eff1ecb36e1dcc7c65bf527。实际官方商品887、图库4513、已核实盒图封面437。完整1111项遍历：created21、supplemented等具体动作以保存进度为准，失败0；仅余JAN4904810089131 Cars Advent Calendar 2026关联待核对，两条历史候选分别是套装内McQueen与Mater的单车，不把整套图库随意附到其中一辆。
 
 实际执行 /tmp/tomica-live-verify.py 及 /tmp/tomica-live-extra-verify.py，退出0；H2封面SHA一致、未登录401，JAN4904810950813/4904810228035/4904810228844新盒图与全部详情照片均HTTP200且字节SHA一致。同步阻碍已解除；468是完整来源清单含非车型商品的盒图数，437才是当前已发布官方商品的盒图数。
+
+## 2026-11-25 未知发售年份补录验收
+
+用户授权“能补就补年份”。从当前未知记录的官方条码候选核对官网发售日，记录700条明确发售年月事实；结合原图鉴已保存的同页、同图片身份年月分组，只补空缺 release_year，不修改已有年份、发售月份、名称、图片及版本关联，保留手工设置，日期冲突跳过。基础车型与明确版本分开处理，不用当前再版日期覆盖历史基础车型，不解析工厂批次码或原型汽车年式为发售年份。
+
+代码0cd411d已由Mac自动加载。实际 /api/tomica-maintenance/years 返回 changed_models=1148、changed_variants=1、conflicts=0、status=completed；页面未知年份总量由16607降为15458。逐一验证999号列车2024、MR2 2023、Cars GRC 2025以及原图鉴迪士尼特注2025：详情年份与按年搜索均正确。未确认记录继续保留未知。
+
+执行 python -m pytest backend/tests/test_tomica_release_years.py backend/tests/test_tomica_mall_backfill.py backend/tests/test_tomica_mall_inventory.py backend/tests/test_tomica_mall_media.py backend/tests/test_tomica_maintenance.py backend/tests/test_api.py backend/tests/test_tomica_editions.py backend/tests/test_tomica_repair.py backend/tests/test_sources.py -q；原始摘要106 passed, 1 warning in 13.17s，退出0。线上 /tmp/tomica-year-live-verify.py 返回LIVE_YEAR_VERIFICATION_OK，退出0。日期来源及原空值备份写入Mac图鉴 artifacts/tomica-mall-backfill/release-years-*.json，聚合日志记录 tomica_release_years_completed。
