@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from backend.app.schemas import ParsedPage, ParseIssue, SourceCandidate
 from .base import SourceParseError
 from .http import normalize_url
+from ..tomica_release_years import source_year
 
 BASE = 'http://tomica.minibird.jp/t-tomica/'
 MODEL_TITLE = re.compile(r'^((?:[FLS]?\d{1,3}-\d+[A-Z]?)|(?:L-\d+[A-Z]?)|(?:S\d+)|(?:SP(?:-\d+[A-Z]?)?))(?=\s|　|$)', re.I)
@@ -206,6 +207,7 @@ class TomicaAdapter:
                     code = next((match for match in codes if match), None)
                     fields = {'series': series, 'number': code[1] if code else 'SP' if re.match(r'^SP(?:\s|$)', description) else '—', 'generation': '', 'name_original': name, 'brand': normalize_brand(description) or normalize_brand(caption), 'release_year': None, 'release_month': None, 'scale': None, 'source_url': url, 'source_locator': key}
                     evidence = {'url': url, 'image_urls': photos, 'caption': caption, 'group': group, 'description': description}
+                    fields['release_year'] = source_year(evidence)
                     page.candidates.append(SourceCandidate(kind='tomica_model', source_key=key, fields=fields, evidence=evidence))
                     for photo in photos:
                         suffix = hashlib.sha256(normalize_url(url, photo, 'tomica').encode()).hexdigest()[:24]

@@ -345,6 +345,8 @@ class GalleryBackfill:
                     self.state = {'status': 'another_worker_running'}
                     return
                 self.collect()
+                from .tomica_release_years import run as fill_years
+                fill_years(self.app, self.directory)
         except Exception as error:
             self.state.update(status='failed', error=type(error).__name__ + ': ' + str(error))
             try:

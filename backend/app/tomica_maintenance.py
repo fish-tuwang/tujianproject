@@ -46,3 +46,17 @@ def coverage(request: Request):
 def progress(request: Request):
     job = getattr(request.app.state, 'tomica_backfill', None)
     return job.snapshot() if job else {'status': 'not_started'}
+
+
+@router.get('/years')
+def year_progress(request: Request):
+    from pathlib import Path
+    from .config import ROOT
+    directory = Path(request.app.state.settings.artifact_dir)
+    directory = directory if directory.is_absolute() else ROOT / directory
+    path = directory / 'tomica-mall-backfill/release-years.json'
+    if not path.exists():
+        return {'status': 'not_started'}
+    result = json.loads(path.read_text(encoding='utf-8'))
+    return {key: value for key, value in result.items() if key not in {'changes', 'conflicts'}} | {
+        'conflicts': len(result.get('conflicts', []))}
