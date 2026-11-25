@@ -62,12 +62,12 @@ def same_picture(thumbnail, original):
         return sum(ImageStat.Stat(ImageChops.difference(a, b)).mean) / 3 < 4
 
 
-def download(url, directory, client):
+def download(url, directory, client, *, refresh=False, use_seed=True):
     image_url(url)
     path = directory / (hashlib.sha256(url.encode()).hexdigest() + '.image')
-    if path.exists():
+    if path.exists() and not refresh:
         return path, valid_image(path.read_bytes())
-    expected = SEED_IMAGES.get(url)
+    expected = SEED_IMAGES.get(url) if use_seed and not refresh else None
     fetch_url = SEED_BASE + expected + '.image' if expected and re.fullmatch(r'[a-f0-9]{64}', expected) else url
     with client.stream('GET', fetch_url) as response:
         response.raise_for_status()

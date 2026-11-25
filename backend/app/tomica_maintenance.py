@@ -7,8 +7,9 @@ from sqlalchemy import func, select
 
 from .models import SourceIdentity, TomicaModel, TomicaVariant
 from .tomica_mall_backfill import INVENTORY, SEED_FILE, CN_FILE, CN_PACKAGING
+from .tomica_cn_sync import lifespan as china_lifespan
 
-router = APIRouter(prefix='/api/tomica-maintenance')
+router = APIRouter(prefix='/api/tomica-maintenance', lifespan=china_lifespan)
 
 
 @router.get('')
@@ -61,3 +62,26 @@ def year_progress(request: Request):
     result = json.loads(path.read_text(encoding='utf-8'))
     return {key: value for key, value in result.items() if key not in {'changes', 'conflicts'}} | {
         'conflicts': len(result.get('conflicts', []))}
+
+
+@router.get('/china')
+def china_status(request: Request):
+    job = getattr(request.app.state, 'tomica_cn_sync', None)
+    return job.snapshot() if job else {'status': 'not_started'}
+
+
+@router.post('/china/run', status_code=202)
+async def china_run(request: Request):
+    from .auth import csrf_check
+    from .repository import CatalogError
+    csrf_check(request)
+    try:
+        body = await request.json()
+    except ValueError:
+        raise CatalogError('INVALID_PARAMETERS', '请使用空JSON对象触发检查', 422)
+    if body != {}:
+        raise CatalogError('INVALID_PARAMETERS', '此操作仅检查固定的中国官网', 422)
+    job = getattr(request.app.state, 'tomica_cn_sync', None)
+    if job is None:
+        raise CatalogError('NOT_READY', '中国官网采集任务尚未就绪', 503)
+    return job.submit('manual')

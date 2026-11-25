@@ -80,7 +80,11 @@ def original(digest: Annotated[str, Path(pattern=DIGEST_PATTERN)], request: Requ
     data = cache.get(key)
     origin = 'redis'
     if data is None or hashlib.sha256(data).hexdigest() != digest:
-        data, _ = read_news_image(digest)
+        if (NEWS_IMAGES / (digest + '.jpg')).is_file():
+            data, _ = read_news_image(digest)
+        else:
+            from .tomica_cn_sync import storage
+            data, _ = read_news_image(digest, storage(request.app.state.settings) / 'images')
         cache.set(key, data, ttl=86400)
         origin = 'disk'
     headers = {'ETag': '"' + digest + '"', 'Cache-Control': 'public, max-age=86400',
