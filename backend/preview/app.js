@@ -224,8 +224,13 @@ async function loadNewsIndex() {
     const {items}=await request('tomica-news');
     if(sequence!==newsIndexSequence||state.kind!=='tomica')return;
     if(!items.length){$('news-index').textContent='新的发现，即将记录在这里。';return;}
-    const latest=items[0], first=latest.products[0];
-    $('news-index').innerHTML=`<nav class="news-months" aria-label="新品月份索引">${items.map(m=>`<a data-news-month="${escapeHTML(m.month)}" href="${newsLink(m.month)}" class="${m===latest?'selected':''}">${escapeHTML(m.month.replace('-','年')+'月新品情报')}</a>`).join('')}</nav><a class="news-feature" href="${newsLink(latest.month,first.id)}"><div class="news-cover">${imageMarkup(first,first.image_url,first.name)}</div><span class="news-issue">${escapeHTML(latest.title)} · ${latest.product_count} 组新品图文</span><h3>${escapeHTML(first.name)}</h3><p>${escapeHTML(first.name_zh||'多角度原图与细节记录')}</p></a><div class="news-more-products">${latest.products.slice(1).map(p=>`<a href="${newsLink(latest.month,p.id)}">${escapeHTML(p.name)}<span>↗</span></a>`).join('')}</div><a class="news-open-month" href="${newsLink(latest.month)}">翻开本期月刊 <span>↗</span></a>`;
+    const latest=items[0],first=latest.products[0],officialCount=latest.products.filter(p=>p.origin==='official-cn').length;
+    $('news-index').classList.add('latest-products-index');
+    const heading=$('news-sidebar').querySelector('.news-rail-heading h2');
+    if(heading)heading.innerHTML='最新商品<span>✦</span>';
+    const mark=$('news-sidebar').querySelector('.news-rail-mark');if(mark)mark.textContent='NEW';
+    $('news-sidebar').setAttribute('aria-label','多美卡最新商品');
+    $('news-index').innerHTML=`<nav class="news-months" aria-label="新品月份索引">${items.map(m=>`<a data-news-month="${escapeHTML(m.month)}" href="${newsLink(m.month,m.products[0]?.id)}" class="${m===latest?'selected':''}">${escapeHTML(m.month.replace('-','年')+'月新品')}</a>`).join('')}</nav><p class="news-latest-intro">${escapeHTML(latest.title)} · ${officialCount?'官网上架 '+officialCount+' 款':'收录 '+latest.product_count+' 组'}</p><div class="news-latest-grid">${latest.products.slice(0,6).map(p=>`<a class="news-latest-card" href="${newsLink(latest.month,p.id)}" aria-label="查看${escapeHTML(p.name)}"><div class="news-latest-photo">${imageMarkup(p,p.image_url,p.name,true)}</div><div class="news-latest-copy"><span class="news-latest-category">${escapeHTML(p.category||'多美卡新品')}</span><h3>${escapeHTML(p.name)}</h3>${p.reference_price?`<p class="news-latest-price">参考价 <strong>¥${escapeHTML(p.reference_price)}</strong></p>`:'<p class="news-latest-detail">查看图文详情 ↗</p>'}</div></a>`).join('')}</div><a class="news-open-month" href="${newsLink(latest.month,first.id)}">查看本月全部 ${latest.product_count} 组 <span>↗</span></a>`;
     bindImages($('news-index'));
   } catch(error) {
     if(sequence!==newsIndexSequence||state.kind!=='tomica')return;

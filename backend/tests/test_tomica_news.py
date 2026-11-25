@@ -107,6 +107,27 @@ def test_month_index_is_descending_and_thin(session, articles):
     assert 'photos' not in index[0]['products'][0] and 'observations' not in index[0]['products'][0]
 
 
+def test_official_arrivals_lead_sidebar_with_their_own_cover_and_price(session, articles):
+    publish(session, articles)
+    original = articles[0]['data']['products'][1]
+    product = {**deepcopy(original), 'id': 'cn-test', 'name': 'Official new car',
+               'name_zh': '汽车系列: 多美卡旗舰版', 'summary': '中国官网上架：2026-11-04',
+               'observations': ['参考价格：55', '产品材质：合金、塑胶']}
+    session.add(TomicaNews(slug='cn-test', archive_month='2026-11', title='China new car',
+        source_name='China official', source_url='https://www.tomy.cn/tomica/item/c/a',
+        content_hash='test', data={'origin': 'official-cn', 'products': [product]}))
+    session.commit()
+    month = news_index(session)['items'][0]
+    first = month['products'][0]
+    assert month['product_count'] == 4 and first['id'] == 'cn-test'
+    assert first['reference_price'] == '55' and first['category'] == '多美卡旗舰版'
+    assert first['listed_at'] == '2026-11-04' and first['origin'] == 'official-cn'
+    assert first['image_url'] == month['cover_image_url'] == '/api/tomica-news/images/' + original['cover_digest']
+    assert len(month['products'][1:]) == 3
+    assert all(p['reference_price'] is None for p in month['products'][1:])
+    assert 'photos' not in first and 'observations' not in first
+
+
 def test_month_api_and_revision_cache(client, session, articles):
     client.app.state.cache = CatalogCache(client=MemoryRedis())
     publish(session, articles)
