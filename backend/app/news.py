@@ -32,22 +32,12 @@ def month_title(month):
 def news_index(session):
     months = {}
     for row in session.scalars(select(TomicaNews).order_by(TomicaNews.archive_month.desc(), TomicaNews.slug)):
-        products = []
-        for product in row.data['products']:
-            price = next((value.split('：', 1)[1] for value in product.get('observations', [])
-                          if value.startswith('参考价格：')), None)
-            listed = re.search(r'中国官网上架：(\d{4}-\d{2}-\d{2})', product.get('summary', ''))
-            products.append({key: product.get(key) for key in ['id', 'name', 'name_zh', 'number']} |
-                {'image_url': image_url(product['cover_digest']), 'origin': row.data.get('origin'),
-                 'reference_price': price, 'listed_at': listed[1] if listed else None,
-                 'category': re.sub(r'^汽车系列\s*[:：]\s*', '', product.get('name_zh') or '')})
+        products = [{key: product.get(key) for key in ['id', 'name', 'name_zh', 'number']} |
+                    {'image_url': image_url(product['cover_digest'])} for product in row.data['products']]
         month = months.setdefault(row.archive_month, {'month': row.archive_month, 'title': month_title(row.archive_month),
                                                        'product_count': 0, 'products': [], 'cover_image_url': products[0]['image_url']})
         month['products'].extend(products)
         month['product_count'] += len(products)
-    for month in months.values():
-        month['products'].sort(key=lambda p: (p.get('origin') == 'official-cn', p.get('listed_at') or ''), reverse=True)
-        month['cover_image_url'] = month['products'][0]['image_url']
     return {'items': list(months.values())}
 
 
@@ -80,7 +70,7 @@ def read_news_image(digest, directory=NEWS_IMAGES):
 
 @router.get('')
 def index(request: Request, session: Session = Depends(get_session)):
-    return public_cached(request, session, 'tomica-news', 'index-v2', {}, lambda repo: news_index(repo.session))
+    return public_cached(request, session, 'tomica-news', 'index', {}, lambda repo: news_index(repo.session))
 
 
 @router.get('/images/{digest}')

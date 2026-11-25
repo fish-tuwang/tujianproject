@@ -224,7 +224,11 @@ async function loadNewsIndex() {
     const {items}=await request('tomica-news');
     if(sequence!==newsIndexSequence||state.kind!=='tomica')return;
     if(!items.length){$('news-index').textContent='新的发现，即将记录在这里。';return;}
-    const latest=items[0],first=latest.products[0],officialCount=latest.products.filter(p=>p.origin==='official-cn').length;
+    const latest=items[0],issue=await request('tomica-news/'+encodeURIComponent(items[0].month));
+    if(sequence!==newsIndexSequence||state.kind!=='tomica')return;
+    const details=new Map(issue.articles.flatMap(article=>article.products.map(p=>[p.id,{origin:article.origin,category:(p.name_zh||'').replace(/^汽车系列\s*[:：]\s*/,''),reference_price:(p.observations||[]).find(value=>value.startsWith('参考价格：'))?.slice(5),listed_at:p.summary?.match(/中国官网上架：(\d{4}-\d{2}-\d{2})/)?.[1]}])));
+    latest.products=latest.products.map(p=>({...p,...details.get(p.id)})).sort((a,b)=>Number(b.origin==='official-cn')-Number(a.origin==='official-cn')||(b.listed_at||'').localeCompare(a.listed_at||''));
+    const first=latest.products[0],officialCount=latest.products.filter(p=>p.origin==='official-cn').length;
     $('news-index').classList.add('latest-products-index');
     const heading=$('news-sidebar').querySelector('.news-rail-heading h2');
     if(heading)heading.innerHTML='最新商品<span>✦</span>';
