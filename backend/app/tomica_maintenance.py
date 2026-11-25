@@ -6,7 +6,7 @@ from fastapi import APIRouter, Request
 from sqlalchemy import func, select
 
 from .models import SourceIdentity, TomicaModel, TomicaVariant
-from .tomica_mall_backfill import INVENTORY, SEED_FILE
+from .tomica_mall_backfill import INVENTORY, SEED_FILE, CN_FILE, CN_PACKAGING
 
 router = APIRouter(prefix='/api/tomica-maintenance')
 
@@ -39,7 +39,8 @@ def coverage(request: Request):
             'cached_image_urls': len(json.loads(seed)) if seed else 0,
             'original_mappings': sum(len(p.get('original_image_map', {})) for p in data['products']),
             'deferred_originals': sum(len(p.get('deferred_originals', [])) for p in data['products']),
-            'version': hashlib.sha256(body + seed).hexdigest()}}
+            'cn_packaging_candidates': len(CN_PACKAGING),
+            'version': hashlib.sha256(body + seed + (CN_FILE.read_bytes() if CN_FILE.exists() else b'')).hexdigest()}}
 
 
 @router.get('/progress')

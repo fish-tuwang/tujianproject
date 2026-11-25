@@ -28,12 +28,16 @@ MAX_IMAGE = 20 * 1024 * 1024
 SEED_FILE = ROOT / 'backend/data/tomica-image-seed.json'
 SEED_IMAGES = json.loads(SEED_FILE.read_text(encoding='utf-8')) if SEED_FILE.exists() else {}
 SEED_BASE = 'https://117.72.11.77/tomica-image-seed-20261124/'
+CN_FILE = ROOT / 'backend/data/tomica-cn-packaging.json'
+CN_PACKAGING = json.loads(CN_FILE.read_text(encoding='utf-8')) if CN_FILE.exists() else {}
 
 
 def image_url(url):
     parts = urlsplit(url)
-    if (parts.scheme != 'https' or parts.netloc != 'takaratomymall.jp'
-            or not parts.path.startswith('/img/goods/') or parts.query or parts.fragment):
+    japanese = parts.netloc == 'takaratomymall.jp' and parts.path.startswith('/img/goods/')
+    chinese = parts.netloc == 'www.tomy.cn' and re.fullmatch(
+        r'/wp-content/uploads/\d{4}/\d{2}/[^/]+\.(?:jpe?g|png|webp)', parts.path, re.I)
+    if parts.scheme != 'https' or not (japanese or chinese) or parts.query or parts.fragment:
         raise ValueError('image outside recorded official source')
     return url
 
@@ -82,6 +86,31 @@ def download(url, directory, client):
     temporary.write_bytes(body)
     temporary.replace(path)
     return path, body
+
+
+def supplemental_box(raw, directory, client):
+    record = CN_PACKAGING.get(raw['jan'])
+    if not record:
+        return None
+    sku = re.fullmatch(r'X?(\d{6})(?:CN)?', record.get('sku', ''), re.I)
+    source = urlsplit(record.get('source_url', ''))
+    if (record.get('review') != 'visual_review_20261125' or not sku
+            or not raw['jan'].endswith(sku[1]) or record.get('jp_name') != raw['name']
+            or record.get('jan_source_url') != raw['source_url']
+            or source.scheme != 'https' or source.netloc != 'www.tomy.cn'
+            or not re.fullmatch(r'/(?:tomica|tomytec)/item/[^/]+/[^/]+/?', source.path)
+            or source.query or source.fragment):
+        raise ValueError('Chinese packaging review does not match exact official product')
+    image = record['packaging_image']
+    if image['url'] not in record['gallery_urls'] or not re.fullmatch(r'[a-f0-9]{64}', image['sha256']):
+        raise ValueError('Chinese packaging image is not a reviewed gallery image')
+    if urlsplit(image_url(image['url'])).netloc != 'www.tomy.cn':
+        raise ValueError('Chinese packaging image is outside its source')
+    path, body = download(image['url'], directory, client)
+    if hashlib.sha256(body).hexdigest() != image['sha256']:
+        raise ValueError('Chinese packaging image checksum mismatch')
+    return {'url': image['url'], 'path': path.name, 'sha256': image['sha256'],
+            'status': 'downloaded', 'kind': 'packaging'}
 
 
 def prepare_image(url, packaging, old_packaging, directory, client, alternatives=(), product_url=None):
@@ -282,6 +311,9 @@ class GalleryBackfill:
             for url in available:
                 if '/img/goods/6/' in url:
                     images.append(prepare_image(url, url in verified, old_packaging, images_directory, client, images, raw['source_url']))
+            extra_box = supplemental_box(raw, images_directory, client) if not verified and not old_packaging else None
+            if extra_box:
+                images.append(extra_box)
             unique = {}
             for image in images:
                 old_image = unique.get(image['sha256'])
@@ -329,10 +361,14 @@ class GalleryBackfill:
                         media_directories(self.app.state.settings)[0], review=identity_review)
             if result['action'] in {'created', 'supplemented', 'unchanged'}:
                 session.commit()
+                if extra_box:
+                    audit('tomica_cn_packaging_verified', jan=raw['jan'],
+                          source_url=CN_PACKAGING[raw['jan']]['source_url'], sha256=extra_box['sha256'])
             else:
                 session.rollback()
             return dict(result, jan=raw['jan'], name=raw['name'], image_count=len(document['images']),
-                        packaging=document['packaging_status'] == 'verified', deferred_originals=sorted(deferred), thumbnail_only=thumbnail is not None)
+                        packaging=document['packaging_status'] == 'verified', cn_packaging=bool(extra_box),
+                        deferred_originals=sorted(deferred), thumbnail_only=thumbnail is not None)
 
     def run(self):
         try:
@@ -357,7 +393,8 @@ class GalleryBackfill:
 
     def collect(self):
         body = INVENTORY.read_bytes()
-        version = hashlib.sha256(body + (SEED_FILE.read_bytes() if SEED_FILE.exists() else b'')).hexdigest()
+        version = hashlib.sha256(body + (SEED_FILE.read_bytes() if SEED_FILE.exists() else b'')
+                                 + (CN_FILE.read_bytes() if CN_FILE.exists() else b'')).hexdigest()
         saved = self.directory / 'state.json'
         old = json.loads(saved.read_text(encoding='utf-8')) if saved.exists() else {}
         if old.get('version') == version and old.get('status') in {'succeeded', 'completed_with_review'}:
@@ -400,6 +437,7 @@ class GalleryBackfill:
                 results.append(result)
                 packaging += bool(result.get('packaging') and action in {'created', 'supplemented', 'unchanged'})
                 self.save(processed=len(results), counts=counts, packaging_products=packaging,
+                          cn_packaging_products=sum(bool(r.get('cn_packaging')) for r in results),
                           thumbnail_only_products=sum(bool(r.get('thumbnail_only')) for r in results),
                           reviews=[r for r in results if r['action'] == 'review'], failures=[r for r in results if r['action'] == 'failed'],
                           source_gaps=[{'jan': r['jan'], 'originals': r['deferred_originals']} for r in results if r.get('deferred_originals')])
