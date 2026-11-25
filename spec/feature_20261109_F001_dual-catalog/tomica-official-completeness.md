@@ -54,3 +54,13 @@ Mac 已确认成功更新 9b0b5bd，并实际运行后续全量清单版本。�
 代码0cd411d已由Mac自动加载。实际 /api/tomica-maintenance/years 返回 changed_models=1148、changed_variants=1、conflicts=0、status=completed；页面未知年份总量由16607降为15458。逐一验证999号列车2024、MR2 2023、Cars GRC 2025以及原图鉴迪士尼特注2025：详情年份与按年搜索均正确。未确认记录继续保留未知。
 
 执行 python -m pytest backend/tests/test_tomica_release_years.py backend/tests/test_tomica_mall_backfill.py backend/tests/test_tomica_mall_inventory.py backend/tests/test_tomica_mall_media.py backend/tests/test_tomica_maintenance.py backend/tests/test_api.py backend/tests/test_tomica_editions.py backend/tests/test_tomica_repair.py backend/tests/test_sources.py -q；原始摘要106 passed, 1 warning in 13.17s，退出0。线上 /tmp/tomica-year-live-verify.py 返回LIVE_YEAR_VERIFICATION_OK，退出0。日期来源及原空值备份写入Mac图鉴 artifacts/tomica-mall-backfill/release-years-*.json，聚合日志记录 tomica_release_years_completed。
+
+## 2026-11-25 中国官网包装补图
+
+按用户提供 https://www.tomy.cn/tomica 检查中国官网多美卡与TLV：34个分类/分页列表、558个详情，详情请求失败0，记录2970个图库图片地址。242项可与既有日本官方清单按唯一货号后六位对应，其中70项此前无已核实盒图；逐张检查相关图库，最终目视确认64项同款包装。两项采用官方包装正面图，其余为盒体照片。记录完整中国商品页、图库地址、货号、对应完整JAN、日文商品名及原图SHA，不按相同编号猜测代次或版本；合并多货号及无法确认项不自动关联。
+
+64张原始图片约21.8MB已预缓存京东现有图片目录并逐一校验SHA；Mac通过已有鉴权图片服务读取。只为缺盒图的商品追加包装图片，保留原车身图库、旧盒图及版本关联，来源边界限于中国官网公开上传目录。源码a4c2f3c已在Mac运行完成：实际新增64个包装封面，官方商品仍887项，图库4513增至4577张，已核实包装商品431增至495，写入失败0。标准图库遍历1111项完成，另1个原有Cars套装关联待核对未强行处理。未知年份仍15458，补年结果保留。
+
+执行 python -m pytest backend/tests/test_tomica_cn_packaging.py backend/tests/test_tomica_mall_backfill.py backend/tests/test_tomica_mall_inventory.py backend/tests/test_tomica_mall_media.py backend/tests/test_tomica_maintenance.py backend/tests/test_tomica_release_years.py backend/tests/test_api.py backend/tests/test_tomica_editions.py backend/tests/test_tomica_repair.py backend/tests/test_sources.py -q；终端原始摘要119 passed, 1 warning in 13.32s，退出0。线上 /tmp/tomica-cn-live-verify.py 输出LIVE_CN_VERIFICATION_OK，退出0；银河铁道999与F-35A的列表盒图、详情包装图和原图SHA一致，未登录访问401。
+
+仍缺包装图的历史车型及本次TLV、停车场等无可靠包装照片的条目保留现有图片，不把车身、内饰、活动图或其他版本包装冒充盒图。
