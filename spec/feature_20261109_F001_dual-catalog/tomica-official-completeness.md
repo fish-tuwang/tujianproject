@@ -64,3 +64,13 @@ Mac 已确认成功更新 9b0b5bd，并实际运行后续全量清单版本。�
 执行 python -m pytest backend/tests/test_tomica_cn_packaging.py backend/tests/test_tomica_mall_backfill.py backend/tests/test_tomica_mall_inventory.py backend/tests/test_tomica_mall_media.py backend/tests/test_tomica_maintenance.py backend/tests/test_tomica_release_years.py backend/tests/test_api.py backend/tests/test_tomica_editions.py backend/tests/test_tomica_repair.py backend/tests/test_sources.py -q；终端原始摘要119 passed, 1 warning in 13.32s，退出0。线上 /tmp/tomica-cn-live-verify.py 输出LIVE_CN_VERIFICATION_OK，退出0；银河铁道999与F-35A的列表盒图、详情包装图和原图SHA一致，未登录访问401。
 
 仍缺包装图的历史车型及本次TLV、停车场等无可靠包装照片的条目保留现有图片，不把车身、内饰、活动图或其他版本包装冒充盒图。
+
+## 2026-11-25 中国官网定时新品检查
+
+按用户要求接通中国官网新品增量检查，沿用每48小时、北京时间03:00的固定相位，独立于原图鉴的车型采集，覆盖中国官网多美卡及TLV分类分页。558条已采集记录作为初始基线，不能把既有全站商品算作首次新增。列表全量发现链接，仅对新增、列表变化和首页最新商品读取详情比较，按真实article:published_time上架月份进入原新品月刊；article:modified_time参与变化识别，不把文件上传年月或官网上架时间写入车型首次发售年份。
+
+Mac运行源码10d6cca，已通过POST /api/tomica-maintenance/china/run手动触发，run_id=8826f7d2-05c4-4776-9016-e8b85b8dbacf。实际2026-11-25 20:25:23开始、20:29:40完成；34个列表页、558条商品、9个最新/变化详情复核，新增0、变更0，status=completed、error=null。初次接入官网本月17组商品资料及完整图库，不将这17组记成网站本轮新增。下次2026-11-27T03:00:00+08:00，enabled=true、interval_hours=48，API进程重启保留固定相位并补查错过的周期。
+
+状态入口GET /api/tomica-maintenance/china；手动入口仅允许已登录、同源JSON空对象，不能指定任意抓取地址；重复触发复用当前任务。状态、基线及图片持久化在settings.artifact_dir/tomica-cn-sync，collection日志事件tomica_cn_sync_started / tomica_cn_sync_finished / tomica_cn_sync_failed。网络失败不会推进基线或报告无新增；图片下载验证、落盘并预热现有缓存，来源图不重新编码。
+
+实际执行相关pytest，原始结果158 passed, 1 warning in 15.23s，退出0。服务器验证LIVE_CN_SCHEDULE_AND_MANUAL_CHECK_OK 0 0 2026-11-27T03:00:00+08:00，退出0；17组封面逐一HTTP200且字节SHA一致，原有用户月刊完整保留。官方商品盒图仍495、未知年份仍15458。使用Mac实际已部署JS与真实月刊数据，桌面1280/手机390宽度均通过官网资料标签、完整商品图片数量及图片放大验证；用户上传文章原标签和图片放大保留。No.63详情图库置于12条版本记录之前的布局亦通过两种宽度复核。
