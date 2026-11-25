@@ -314,6 +314,10 @@ function renderDetail() {
     const extra=document.createElement('section');extra.id='pokemon-extra';extra.className='pokemon-extra';$('detail-root').append(extra);
     window.PokemonDetails.mount(extra,item.extra,{escapeHTML,typeTags,imageMarkup,imageURL,bindImages});
   }
+  if(kind==='tomica'){
+    const versions=[...$('detail-root').querySelectorAll('.detail-section')].find(section=>section.querySelector('h3')?.textContent.startsWith('版本记录'));
+    if(versions)$('detail-root').querySelectorAll('.official-product').forEach(product=>versions.before(product));
+  }
   bindImages($('detail-root'));
   if(kind==='tomica')bindDetailZoom($('detail-root'));
   $('detail-root').querySelectorAll('[data-form]').forEach(button=>button.onclick=()=>{state.activeForm=Number(button.dataset.form);renderDetail();});
